@@ -31,6 +31,39 @@ pytest -q
 
 ## Commands
 
+### Bootstrap a template from an example PPTX (v1 workflow)
+
+Inspect a PPTX to see layouts and placeholder indices:
+
+```bash
+slide-smith inspect-pptx --pptx /path/to/template.pptx
+```
+
+Bootstrap a template package (copies PPTX + generates starter template.json):
+
+```bash
+slide-smith bootstrap-template \
+  --pptx /path/to/template.pptx \
+  --template-id my_template \
+  --out-dir ./templates
+```
+
+Validate the generated template package:
+
+```bash
+slide-smith validate-template --template my_template --templates-dir ./templates
+```
+
+Render a dummy deck for human review:
+
+```bash
+slide-smith create \
+  --input docs/design/examples/deck-spec.dummy.sample.json \
+  --template my_template \
+  --templates-dir ./templates \
+  --output /tmp/dummy-review.pptx
+```
+
 ### Create (render) a deck
 
 ```bash
