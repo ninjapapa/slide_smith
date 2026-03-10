@@ -8,11 +8,28 @@ An agent-first application is designed to be usable not just by humans, but dire
 
 ## Early project status
 
-The repo now includes early design docs under `docs/design/`, issue drafts under `docs/issues/`, an initial Python CLI scaffold in `src/slide_smith/`, a default template package under `templates/default/`, and a first rendering path that can generate `.pptx` output.
+The repo now includes:
+- design docs under `docs/design/`
+- local issue drafts under `docs/issues/`
+- a Python CLI scaffold in `src/slide_smith/`
+- a default template package under `templates/default/`
+- an initial rendering path using `python-pptx`
+- tests under `tests/`
+- a project context file in `CLAUDE.md`
 
 ## Local development
 
-Using `uv` is the easiest path here:
+### Option 1: project-local venv with `python3 -m venv`
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+pytest -q
+python -m slide_smith.cli --help
+```
+
+### Option 2: using `uv`
 
 ```bash
 uv venv .venv
@@ -21,3 +38,27 @@ uv pip install -e .[dev]
 pytest -q
 python -m slide_smith.cli --help
 ```
+
+## Current CLI
+
+```bash
+python -m slide_smith.cli inspect-template --template default
+python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.json --template default --output out.pptx
+python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.md --template default --output out.pptx
+```
+
+## Current design direction
+
+- input: markdown or JSON
+- normalization target: internal deck spec
+- template model: `template.pptx` + `template.json`
+- rendering approach: placeholder-first
+- MVP archetypes:
+  - `title`
+  - `section`
+  - `title_and_bullets`
+  - `image_left_text_right`
+
+## Notes
+
+For broader project context and implementation direction, see `CLAUDE.md` and `docs/design/`.
