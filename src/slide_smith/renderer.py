@@ -92,6 +92,15 @@ def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path) -
 
 
 
+def _set_notes(slide, notes: str | None) -> None:
+    if not notes:
+        return
+    # python-pptx creates notes slide lazily.
+    notes_slide = slide.notes_slide
+    notes_slide.notes_text_frame.text = notes
+
+
+
 def render_deck(deck_spec: dict[str, Any], template_spec: dict[str, Any], template_id: str, output_path: str, base_dir: str | None = None) -> str:
     prs = _presentation_for_template(template_id)
     source_dir = Path(base_dir or ".").resolve()
@@ -115,6 +124,8 @@ def render_deck(deck_spec: dict[str, Any], template_spec: dict[str, Any], templa
             _render_image_left_text_right(slide, slide_spec, source_dir)
         else:
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
+
+        _set_notes(slide, slide_spec.get("notes"))
 
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)

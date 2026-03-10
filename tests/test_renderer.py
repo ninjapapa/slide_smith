@@ -22,13 +22,14 @@ def test_render_deck_writes_pptx(tmp_path: Path) -> None:
     deck_spec = {
         "title": "Demo",
         "slides": [
-            {"archetype": "title", "title": "Demo", "subtitle": "Sub"},
-            {"archetype": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"]},
+            {"archetype": "title", "title": "Demo", "subtitle": "Sub", "notes": "intro notes"},
+            {"archetype": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"], "notes": "bullet notes"},
             {
                 "archetype": "image_left_text_right",
                 "title": "Product",
                 "body": "Body text",
                 "image": "demo.png",
+                "notes": "image notes",
             },
         ],
     }
@@ -42,3 +43,7 @@ def test_render_deck_writes_pptx(tmp_path: Path) -> None:
     assert len(prs.slides) == 3
     assert prs.slides[0].shapes.title.text == "Demo"
     assert prs.slides[1].shapes.title.text == "Highlights"
+
+    assert prs.slides[0].notes_slide.notes_text_frame.text == "intro notes"
+    assert prs.slides[1].notes_slide.notes_text_frame.text == "bullet notes"
+    assert prs.slides[2].notes_slide.notes_text_frame.text == "image notes"
