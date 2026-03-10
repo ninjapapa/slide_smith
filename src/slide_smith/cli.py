@@ -15,6 +15,7 @@ from slide_smith.editor import (
 from slide_smith.markdown_parser import parse_markdown
 from slide_smith.renderer import RenderingError, render_deck
 from slide_smith.template_loader import load_template_spec
+from slide_smith.template_validator import validate_template
 
 
 
@@ -69,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     delete_slide = subparsers.add_parser("delete-slide", help="Delete a slide in an existing deck.")
     delete_slide.add_argument("--deck", required=True, help="Path to target deck.")
     delete_slide.add_argument("--index", type=int, required=True, help="Slide index to delete.")
+
+    validate_template_cmd = subparsers.add_parser(
+        "validate-template", help="Validate that a template package matches its PPTX (layouts/placeholders)."
+    )
+    validate_template_cmd.add_argument("--template", required=True, help="Template id to validate.")
 
     return parser
 
@@ -217,6 +223,20 @@ def main() -> int:
             print(f"Delete-slide failed: {exc}")
             return 1
         print(json.dumps({"deck": path, "status": "slide deleted"}, indent=2))
+        return 0
+
+    if args.command == "validate-template":
+        result = validate_template(args.template)
+        if not result.ok:
+            print("Template validation failed:")
+            for e in result.errors:
+                print(f"- {e}")
+            return 1
+        # If we returned warnings, surface them but still exit 0.
+        if result.errors:
+            for e in result.errors:
+                print(e)
+        print(json.dumps({"template": args.template, "status": "ok"}, indent=2))
         return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
