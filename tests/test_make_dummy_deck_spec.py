@@ -1,12 +1,13 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
 def test_make_dummy_deck_spec_outputs_valid_json() -> None:
     repo = Path(__file__).resolve().parents[1]
     cmd = [
-        str(repo / ".venv" / "bin" / "python"),
+        sys.executable,
         "-m",
         "slide_smith.cli",
         "make-dummy-deck-spec",
@@ -25,7 +26,7 @@ def test_make_dummy_deck_spec_outputs_valid_json() -> None:
 def test_make_dummy_deck_spec_is_deterministic() -> None:
     repo = Path(__file__).resolve().parents[1]
     cmd = [
-        str(repo / ".venv" / "bin" / "python"),
+        sys.executable,
         "-m",
         "slide_smith.cli",
         "make-dummy-deck-spec",
