@@ -32,6 +32,12 @@ This repo is intentionally shaped to be operated by calling agents:
 
 The core pipeline is **JSON Deck Spec -> PPTX**. Markdown ingestion is optional and can be handled by caller-side skills/tools.
 
+### Agent skill (for Claude Code / OpenClaw)
+
+This repo ships an agent skill file that teaches calling agents how to operate Slide Smith via CLI:
+
+- `skills/slide-smith/SKILL.md`
+
 The repo now includes:
 - design docs under `docs/design/`
 - local issue drafts under `docs/issues/`
@@ -65,17 +71,24 @@ python -m slide_smith.cli --help
 
 ## Current CLI
 
+Prefer the installed entrypoint:
+
 ```bash
-python -m slide_smith.cli inspect-template --template default
-python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.json --template default --output out.pptx
-python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.md --template default --output out.pptx
-python -m slide_smith.cli add-slide --deck out.pptx --after 2 --type title_and_bullets --input slide.json
-python -m slide_smith.cli update-slide --deck out.pptx --index 1 --input patch.json
+slide-smith inspect-template --template default
+slide-smith validate-template --template default
+slide-smith create --input docs/design/examples/deck-spec.sample.json --template default --output out.pptx
+slide-smith create --input docs/design/examples/deck-spec.sample.json --template default --assets-dir /tmp/slide-smith-assets --output out.pptx
+slide-smith add-slide --deck out.pptx --after 2 --type title_and_bullets --input slide.json
+slide-smith update-slide --deck out.pptx --index 1 --input patch.json
+slide-smith list-slides --deck out.pptx
+slide-smith delete-slide --deck out.pptx --index 0
 ```
+
+(You can still run via `python -m slide_smith.cli ...` if needed.)
 
 ## Current design direction
 
-- input: markdown or JSON
+- input: JSON (primary); markdown is optional and best handled caller-side
 - normalization target: internal deck spec
 - template model: `template.pptx` + `template.json`
 - rendering approach: placeholder-first
