@@ -6,7 +6,14 @@ from typing import Any
 
 from pptx import Presentation
 
-from slide_smith.renderer import RenderingError, _layout_by_name, _render_image_left_text_right, _render_section, _render_title, _render_title_and_bullets
+from slide_smith.renderer import (
+    _layout_by_name,
+    _render_image_left_text_right,
+    _render_section,
+    _render_title,
+    _render_title_and_bullets,
+)
+from slide_smith.styling import load_styles
 from slide_smith.template_loader import load_template_spec
 
 
@@ -28,6 +35,7 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
         )
 
     template_spec = load_template_spec(template_id)
+    styles = load_styles(template_spec)
     archetypes = {item["id"]: item for item in template_spec.get("archetypes", [])}
     if archetype not in archetypes:
         raise EditError(f"Archetype '{archetype}' is not supported by template '{template_id}'")
@@ -39,13 +47,13 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
     base_dir = Path(input_path).resolve().parent
 
     if archetype == "title":
-        _render_title(slide, slide_spec)
+        _render_title(slide, slide_spec, styles)
     elif archetype == "section":
-        _render_section(slide, slide_spec)
+        _render_section(slide, slide_spec, styles)
     elif archetype == "title_and_bullets":
-        _render_title_and_bullets(slide, slide_spec)
+        _render_title_and_bullets(slide, slide_spec, styles)
     elif archetype == "image_left_text_right":
-        _render_image_left_text_right(slide, slide_spec, base_dir)
+        _render_image_left_text_right(slide, slide_spec, base_dir, styles)
     else:
         raise EditError(f"Archetype '{archetype}' is not implemented")
 

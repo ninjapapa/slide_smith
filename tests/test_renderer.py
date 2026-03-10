@@ -6,6 +6,7 @@ from pathlib import Path
 from pptx import Presentation
 
 from slide_smith.renderer import render_deck
+from slide_smith.styling import load_styles
 from slide_smith.template_loader import load_template_spec
 
 
@@ -44,6 +45,13 @@ def test_render_deck_writes_pptx(tmp_path: Path) -> None:
     assert prs.slides[0].shapes.title.text == "Demo"
     assert prs.slides[1].shapes.title.text == "Highlights"
 
+    # Notes preserved.
     assert prs.slides[0].notes_slide.notes_text_frame.text == "intro notes"
     assert prs.slides[1].notes_slide.notes_text_frame.text == "bullet notes"
     assert prs.slides[2].notes_slide.notes_text_frame.text == "image notes"
+
+    # Styles applied (at least for the title placeholder run).
+    styles = load_styles(template_spec)
+    title_run = prs.slides[0].shapes.title.text_frame.paragraphs[0].runs[0]
+    assert title_run.font.name == styles["title"].font
+    assert int(title_run.font.size.pt) == int(styles["title"].size_pt)

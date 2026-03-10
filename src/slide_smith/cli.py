@@ -67,6 +67,12 @@ def handle_inspect_template(template_id: str) -> int:
     print(f"version: {spec.get('version', 'n/a')}")
     deck = spec.get("deck", {})
     print(f"aspect_ratio: {deck.get('aspect_ratio', 'unknown')}")
+
+    if spec.get("styles"):
+        print("styles:")
+        for k, v in (spec.get("styles") or {}).items():
+            print(f"- {k}: {v}")
+
     print("supported_archetypes:")
     for archetype in spec.get("archetypes", []):
         print(f"- {archetype['id']}: {archetype.get('description', '')}")
