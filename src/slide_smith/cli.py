@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
 from slide_smith.markdown_parser import parse_markdown
+from slide_smith.renderer import RenderingError, render_deck
 from slide_smith.template_loader import load_template_spec
 
 
@@ -67,7 +69,7 @@ def handle_inspect_template(template_id: str) -> int:
 
 
 def handle_create(input_path: str, template_id: str, output_path: str) -> int:
-    _ = load_template_spec(template_id)
+    template_spec = load_template_spec(template_id)
     if input_path.endswith(".json"):
         spec = load_deck_spec(input_path)
     elif input_path.endswith(".md"):
@@ -83,8 +85,19 @@ def handle_create(input_path: str, template_id: str, output_path: str) -> int:
             print(f"- {error}")
         return 1
 
-    print("Create flow is not implemented yet, but input normalized successfully.")
-    print(json.dumps({"template": template_id, "output": output_path, "deck": spec}, indent=2))
+    try:
+        rendered_path = render_deck(
+            spec,
+            template_spec,
+            template_id,
+            output_path,
+            base_dir=str(Path(input_path).resolve().parent),
+        )
+    except RenderingError as exc:
+        print(f"Rendering failed: {exc}")
+        return 1
+
+    print(json.dumps({"template": template_id, "output": rendered_path, "deck": spec}, indent=2))
     return 0
 
 

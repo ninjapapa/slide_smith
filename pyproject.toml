@@ -12,6 +12,14 @@ license = { text = "MIT" }
 authors = [
   { name = "Bo Zhang" }
 ]
+dependencies = [
+  "python-pptx>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.0.0",
+]
 
 [project.scripts]
 slide-smith = "slide_smith.cli:main"

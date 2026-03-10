@@ -8,4 +8,16 @@ An agent-first application is designed to be usable not just by humans, but dire
 
 ## Early project status
 
-The repo now includes early design docs under `docs/design/`, issue drafts under `docs/issues/`, and an initial Python CLI scaffold in `src/slide_smith/`.
+The repo now includes early design docs under `docs/design/`, issue drafts under `docs/issues/`, an initial Python CLI scaffold in `src/slide_smith/`, a default template package under `templates/default/`, and a first rendering path that can generate `.pptx` output.
+
+## Local development
+
+Using `uv` is the easiest path here:
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e .[dev]
+pytest -q
+python -m slide_smith.cli --help
+```
