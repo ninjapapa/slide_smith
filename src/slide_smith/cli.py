@@ -143,6 +143,20 @@ def handle_create(
             print(f"- {error}")
         return 1
 
+    # Schema validation is the source of truth when jsonschema is available.
+    try:
+        from slide_smith.schema_validation import validate_against_schema
+
+        schema_res = validate_against_schema(spec)
+        if not schema_res.ok:
+            print("Deck spec schema validation failed:")
+            for error in schema_res.errors:
+                print(f"- {error}")
+            return 1
+    except Exception:
+        # jsonschema not installed or schema unavailable; keep runtime flexible.
+        pass
+
     try:
         rendered_path = render_deck(
             spec,
