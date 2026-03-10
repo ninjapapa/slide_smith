@@ -30,8 +30,18 @@ def _layout_by_name(prs: Presentation, name: str):
 
 
 
-def _set_placeholder_text(slide, idx: int, text: str | None, style=None) -> None:
-    if text is None:
+def _slot_index(archetype_spec: dict[str, Any], slot_name: str, default: int | None = None) -> int | None:
+    for slot in archetype_spec.get("slots", []):
+        if slot.get("name") == slot_name:
+            idx = slot.get("placeholder_idx")
+            if isinstance(idx, int):
+                return idx
+    return default
+
+
+
+def _set_placeholder_text(slide, idx: int | None, text: str | None, style=None) -> None:
+    if idx is None or text is None:
         return
     try:
         ph = slide.placeholders[idx]
@@ -43,21 +53,30 @@ def _set_placeholder_text(slide, idx: int, text: str | None, style=None) -> None
 
 
 
-def _render_title(slide, spec: dict[str, Any], styles) -> None:
-    _set_placeholder_text(slide, 0, spec.get("title", ""), styles.get("title"))
-    _set_placeholder_text(slide, 1, spec.get("subtitle", ""), styles.get("subtitle"))
+def _render_title(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any]) -> None:
+    _set_placeholder_text(slide, _slot_index(archetype_spec, "title", 0), spec.get("title", ""), styles.get("title"))
+    _set_placeholder_text(slide, _slot_index(archetype_spec, "subtitle", 1), spec.get("subtitle", ""), styles.get("subtitle"))
 
 
 
-def _render_section(slide, spec: dict[str, Any], styles) -> None:
-    _set_placeholder_text(slide, 0, spec.get("title", ""), styles.get("title"))
-    _set_placeholder_text(slide, 1, spec.get("subtitle") or spec.get("body", ""), styles.get("subtitle"))
+def _render_section(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any]) -> None:
+    _set_placeholder_text(slide, _slot_index(archetype_spec, "title", 0), spec.get("title", ""), styles.get("title"))
+    subtitle_idx = _slot_index(archetype_spec, "subtitle")
+    body_idx = _slot_index(archetype_spec, "body")
+    idx = subtitle_idx if subtitle_idx is not None else body_idx
+    _set_placeholder_text(slide, idx, spec.get("subtitle") or spec.get("body", ""), styles.get("subtitle"))
 
 
 
-def _render_title_and_bullets(slide, spec: dict[str, Any], styles) -> None:
-    _set_placeholder_text(slide, 0, spec.get("title", ""), styles.get("title"))
-    body_placeholder = slide.placeholders[1]
+def _render_title_and_bullets(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any]) -> None:
+    _set_placeholder_text(slide, _slot_index(archetype_spec, "title", 0), spec.get("title", ""), styles.get("title"))
+    body_idx = _slot_index(archetype_spec, "bullets")
+    if body_idx is None:
+        body_idx = _slot_index(archetype_spec, "body", 1)
+    try:
+        body_placeholder = slide.placeholders[body_idx]
+    except KeyError as exc:
+        raise RenderingError(f"Placeholder idx={body_idx} not found on slide") from exc
     text_frame = body_placeholder.text_frame
     bullets = spec.get("bullets") or []
     if not bullets:
@@ -73,8 +92,8 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles) -> None:
 
 
 
-def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, styles) -> None:
-    _set_placeholder_text(slide, 0, spec.get("title", ""), styles.get("title"))
+def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, styles, archetype_spec: dict[str, Any]) -> None:
+    _set_placeholder_text(slide, _slot_index(archetype_spec, "title", 0), spec.get("title", ""), styles.get("title"))
 
     image_field = spec.get("image")
     image_path = None
@@ -83,14 +102,20 @@ def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, s
     elif isinstance(image_field, dict):
         image_path = image_field.get("path")
 
-    if image_path:
+    image_idx = _slot_index(archetype_spec, "image", 1)
+    body_idx = _slot_index(archetype_spec, "body", 2)
+
+    if image_path and image_idx is not None:
         p = Path(str(image_path)).expanduser()
         resolved = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
         if not resolved.exists():
             raise RenderingError(f"Image file not found: {resolved}")
         if not resolved.is_file():
             raise RenderingError(f"Image path is not a file: {resolved}")
-        image_placeholder = slide.placeholders[1]
+        try:
+            image_placeholder = slide.placeholders[image_idx]
+        except KeyError as exc:
+            raise RenderingError(f"Placeholder idx={image_idx} not found on slide") from exc
         slide.shapes.add_picture(
             str(resolved),
             image_placeholder.left,
@@ -99,9 +124,13 @@ def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, s
             height=image_placeholder.height,
         )
 
-    body_placeholder = slide.placeholders[2]
-    body_placeholder.text = spec.get("body", "")
-    apply_text_style(body_placeholder.text_frame, styles.get("body"))
+    if body_idx is not None:
+        try:
+            body_placeholder = slide.placeholders[body_idx]
+        except KeyError as exc:
+            raise RenderingError(f"Placeholder idx={body_idx} not found on slide") from exc
+        body_placeholder.text = spec.get("body", "")
+        apply_text_style(body_placeholder.text_frame, styles.get("body"))
 
 
 
@@ -132,17 +161,18 @@ def render_deck(
         archetype = slide_spec["archetype"]
         if archetype not in archetypes:
             raise RenderingError(f"Archetype '{archetype}' not supported by template '{template_id}'")
-        layout_name = archetypes[archetype]["layout"]
+        archetype_spec = archetypes[archetype]
+        layout_name = archetype_spec["layout"]
         slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
 
         if archetype == "title":
-            _render_title(slide, slide_spec, styles)
+            _render_title(slide, slide_spec, styles, archetype_spec)
         elif archetype == "section":
-            _render_section(slide, slide_spec, styles)
+            _render_section(slide, slide_spec, styles, archetype_spec)
         elif archetype == "title_and_bullets":
-            _render_title_and_bullets(slide, slide_spec, styles)
+            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec)
         elif archetype == "image_left_text_right":
-            _render_image_left_text_right(slide, slide_spec, source_dir, styles)
+            _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec)
         else:
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
 
