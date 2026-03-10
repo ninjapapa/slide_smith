@@ -8,6 +8,13 @@ It uses the `python-pptx` (`pptx`) library as the core PowerPoint generation eng
 
 An agent-first application is designed to be usable not just by humans, but directly by calling agents: it exposes clear operable interfaces, good documentation, informative errors, and feedback loops that let agents reliably create, inspect, and refine outputs over multiple steps.
 
+**Agent-first mantra**
+- *Designed by human*
+- *Created by agents*
+- *For agents to use*
+- *Learn from agents feedback*
+- *Refine and maintain by agents*
+
 ## Early project status
 
 The repo now includes:
