@@ -1,4 +1,12 @@
+from __future__ import annotations
+
 import argparse
+import json
+
+from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
+from slide_smith.markdown_parser import parse_markdown
+from slide_smith.template_loader import load_template_spec
+
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +40,55 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+
+def handle_inspect_template(template_id: str) -> int:
+    spec = load_template_spec(template_id)
+    print(f"template: {spec['template_id']} ({spec.get('name', 'unnamed')})")
+    print(f"version: {spec.get('version', 'n/a')}")
+    deck = spec.get("deck", {})
+    print(f"aspect_ratio: {deck.get('aspect_ratio', 'unknown')}")
+    print("supported_archetypes:")
+    for archetype in spec.get("archetypes", []):
+        print(f"- {archetype['id']}: {archetype.get('description', '')}")
+        print(f"  layout: {archetype.get('layout', 'unknown')}")
+        for slot in archetype.get("slots", []):
+            required = "required" if slot.get("required") else "optional"
+            extras = []
+            if "placeholder_idx" in slot:
+                extras.append(f"placeholder_idx={slot['placeholder_idx']}")
+            if "max_items" in slot:
+                extras.append(f"max_items={slot['max_items']}")
+            if "aspect_ratio" in slot:
+                extras.append(f"aspect_ratio={slot['aspect_ratio']}")
+            extra_text = f" ({', '.join(extras)})" if extras else ""
+            print(f"  - slot {slot['name']}: {slot['type']} [{required}]{extra_text}")
+    return 0
+
+
+
+def handle_create(input_path: str, template_id: str, output_path: str) -> int:
+    _ = load_template_spec(template_id)
+    if input_path.endswith(".json"):
+        spec = load_deck_spec(input_path)
+    elif input_path.endswith(".md"):
+        spec = parse_markdown(input_path)
+    else:
+        print("Unsupported input type. Use .json or .md")
+        return 1
+
+    errors = validate_deck_spec(spec)
+    if errors:
+        print("Deck spec validation failed:")
+        for error in errors:
+            print(f"- {error}")
+        return 1
+
+    print("Create flow is not implemented yet, but input normalized successfully.")
+    print(json.dumps({"template": template_id, "output": output_path, "deck": spec}, indent=2))
+    return 0
+
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -39,6 +96,11 @@ def main() -> int:
     if not args.command:
         parser.print_help()
         return 0
+
+    if args.command == "inspect-template":
+        return handle_inspect_template(args.template)
+    if args.command == "create":
+        return handle_create(args.input, args.template, args.output)
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
     return 0

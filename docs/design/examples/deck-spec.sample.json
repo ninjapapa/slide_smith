@@ -1,0 +1,26 @@
+{
+  "title": "Q2 Business Review",
+  "subtitle": "Draft for leadership review",
+  "slides": [
+    {
+      "archetype": "title",
+      "title": "Q2 Business Review",
+      "subtitle": "Draft for leadership review"
+    },
+    {
+      "archetype": "title_and_bullets",
+      "title": "Highlights",
+      "bullets": [
+        "Revenue up 20%",
+        "Margin improved",
+        "Pipeline remains strong"
+      ]
+    },
+    {
+      "archetype": "image_left_text_right",
+      "title": "Product demo",
+      "body": "New workflow reduces setup time for sales engineering.",
+      "image": "assets/demo.png"
+    }
+  ]
+}

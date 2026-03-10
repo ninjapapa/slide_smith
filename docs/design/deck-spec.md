@@ -87,6 +87,15 @@ A simple convention could be:
 - paragraphs become `body`
 - optional slide metadata can be added later
 
+## Examples and schema
+
+Related files:
+- `docs/design/deck-spec.schema.json`
+- `docs/design/examples/deck-spec.sample.json`
+- `docs/design/examples/deck-spec.sample.md`
+
+These capture the first-pass schema direction plus example JSON and markdown inputs that normalize into the same deck model.
+
 ## MVP guidance
 
 For MVP, prefer explicit, narrow slides rather than a rich universal model. The point is to make rendering reliable and template mapping straightforward.

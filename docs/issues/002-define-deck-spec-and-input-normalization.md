@@ -1,5 +1,7 @@
 # Issue 002: Define the internal deck spec and input normalization
 
+Status: in progress
+
 ## Summary
 Define the internal deck specification that becomes the canonical intermediate format for `slide_smith`, and describe how JSON and markdown inputs normalize into it.
 

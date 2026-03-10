@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/slide-smith/deck-spec.schema.json",
+  "title": "slide_smith deck spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slides"],
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/slide"
+      }
+    }
+  },
+  "$defs": {
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archetype"],
+      "properties": {
+        "archetype": {
+          "type": "string",
+          "enum": [
+            "title",
+            "section",
+            "title_and_bullets",
+            "image_left_text_right"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "bullets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "image": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "template_id": "default",
+  "name": "Default MVP Template",
+  "version": "0.1",
+  "deck": {
+    "aspect_ratio": "16:9",
+    "supported_archetypes": [
+      "title",
+      "section",
+      "title_and_bullets",
+      "image_left_text_right"
+    ]
+  },
+  "archetypes": [
+    {
+      "id": "title",
+      "layout": "Title Slide",
+      "description": "Opening slide with title and subtitle.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "subtitle", "type": "text", "required": false, "placeholder_idx": 1 }
+      ]
+    },
+    {
+      "id": "section",
+      "layout": "Section Header",
+      "description": "Section divider slide.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "subtitle", "type": "text", "required": false, "placeholder_idx": 1 }
+      ]
+    },
+    {
+      "id": "title_and_bullets",
+      "layout": "Title and Content",
+      "description": "Title with bullet list content.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "bullets", "type": "bullet_list", "required": true, "placeholder_idx": 1, "max_items": 6, "notes": "Prefer concise bullets." }
+      ]
+    },
+    {
+      "id": "image_left_text_right",
+      "layout": "Two Content",
+      "description": "Image on the left, explanatory text on the right.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "image", "type": "image", "required": true, "placeholder_idx": 1, "aspect_ratio": "flexible" },
+        { "name": "body", "type": "text", "required": true, "placeholder_idx": 2, "notes": "Keep body concise." }
+      ]
+    }
+  ]
+}

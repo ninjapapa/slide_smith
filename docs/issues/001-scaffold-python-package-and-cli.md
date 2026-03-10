@@ -1,5 +1,7 @@
 # Issue 001: Scaffold the Python package and CLI
 
+Status: closed (completed in repo)
+
 ## Summary
 Create the initial Python project structure for `slide_smith`, including a CLI entrypoint and a minimal command surface that establishes the app as an agent-first tool.
 

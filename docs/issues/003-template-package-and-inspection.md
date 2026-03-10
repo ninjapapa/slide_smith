@@ -1,5 +1,7 @@
 # Issue 003: Design the template package format and implement template inspection
 
+Status: in progress
+
 ## Summary
 Define the MVP template package format (`template.pptx` + `template.json`) and implement the first inspection path so agents can discover supported slide archetypes, slots, and constraints.
 
