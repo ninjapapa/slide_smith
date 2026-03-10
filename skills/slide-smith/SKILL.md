@@ -25,7 +25,7 @@ Markdown ingestion is optional; prefer caller-side skills/tools to convert Markd
 cd ~/slide_smith
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'
+pip install .
 pytest -q
 ```
 
@@ -37,6 +37,13 @@ pytest -q
 slide-smith create \
   --input docs/design/examples/deck-spec.full.sample.json \
   --template default \
+  --output /tmp/out.pptx
+
+# External templates root:
+slide-smith create \
+  --input docs/design/examples/deck-spec.full.sample.json \
+  --template default \
+  --templates-dir /path/to/templates \
   --output /tmp/out.pptx
 ```
 
@@ -66,10 +73,20 @@ slide-smith create \
 slide-smith inspect-template --template default
 ```
 
+If your templates live outside the repo, pass a templates root:
+
+```bash
+slide-smith inspect-template --template default --templates-dir /path/to/templates
+```
+
 ### Validate a template package
 
 ```bash
 slide-smith validate-template --template default
+```
+
+```bash
+slide-smith validate-template --template default --templates-dir /path/to/templates
 ```
 
 Notes:
