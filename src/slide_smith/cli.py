@@ -34,6 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
     create = subparsers.add_parser("create", help="Create a deck from structured input.")
     create.add_argument("--input", required=True, help="Path to markdown or JSON input.")
     create.add_argument("--template", required=True, help="Template id to use.")
+    create.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
     create.add_argument("--output", required=True, help="Output .pptx path.")
     create.add_argument(
         "--assets-dir",
@@ -52,6 +57,11 @@ def build_parser() -> argparse.ArgumentParser:
         "inspect-template", help="Inspect a template package."
     )
     inspect_template.add_argument("--template", required=True, help="Template id to inspect.")
+    inspect_template.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
 
     add_slide = subparsers.add_parser("add-slide", help="Add a slide to an existing deck.")
     add_slide.add_argument("--deck", required=True, help="Path to target deck.")
@@ -75,13 +85,18 @@ def build_parser() -> argparse.ArgumentParser:
         "validate-template", help="Validate that a template package matches its PPTX (layouts/placeholders)."
     )
     validate_template_cmd.add_argument("--template", required=True, help="Template id to validate.")
+    validate_template_cmd.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
 
     return parser
 
 
 
-def handle_inspect_template(template_id: str) -> int:
-    spec = load_template_spec(template_id)
+def handle_inspect_template(template_id: str, templates_dir: str | None = None) -> int:
+    spec = load_template_spec(template_id, templates_dir=templates_dir)
     print(f"template: {spec['template_id']} ({spec.get('name', 'unnamed')})")
     print(f"version: {spec.get('version', 'n/a')}")
     deck = spec.get("deck", {})
@@ -117,8 +132,9 @@ def handle_create(
     output_path: str,
     assets_dir: str | None = None,
     print_mode: str = "normalized",
+    templates_dir: str | None = None,
 ) -> int:
-    template_spec = load_template_spec(template_id)
+    template_spec = load_template_spec(template_id, templates_dir=templates_dir)
     if input_path.endswith(".json"):
         spec = load_deck_spec(input_path)
     elif input_path.endswith(".md"):
@@ -164,6 +180,7 @@ def handle_create(
             template_id,
             output_path,
             base_dir=str(Path(input_path).resolve().parent),
+            templates_dir=templates_dir,
         )
     except RenderingError as exc:
         print(f"Rendering failed: {exc}")
@@ -195,7 +212,7 @@ def main() -> int:
         return 0
 
     if args.command == "inspect-template":
-        return handle_inspect_template(args.template)
+        return handle_inspect_template(args.template, templates_dir=getattr(args, "templates_dir", None))
     if args.command == "create":
         return handle_create(
             args.input,
@@ -203,6 +220,7 @@ def main() -> int:
             args.output,
             assets_dir=getattr(args, "assets_dir", None),
             print_mode=getattr(args, "print_mode", "normalized"),
+            templates_dir=getattr(args, "templates_dir", None),
         )
     if args.command == "add-slide":
         try:
@@ -240,7 +258,7 @@ def main() -> int:
         return 0
 
     if args.command == "validate-template":
-        result = validate_template(args.template)
+        result = validate_template(args.template, templates_dir=getattr(args, "templates_dir", None))
         if not result.ok:
             print("Template validation failed:")
             for e in result.errors:
