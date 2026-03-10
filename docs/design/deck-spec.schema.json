@@ -22,39 +22,71 @@
   },
   "$defs": {
     "slide": {
+      "oneOf": [
+        { "$ref": "#/$defs/title_slide" },
+        { "$ref": "#/$defs/section_slide" },
+        { "$ref": "#/$defs/title_and_bullets_slide" },
+        { "$ref": "#/$defs/image_left_text_right_slide" }
+      ]
+    },
+
+    "base_slide": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["archetype"],
+      "required": ["archetype", "title"],
       "properties": {
-        "archetype": {
-          "type": "string",
-          "enum": [
-            "title",
-            "section",
-            "title_and_bullets",
-            "image_left_text_right"
-          ]
-        },
-        "title": {
-          "type": "string"
-        },
-        "subtitle": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        },
-        "bullets": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "image": {
-          "type": "string"
-        },
-        "notes": {
-          "type": "string"
-        }
+        "archetype": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "body": { "type": "string" },
+        "bullets": { "type": "array", "items": { "type": "string" } },
+        "image": { "type": "string" },
+        "notes": { "type": "string" }
       }
+    },
+
+    "title_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "title" } },
+          "required": ["archetype", "title"]
+        }
+      ]
+    },
+
+    "section_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "section" } },
+          "required": ["archetype", "title"]
+        }
+      ]
+    },
+
+    "title_and_bullets_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "title_and_bullets" } },
+          "required": ["archetype", "title"],
+          "anyOf": [
+            { "required": ["bullets"] },
+            { "required": ["body"] }
+          ]
+        }
+      ]
+    },
+
+    "image_left_text_right_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "image_left_text_right" } },
+          "required": ["archetype", "title", "body", "image"]
+        }
+      ]
     }
   }
 }
