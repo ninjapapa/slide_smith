@@ -1,0 +1,32 @@
+{
+  "title": "Slide Smith Full JSON Fixture",
+  "subtitle": "Exercises notes + bullets + image object",
+  "slides": [
+    {
+      "archetype": "title",
+      "title": "Slide Smith Full JSON Fixture",
+      "subtitle": "Exercises notes + bullets + image object",
+      "notes": "Speaker notes should land in the PPTX notes pane."
+    },
+    {
+      "archetype": "title_and_bullets",
+      "title": "What this covers",
+      "bullets": [
+        "JSON -> PPTX is the core pipeline",
+        "Template-driven styling",
+        "Asset collection via --assets-dir"
+      ],
+      "notes": "Keep bullets short; this is primarily a regression fixture."
+    },
+    {
+      "archetype": "image_left_text_right",
+      "title": "Image slide",
+      "body": "Image is provided as an object with path + alt.",
+      "image": {
+        "path": "assets/demo.png",
+        "alt": "Demo image used for regression testing"
+      },
+      "notes": "Confirm image embeds and alt metadata is preserved in JSON (alt not currently rendered)."
+    }
+  ]
+}

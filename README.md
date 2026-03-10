@@ -17,6 +17,21 @@ An agent-first application is designed to be usable not just by humans, but dire
 
 ## Early project status
 
+## Agent-first posture
+
+**Designed by human. Created by agents. For agents to use.**
+
+This repo is intentionally shaped to be operated by calling agents:
+- *Designed by human*
+- *Created by agents*
+- *For agents to use*
+- *Learn from agents feedback*
+- *Refine and maintain by agents*
+
+### JSON-first workflow
+
+The core pipeline is **JSON Deck Spec -> PPTX**. Markdown ingestion is optional and can be handled by caller-side skills/tools.
+
 The repo now includes:
 - design docs under `docs/design/`
 - local issue drafts under `docs/issues/`
