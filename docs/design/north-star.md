@@ -30,12 +30,39 @@ The app should be something an agent can call, inspect, correct, and call again.
 
 For the first version, the app should focus on a small number of high-value capabilities:
 
-- **Create from scratch** from markdown or JSON presentation descriptions
+- **Create** a deck from a JSON presentation description
 - **Apply a template** to generate a deck in a chosen style
-- **Modify an existing deck** in simple ways
-- **Add pages** and **delete pages** as part of iterative editing
+- **Iteratively edit an existing deck** in simple ways (add/update/list/delete slides)
 
-This keeps the MVP simple while still supporting useful agent workflows.
+This keeps the MVP narrow while still supporting useful agent workflows.
+
+## V1 Release Goal: Agent-assisted template bootstrap from an example PPTX
+
+For v1, the key missing piece is enabling a *human* (working through an agent like OpenClaw / Claude Code) to bring their own PPTX and turn it into a usable Slide Smith template package.
+
+### Typical user experience (agent-mediated)
+
+1. **User shares a local path to a PPTX** they want to use as a template seed.
+2. **Agent inspects the PPTX** (layouts/placeholders) using Slide Smith tooling.
+3. **Agent selectively bootstraps a template package**:
+   - the PPTX may contain far more layouts than needed
+   - the agent uses knowledge of what Slide Smith supports (canonical `skills/slide-smith/SKILL.md`) to choose a minimal supported subset
+4. **Agent iterates with Slide Smith over multiple steps** to resolve issues (naming, missing placeholders, unsupported constructs). The point is to let the LLM handle decision-making while Slide Smith stays deterministic.
+5. **Agent produces a dummy rendered deck** using the bootstrapped template (with placeholder content) so the human can visually review the result.
+6. **Human gives feedback**, and the agent refines the template JSON / selection and re-renders until it’s “good enough”.
+
+### Definition of “bootstrap a template package” (v1)
+
+Given an example PPTX and an agent’s selection of what to include, Slide Smith can:
+- Create a new template folder containing `template.pptx`.
+- Generate a starter `template.json` that inventories selected slide layouts and placeholders (including placeholder indices) so rendering can target the right placeholders deterministically.
+- Produce inspectable output so an agent can guide the user through mapping layouts → archetypes (manual refinement is expected).
+
+### Non-goals for v1 bootstrap
+
+- Fully automatic, high-fidelity reverse-engineering of arbitrary decks.
+- Perfect archetype detection without human/agent review.
+- Eliminating the need for iterative “render → review → tweak” loops.
 
 ## Template Ambition
 
@@ -66,9 +93,10 @@ The MVP does not need to fully solve template extraction, but the design should 
 ## Proposed MVP Scope
 
 ### Inputs
-- Markdown presentation description
 - JSON presentation description
+- Optional: Markdown presentation description (nice-to-have; not required for v1)
 - Optional template selection
+- Optional: example PPTX path (for template bootstrap)
 
 ### Outputs
 - PowerPoint deck (`.pptx`)
@@ -90,11 +118,20 @@ The MVP does not need to fully solve template extraction, but the design should 
 A simple CLI could look something like:
 
 ```bash
-slide-smith create --input brief.md --template default --output out.pptx
+# Render
 slide-smith create --input brief.json --template default --output out.pptx
-slide-smith add-slide --deck out.pptx --after 3 --input slide.md
+
+# Iterative edits
+slide-smith add-slide --deck out.pptx --after 3 --type title_and_bullets --input slide.json
+slide-smith update-slide --deck out.pptx --index 1 --input patch.json
 slide-smith delete-slide --deck out.pptx --index 4
-slide-smith inspect-template --deck example.pptx
+
+# Template operations
+slide-smith inspect-template --template default
+slide-smith validate-template --template default
+
+# V1 goal: bootstrap a template package from an example PPTX
+slide-smith bootstrap-template --pptx /path/to/example.pptx --template-id my_template --out-dir ./templates
 ```
 
 This is only directional, but it captures the type of interface agents should be able to use.
