@@ -1,5 +1,7 @@
 # slide_smith
 
+[![CI](https://github.com/ninjapapa/slide_smith/actions/workflows/ci.yml/badge.svg)](https://github.com/ninjapapa/slide_smith/actions/workflows/ci.yml)
+
 slide_smith is a demo agent-first application for Python-based PowerPoint creation.
 
 It uses the `python-pptx` (`pptx`) library as the core PowerPoint generation engine, but the goal here is not just deck generation — it is to wrap that capability in an agent-first app that agents can operate reliably.
