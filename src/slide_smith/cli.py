@@ -135,6 +135,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format (default: json).",
     )
 
+    dummy = subparsers.add_parser(
+        "make-dummy-deck-spec",
+        help="Generate a dummy deck spec JSON that exercises a template's archetypes.",
+    )
+    dummy.add_argument("--template", required=True, help="Template id to generate dummy deck spec for.")
+    dummy.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
+    dummy.add_argument(
+        "--output",
+        default="-",
+        help="Output path for JSON deck spec (default: '-' for stdout).",
+    )
+
     return parser
 
 
@@ -388,6 +404,19 @@ def main() -> int:
                     sort_keys=True,
                 )
             )
+        return 0
+
+    if args.command == "make-dummy-deck-spec":
+        from slide_smith.dummy_deck import make_dummy_deck_spec
+
+        res = make_dummy_deck_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
+        payload = json.dumps(res.deck_spec, indent=2, sort_keys=True) + "\n"
+
+        out_path = getattr(args, "output", "-")
+        if out_path == "-":
+            print(payload, end="")
+        else:
+            Path(out_path).expanduser().resolve().write_text(payload)
         return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
