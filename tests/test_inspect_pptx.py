@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -22,7 +23,7 @@ def test_inspect_pptx_outputs_layouts_and_placeholders() -> None:
     pptx_path = _make_temp_pptx()
 
     cmd = [
-        str(repo / ".venv" / "bin" / "python"),
+        sys.executable,
         "-m",
         "slide_smith.cli",
         "inspect-pptx",
@@ -55,7 +56,7 @@ def test_inspect_pptx_is_deterministic() -> None:
     pptx_path = _make_temp_pptx()
 
     cmd = [
-        str(repo / ".venv" / "bin" / "python"),
+        sys.executable,
         "-m",
         "slide_smith.cli",
         "inspect-pptx",
