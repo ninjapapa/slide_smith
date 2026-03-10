@@ -6,6 +6,7 @@ from typing import Any
 
 from pptx import Presentation
 
+from slide_smith.pptx_edit import delete_slide
 from slide_smith.renderer import (
     _layout_by_name,
     _render_image_left_text_right,
@@ -62,6 +63,27 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
 
 
 
+def _resolve_image_path(image_field: object, base_dir: Path) -> Path:
+    if isinstance(image_field, str):
+        path = image_field
+    elif isinstance(image_field, dict):
+        path = image_field.get("path")
+    else:
+        raise EditError(f"Unsupported image field type: {type(image_field).__name__}")
+
+    if not isinstance(path, str) or not path:
+        raise EditError("Image replacement requires a non-empty path")
+
+    p = Path(path).expanduser()
+    resolved = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
+    if not resolved.exists():
+        raise EditError(f"Image file not found: {resolved}")
+    if not resolved.is_file():
+        raise EditError(f"Image path is not a file: {resolved}")
+    return resolved
+
+
+
 def update_slide_in_deck(deck_path: str, index: int, input_path: str) -> str:
     prs = Presentation(deck_path)
     if index < 0 or index >= len(prs.slides):
@@ -97,14 +119,61 @@ def update_slide_in_deck(deck_path: str, index: int, input_path: str) -> str:
         except Exception as exc:
             raise EditError("Target slide does not support bullet updates") from exc
         bullets = patch["bullets"]
+        if not isinstance(bullets, list):
+            raise EditError("'bullets' patch must be an array of strings")
         if not bullets:
             text_frame.text = ""
         else:
-            text_frame.text = bullets[0]
+            text_frame.text = str(bullets[0])
             for bullet in bullets[1:]:
                 p = text_frame.add_paragraph()
-                p.text = bullet
+                p.text = str(bullet)
                 p.level = 0
 
+    if "notes" in patch:
+        notes = patch["notes"]
+        if notes is not None and not isinstance(notes, str):
+            raise EditError("'notes' patch must be a string (or null to clear)")
+        slide.notes_slide.notes_text_frame.text = notes or ""
+
+    if "image" in patch:
+        base_dir = Path(input_path).resolve().parent
+        resolved = _resolve_image_path(patch["image"], base_dir)
+        try:
+            image_placeholder = slide.placeholders[1]
+        except Exception as exc:
+            raise EditError("Target slide does not have image placeholder idx=1") from exc
+        slide.shapes.add_picture(
+            str(resolved),
+            image_placeholder.left,
+            image_placeholder.top,
+            width=image_placeholder.width,
+            height=image_placeholder.height,
+        )
+
+    prs.save(deck_path)
+    return deck_path
+
+
+
+def list_slides_in_deck(deck_path: str) -> list[dict[str, Any]]:
+    prs = Presentation(deck_path)
+    items: list[dict[str, Any]] = []
+    for i, slide in enumerate(prs.slides):
+        title = None
+        try:
+            title = slide.shapes.title.text
+        except Exception:
+            title = None
+        items.append({"index": i, "title": title})
+    return items
+
+
+
+def delete_slide_from_deck(deck_path: str, index: int) -> str:
+    prs = Presentation(deck_path)
+    if index < 0 or index >= len(prs.slides):
+        raise EditError(f"Slide index {index} out of range")
+    delete_slide(prs, index)
     prs.save(deck_path)
     return deck_path

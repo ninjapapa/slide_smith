@@ -5,7 +5,13 @@ import json
 from pathlib import Path
 
 from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
-from slide_smith.editor import EditError, add_slide_to_deck, update_slide_in_deck
+from slide_smith.editor import (
+    EditError,
+    add_slide_to_deck,
+    delete_slide_from_deck,
+    list_slides_in_deck,
+    update_slide_in_deck,
+)
 from slide_smith.markdown_parser import parse_markdown
 from slide_smith.renderer import RenderingError, render_deck
 from slide_smith.template_loader import load_template_spec
@@ -56,6 +62,13 @@ def build_parser() -> argparse.ArgumentParser:
     update_slide.add_argument("--deck", required=True, help="Path to target deck.")
     update_slide.add_argument("--index", type=int, required=True, help="Slide index to update.")
     update_slide.add_argument("--input", required=True, help="Path to patch JSON.")
+
+    list_slides = subparsers.add_parser("list-slides", help="List slides in an existing deck.")
+    list_slides.add_argument("--deck", required=True, help="Path to target deck.")
+
+    delete_slide = subparsers.add_parser("delete-slide", help="Delete a slide in an existing deck.")
+    delete_slide.add_argument("--deck", required=True, help="Path to target deck.")
+    delete_slide.add_argument("--index", type=int, required=True, help="Slide index to delete.")
 
     return parser
 
@@ -186,6 +199,24 @@ def main() -> int:
             print(f"Update-slide failed: {exc}")
             return 1
         print(json.dumps({"deck": path, "status": "slide updated"}, indent=2))
+        return 0
+
+    if args.command == "list-slides":
+        try:
+            items = list_slides_in_deck(args.deck)
+        except EditError as exc:
+            print(f"List-slides failed: {exc}")
+            return 1
+        print(json.dumps({"deck": args.deck, "slides": items}, indent=2))
+        return 0
+
+    if args.command == "delete-slide":
+        try:
+            path = delete_slide_from_deck(args.deck, args.index)
+        except EditError as exc:
+            print(f"Delete-slide failed: {exc}")
+            return 1
+        print(json.dumps({"deck": path, "status": "slide deleted"}, indent=2))
         return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
