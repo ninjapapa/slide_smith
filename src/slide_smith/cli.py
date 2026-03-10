@@ -17,6 +17,11 @@ def build_parser() -> argparse.ArgumentParser:
         prog="slide-smith",
         description="Agent-first PowerPoint creation tool.",
     )
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        help="Print version and exit.",
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     create = subparsers.add_parser("create", help="Create a deck from structured input.")
@@ -27,6 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--assets-dir",
         default=None,
         help="Optional directory to collect/copy referenced assets (e.g., images) for reproducible rendering.",
+    )
+    create.add_argument(
+        "--print",
+        dest="print_mode",
+        choices=["normalized", "none"],
+        default="normalized",
+        help="Control stdout output: 'normalized' prints normalized deck JSON; 'none' prints only output path JSON.",
     )
 
     inspect_template = subparsers.add_parser(
@@ -74,7 +86,13 @@ def handle_inspect_template(template_id: str) -> int:
 
 
 
-def handle_create(input_path: str, template_id: str, output_path: str, assets_dir: str | None = None) -> int:
+def handle_create(
+    input_path: str,
+    template_id: str,
+    output_path: str,
+    assets_dir: str | None = None,
+    print_mode: str = "normalized",
+) -> int:
     template_spec = load_template_spec(template_id)
     if input_path.endswith(".json"):
         spec = load_deck_spec(input_path)
@@ -112,7 +130,10 @@ def handle_create(input_path: str, template_id: str, output_path: str, assets_di
         print(f"Rendering failed: {exc}")
         return 1
 
-    print(json.dumps({"template": template_id, "output": rendered_path, "deck": spec}, indent=2))
+    if print_mode == "none":
+        print(json.dumps({"output": rendered_path}, indent=2))
+    else:
+        print(json.dumps({"template": template_id, "output": rendered_path, "deck": spec}, indent=2))
     return 0
 
 
@@ -121,6 +142,15 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
+    if getattr(args, "version", False):
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            print(version("slide-smith"))
+        except PackageNotFoundError:
+            print("unknown")
+        return 0
+
     if not args.command:
         parser.print_help()
         return 0
@@ -128,7 +158,13 @@ def main() -> int:
     if args.command == "inspect-template":
         return handle_inspect_template(args.template)
     if args.command == "create":
-        return handle_create(args.input, args.template, args.output, assets_dir=getattr(args, "assets_dir", None))
+        return handle_create(
+            args.input,
+            args.template,
+            args.output,
+            assets_dir=getattr(args, "assets_dir", None),
+            print_mode=getattr(args, "print_mode", "normalized"),
+        )
     if args.command == "add-slide":
         try:
             path = add_slide_to_deck(args.deck, args.after, args.type, args.input)
