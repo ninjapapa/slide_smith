@@ -91,6 +91,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional root directory containing template packages (defaults to repo-local templates/).",
     )
 
+    bootstrap = subparsers.add_parser(
+        "bootstrap-template",
+        help="Bootstrap a template package (template.pptx + starter template.json) from an example PPTX.",
+    )
+    bootstrap.add_argument("--pptx", required=True, help="Path to example .pptx to bootstrap from.")
+    bootstrap.add_argument("--template-id", required=True, help="Template id for the new template package.")
+    bootstrap.add_argument("--out-dir", required=True, help="Directory to write the new template package into.")
+    bootstrap.add_argument(
+        "--include-layout",
+        action="append",
+        default=[],
+        help="Include only layouts with this exact name (repeatable). If omitted, all layouts are included.",
+    )
+    bootstrap.add_argument(
+        "--exclude-layout",
+        action="append",
+        default=[],
+        help="Exclude layouts with this exact name (repeatable).",
+    )
+    bootstrap.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the output template folder if it already exists.",
+    )
+    bootstrap.add_argument(
+        "--print",
+        dest="print_mode",
+        choices=["report", "json", "none"],
+        default="report",
+        help="Output mode: report (human), json (machine), or none.",
+    )
+
     return parser
 
 
@@ -269,6 +301,55 @@ def main() -> int:
             for e in result.errors:
                 print(e)
         print(json.dumps({"template": args.template, "status": "ok"}, indent=2))
+        return 0
+
+    if args.command == "bootstrap-template":
+        from slide_smith.template_bootstrapper import BootstrapError, bootstrap_template
+
+        try:
+            res = bootstrap_template(
+                pptx_path=args.pptx,
+                template_id=args.template_id,
+                out_dir=args.out_dir,
+                include_layouts=getattr(args, "include_layout", None) or [],
+                exclude_layouts=getattr(args, "exclude_layout", None) or [],
+                overwrite=getattr(args, "overwrite", False),
+            )
+        except BootstrapError as exc:
+            print(f"Bootstrap failed: {exc}")
+            return 1
+
+        mode = getattr(args, "print_mode", "report")
+        if mode == "none":
+            return 0
+        if mode == "json":
+            print(
+                json.dumps(
+                    {
+                        "template_dir": res.template_dir,
+                        "template_pptx": res.template_pptx,
+                        "template_json": res.template_json,
+                        "included_layouts": res.included_layouts,
+                        "excluded_layouts": res.excluded_layouts,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
+
+        # report
+        print(f"template_dir: {res.template_dir}")
+        print(f"- template.pptx: {res.template_pptx}")
+        print(f"- template.json: {res.template_json}")
+        if res.included_layouts:
+            print("included_layouts:")
+            for n in res.included_layouts:
+                print(f"- {n}")
+        if res.excluded_layouts:
+            print("excluded_layouts:")
+            for n in res.excluded_layouts:
+                print(f"- {n}")
         return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")

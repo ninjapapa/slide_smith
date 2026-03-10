@@ -82,9 +82,15 @@ def validate_template(template_id: str, templates_dir: str | None = None) -> Tem
             if not isinstance(idx, int):
                 errors.append(f"archetype '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
                 continue
-            try:
-                _ = layout.placeholders[idx]
-            except KeyError:
+            found = False
+            for ph in layout.placeholders:
+                try:
+                    if int(ph.placeholder_format.idx) == idx:
+                        found = True
+                        break
+                except Exception:
+                    continue
+            if not found:
                 errors.append(
                     f"archetype '{aid}': layout '{layout_name}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
                 )
