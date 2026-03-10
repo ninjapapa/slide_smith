@@ -20,7 +20,7 @@
       "archetype": "image_left_text_right",
       "title": "Product demo",
       "body": "New workflow reduces setup time for sales engineering.",
-      "image": "assets/demo.png"
+      "image": {"path": "assets/demo.png", "alt": "Screenshot of the product demo"}
     }
   ]
 }

@@ -76,7 +76,13 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles) -> None:
 def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, styles) -> None:
     _set_placeholder_text(slide, 0, spec.get("title", ""), styles.get("title"))
 
-    image_path = spec.get("image")
+    image_field = spec.get("image")
+    image_path = None
+    if isinstance(image_field, str):
+        image_path = image_field
+    elif isinstance(image_field, dict):
+        image_path = image_field.get("path")
+
     if image_path:
         p = Path(str(image_path)).expanduser()
         resolved = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()

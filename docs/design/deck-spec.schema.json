@@ -40,7 +40,20 @@
         "subtitle": { "type": "string" },
         "body": { "type": "string" },
         "bullets": { "type": "array", "items": { "type": "string" } },
-        "image": { "type": "string" },
+        "image": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path"],
+              "properties": {
+                "path": { "type": "string" },
+                "alt": { "type": "string" }
+              }
+            }
+          ]
+        },
         "notes": { "type": "string" }
       }
     },

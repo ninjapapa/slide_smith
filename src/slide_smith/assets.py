@@ -50,9 +50,19 @@ def collect_assets(deck_spec: dict[str, Any], base_dir: str | Path, assets_dir: 
     spec = copy.deepcopy(deck_spec)
 
     for slide in spec.get("slides", []):
-        image_path = slide.get("image")
-        if not image_path:
+        image_field = slide.get("image")
+        if not image_field:
             continue
+
+        if isinstance(image_field, str):
+            image_path = image_field
+        elif isinstance(image_field, dict):
+            image_path = image_field.get("path")
+        else:
+            raise AssetError(f"Unsupported image field type: {type(image_field).__name__}")
+
+        if not image_path:
+            raise AssetError("Image object missing required 'path'")
 
         src = resolve_asset_path(str(image_path), src_base)
         if not src.exists():
@@ -65,6 +75,10 @@ def collect_assets(deck_spec: dict[str, Any], base_dir: str | Path, assets_dir: 
             shutil.copy2(src, dest)
 
         # Store as absolute for reliability.
-        slide["image"] = str(dest)
+        if isinstance(image_field, str):
+            slide["image"] = str(dest)
+        else:
+            # Preserve other metadata (e.g., alt) while rewriting path.
+            slide["image"] = {**image_field, "path": str(dest)}
 
     return spec

@@ -91,6 +91,18 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
 
         elif archetype == "image_left_text_right":
             req_str("body")
-            req_str("image")
+            image = slide.get("image")
+            if isinstance(image, str):
+                if not image:
+                    errors.append(f"{_path(sp, 'image')}: required non-empty string")
+            elif isinstance(image, dict):
+                ip = image.get("path")
+                if not isinstance(ip, str) or not ip:
+                    errors.append(f"{_path(sp, 'image.path')}: required non-empty string")
+                alt = image.get("alt")
+                if alt is not None and not isinstance(alt, str):
+                    errors.append(f"{_path(sp, 'image.alt')}: must be a string")
+            else:
+                errors.append(f"{_path(sp, 'image')}: must be a string or an object")
 
     return errors
