@@ -14,8 +14,8 @@ class RenderingError(Exception):
 
 
 
-def _presentation_for_template(template_id: str) -> Presentation:
-    pptx_path = template_dir(template_id) / "template.pptx"
+def _presentation_for_template(template_id: str, templates_dir: str | None = None) -> Presentation:
+    pptx_path = template_dir(template_id, templates_dir) / "template.pptx"
     if pptx_path.exists():
         return Presentation(str(pptx_path))
     return Presentation()
@@ -114,8 +114,15 @@ def _set_notes(slide, notes: str | None) -> None:
 
 
 
-def render_deck(deck_spec: dict[str, Any], template_spec: dict[str, Any], template_id: str, output_path: str, base_dir: str | None = None) -> str:
-    prs = _presentation_for_template(template_id)
+def render_deck(
+    deck_spec: dict[str, Any],
+    template_spec: dict[str, Any],
+    template_id: str,
+    output_path: str,
+    base_dir: str | None = None,
+    templates_dir: str | None = None,
+) -> str:
+    prs = _presentation_for_template(template_id, templates_dir=templates_dir)
     source_dir = Path(base_dir or ".").resolve()
 
     styles = load_styles(template_spec)

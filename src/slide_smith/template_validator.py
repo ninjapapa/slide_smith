@@ -19,11 +19,11 @@ class TemplateValidationError(Exception):
     pass
 
 
-def validate_template(template_id: str) -> TemplateValidationResult:
+def validate_template(template_id: str, templates_dir: str | None = None) -> TemplateValidationResult:
     errors: list[str] = []
 
-    spec = load_template_spec(template_id)
-    tdir = template_dir(template_id)
+    spec = load_template_spec(template_id, templates_dir=templates_dir)
+    tdir = template_dir(template_id, templates_dir=templates_dir)
     pptx_path = tdir / "template.pptx"
 
     # Allow templates that are JSON-only (no pptx) for early-stage prototyping.

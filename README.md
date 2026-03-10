@@ -54,7 +54,7 @@ The repo now includes:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .[dev]
+pip install .
 pytest -q
 python -m slide_smith.cli --help
 ```
@@ -64,7 +64,7 @@ python -m slide_smith.cli --help
 ```bash
 uv venv .venv
 source .venv/bin/activate
-uv pip install -e .[dev]
+uv pip install .
 pytest -q
 python -m slide_smith.cli --help
 ```
@@ -78,6 +78,10 @@ slide-smith inspect-template --template default
 slide-smith validate-template --template default
 slide-smith create --input docs/design/examples/deck-spec.sample.json --template default --output out.pptx
 slide-smith create --input docs/design/examples/deck-spec.sample.json --template default --assets-dir /tmp/slide-smith-assets --output out.pptx
+
+# If your templates live somewhere else:
+slide-smith inspect-template --template default --templates-dir /path/to/templates
+
 slide-smith add-slide --deck out.pptx --after 2 --type title_and_bullets --input slide.json
 slide-smith update-slide --deck out.pptx --index 1 --input patch.json
 slide-smith list-slides --deck out.pptx

@@ -68,7 +68,7 @@ Typical setup/use:
 ```bash
 cd ~/slide_smith
 source .venv/bin/activate
-pip install -e .[dev]
+pip install .
 pytest -q
 python -m slide_smith.cli --help
 ```
