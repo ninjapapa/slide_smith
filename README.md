@@ -45,6 +45,8 @@ python -m slide_smith.cli --help
 python -m slide_smith.cli inspect-template --template default
 python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.json --template default --output out.pptx
 python -m slide_smith.cli create --input docs/design/examples/deck-spec.sample.md --template default --output out.pptx
+python -m slide_smith.cli add-slide --deck out.pptx --after 2 --type title_and_bullets --input slide.json
+python -m slide_smith.cli update-slide --deck out.pptx --index 1 --input patch.json
 ```
 
 ## Current design direction

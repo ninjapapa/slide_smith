@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
+from slide_smith.editor import EditError, add_slide_to_deck, update_slide_in_deck
 from slide_smith.markdown_parser import parse_markdown
 from slide_smith.renderer import RenderingError, render_deck
 from slide_smith.template_loader import load_template_spec
@@ -114,6 +115,22 @@ def main() -> int:
         return handle_inspect_template(args.template)
     if args.command == "create":
         return handle_create(args.input, args.template, args.output)
+    if args.command == "add-slide":
+        try:
+            path = add_slide_to_deck(args.deck, args.after, args.type, args.input)
+        except EditError as exc:
+            print(f"Add-slide failed: {exc}")
+            return 1
+        print(json.dumps({"deck": path, "status": "slide added"}, indent=2))
+        return 0
+    if args.command == "update-slide":
+        try:
+            path = update_slide_in_deck(args.deck, args.index, args.input)
+        except EditError as exc:
+            print(f"Update-slide failed: {exc}")
+            return 1
+        print(json.dumps({"deck": path, "status": "slide updated"}, indent=2))
+        return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
     return 0

@@ -44,6 +44,7 @@ Current implementation includes:
 - markdown normalization in `src/slide_smith/markdown_parser.py`
 - template loading in `src/slide_smith/template_loader.py`
 - initial rendering path in `src/slide_smith/renderer.py`
+- narrow deck edit operations in `src/slide_smith/editor.py`
 - test coverage under `tests/`
 
 ### Template status
