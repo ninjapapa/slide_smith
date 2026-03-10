@@ -61,3 +61,5 @@ def test_render_deck_writes_pptx(tmp_path: Path) -> None:
             assert title_run.font.name == styles["title"].font
         if styles["title"].size_pt is not None and title_run.font.size is not None:
             assert int(title_run.font.size.pt) == int(styles["title"].size_pt)
+        if styles["title"].bold is not None and title_run.font.bold is not None:
+            assert title_run.font.bold == styles["title"].bold

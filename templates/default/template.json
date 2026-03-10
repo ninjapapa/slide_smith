@@ -12,10 +12,10 @@
     ]
   },
   "styles": {
-    "title": {"font": "Calibri", "size_pt": 40, "color_hex": "111111"},
-    "subtitle": {"font": "Calibri", "size_pt": 24, "color_hex": "333333"},
-    "body": {"font": "Calibri", "size_pt": 18, "color_hex": "222222"},
-    "bullets": {"font": "Calibri", "size_pt": 18, "color_hex": "222222"}
+    "title": {"font": "Calibri", "size_pt": 40, "color_hex": "111111", "bold": true, "align": "left"},
+    "subtitle": {"font": "Calibri", "size_pt": 24, "color_hex": "333333", "italic": false, "align": "left"},
+    "body": {"font": "Calibri", "size_pt": 18, "color_hex": "222222", "line_spacing_pt": 22},
+    "bullets": {"font": "Calibri", "size_pt": 18, "color_hex": "222222", "line_spacing_pt": 22}
   },
   "archetypes": [
     {
