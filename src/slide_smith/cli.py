@@ -123,6 +123,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output mode: report (human), json (machine), or none.",
     )
 
+    inspect_pptx = subparsers.add_parser(
+        "inspect-pptx",
+        help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
+    )
+    inspect_pptx.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
+    inspect_pptx.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+        help="Output format (default: json).",
+    )
+
     return parser
 
 
@@ -350,6 +362,32 @@ def main() -> int:
             print("excluded_layouts:")
             for n in res.excluded_layouts:
                 print(f"- {n}")
+        return 0
+
+    if args.command == "inspect-pptx":
+        from slide_smith.pptx_inspector import inspect_pptx
+
+        try:
+            res = inspect_pptx(args.pptx)
+        except Exception as exc:
+            print(f"Inspect failed: {exc}")
+            return 1
+
+        if getattr(args, "format", "json") == "text":
+            print(f"pptx: {res.pptx}")
+            print(f"slide_size: {res.slide_size['width_emu']}x{res.slide_size['height_emu']} emu")
+            for layout in res.layouts:
+                print(f"\nlayout[{layout['index']}]: {layout['name']}")
+                for ph in layout.get("placeholders", []):
+                    print(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
+        else:
+            print(
+                json.dumps(
+                    {"pptx": res.pptx, "slide_size": res.slide_size, "layouts": res.layouts},
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
         return 0
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
