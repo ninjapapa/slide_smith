@@ -23,6 +23,11 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--input", required=True, help="Path to markdown or JSON input.")
     create.add_argument("--template", required=True, help="Template id to use.")
     create.add_argument("--output", required=True, help="Output .pptx path.")
+    create.add_argument(
+        "--assets-dir",
+        default=None,
+        help="Optional directory to collect/copy referenced assets (e.g., images) for reproducible rendering.",
+    )
 
     inspect_template = subparsers.add_parser(
         "inspect-template", help="Inspect a template package."
@@ -69,7 +74,7 @@ def handle_inspect_template(template_id: str) -> int:
 
 
 
-def handle_create(input_path: str, template_id: str, output_path: str) -> int:
+def handle_create(input_path: str, template_id: str, output_path: str, assets_dir: str | None = None) -> int:
     template_spec = load_template_spec(template_id)
     if input_path.endswith(".json"):
         spec = load_deck_spec(input_path)
@@ -78,6 +83,15 @@ def handle_create(input_path: str, template_id: str, output_path: str) -> int:
     else:
         print("Unsupported input type. Use .json or .md")
         return 1
+
+    if assets_dir:
+        from slide_smith.assets import AssetError, collect_assets
+
+        try:
+            spec = collect_assets(spec, base_dir=str(Path(input_path).resolve().parent), assets_dir=assets_dir)
+        except AssetError as exc:
+            print(f"Asset collection failed: {exc}")
+            return 1
 
     errors = validate_deck_spec(spec)
     if errors:
@@ -114,7 +128,7 @@ def main() -> int:
     if args.command == "inspect-template":
         return handle_inspect_template(args.template)
     if args.command == "create":
-        return handle_create(args.input, args.template, args.output)
+        return handle_create(args.input, args.template, args.output, assets_dir=getattr(args, "assets_dir", None))
     if args.command == "add-slide":
         try:
             path = add_slide_to_deck(args.deck, args.after, args.type, args.input)

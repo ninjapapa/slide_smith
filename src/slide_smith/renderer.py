@@ -72,9 +72,12 @@ def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path) -
 
     image_path = spec.get("image")
     if image_path:
-        resolved = (base_dir / image_path).resolve() if not Path(image_path).is_absolute() else Path(image_path)
+        p = Path(str(image_path)).expanduser()
+        resolved = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
         if not resolved.exists():
             raise RenderingError(f"Image file not found: {resolved}")
+        if not resolved.is_file():
+            raise RenderingError(f"Image path is not a file: {resolved}")
         image_placeholder = slide.placeholders[1]
         slide.shapes.add_picture(
             str(resolved),
