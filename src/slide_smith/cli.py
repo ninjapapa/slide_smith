@@ -393,111 +393,18 @@ def main() -> int:
         return 0
 
     if args.command == "map-template":
-        from slide_smith.hints import apply_hints_to_template_spec, build_help_request, load_hints
-        from slide_smith.pptx_inspector import inspect_pptx
-        from slide_smith.template_loader import template_dir
-        from slide_smith.template_mapper import infer_standard_mappings, standard_patch
-        from slide_smith.template_mapper_extended import infer_extended_mappings
+        from slide_smith.commands.map_template import handle_map_template
 
-        tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
-        path = tdir / "template.json"
-        spec = load_template_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
-        updated = infer_standard_mappings(spec)
-        updated = infer_extended_mappings(updated)
-
-        hints = load_hints(getattr(args, "hints", None))
-        updated = apply_hints_to_template_spec(updated, hints)
-
-        if getattr(args, "interactive", False):
-            pptx_path = tdir / "template.pptx"
-            layouts = {}
-            if pptx_path.exists():
-                try:
-                    inv = inspect_pptx(str(pptx_path))
-                    layouts = {item["name"]: item for item in inv.layouts}
-                except Exception:
-                    layouts = {}
-
-            # Build lookup of bootstrapped archetypes by id and by layout name.
-            boot = {a.get("id"): a for a in (spec.get("archetypes") or []) if isinstance(a, dict)}
-            boot_by_layout = {a.get("layout"): a for a in (spec.get("archetypes") or []) if isinstance(a, dict)}
-
-            updated_by_id = {a.get("id"): a for a in (updated.get("archetypes") or []) if isinstance(a, dict)}
-            for std_id in ["title", "section", "title_and_bullets", "image_left_text_right"]:
-                a = updated_by_id.get(std_id)
-                if not a:
-                    continue
-
-                inf = a.get("inference") or {}
-                default_src = inf.get("source_archetype") if isinstance(inf, dict) else None
-                print(f"\n== map '{std_id}' ==")
-                if default_src:
-                    print(f"suggested source: {default_src}")
-                print(f"current layout: {a.get('layout')}")
-
-                yn = input("accept suggested mapping? [Y/n] ").strip().lower()
-                if yn == "n":
-                    choice = input("enter source archetype id (layout__*) OR layout name (blank to keep): ").strip()
-                    if choice:
-                        src = boot.get(choice) or boot_by_layout.get(choice)
-                        if not src:
-                            print("  ! not found; keeping existing")
-                        else:
-                            a["layout"] = src.get("layout")
-                            a["inference"] = {"manual": True, "source_archetype": src.get("id")}
-
-                layout_name = a.get("layout")
-                if isinstance(layout_name, str) and layout_name in layouts:
-                    print("placeholders:")
-                    for ph in layouts[layout_name].get("placeholders", []):
-                        print(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
-
-                for slot in a.get("slots") or []:
-                    if not isinstance(slot, dict):
-                        continue
-                    sname = slot.get("name")
-                    cur = slot.get("placeholder_idx")
-                    prompt = f"slot '{sname}' placeholder_idx [{cur if cur is not None else ''}]: "
-                    raw = input(prompt).strip()
-                    if not raw:
-                        continue
-                    if raw.lower() in {"none", "null", "skip"}:
-                        slot.pop("placeholder_idx", None)
-                        continue
-                    try:
-                        slot["placeholder_idx"] = int(raw)
-                    except Exception:
-                        print("  ! invalid int; keeping existing")
-
-        if getattr(args, "write", False):
-            path.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n")
-            print(json.dumps({"template": args.template, "status": "mapped", "template_json": str(path)}, indent=2))
-            return 0
-
-        mode = getattr(args, "map_print_mode", "spec")
-        if mode == "patch":
-            print(json.dumps(standard_patch(updated), indent=2, sort_keys=True))
-        elif mode == "help-request":
-            pptx_path = tdir / "template.pptx"
-            layouts_payload = []
-            if pptx_path.exists():
-                inv = inspect_pptx(str(pptx_path))
-                layouts_payload = inv.layouts
-
-            from slide_smith.archetype_registry import EXTENDED_ARCHETYPES
-
-            # v1.1: request help for extended archetypes.
-            missing = list(EXTENDED_ARCHETYPES)
-            req = build_help_request(
-                template_id=args.template,
-                template_pptx=pptx_path,
-                layouts=layouts_payload,
-                missing=missing,
-            )
-            print(json.dumps(req, indent=2, sort_keys=True))
-        else:
-            print(json.dumps(updated, indent=2, sort_keys=True))
-        return 0
+        code, out = handle_map_template(
+            template=args.template,
+            templates_dir=getattr(args, "templates_dir", None),
+            write=getattr(args, "write", False),
+            interactive=getattr(args, "interactive", False),
+            print_mode=getattr(args, "map_print_mode", "spec"),
+            hints_path=getattr(args, "hints", None),
+        )
+        print(out)
+        return code
 
     if args.command == "bootstrap-template":
         from slide_smith.template_bootstrapper import BootstrapError, bootstrap_template
@@ -549,39 +456,16 @@ def main() -> int:
         return 0
 
     if args.command == "export-previews":
-        from slide_smith.pptx_inspector import inspect_pptx
-        from slide_smith.template_loader import template_dir
+        from slide_smith.commands.export_previews import handle_export_previews
 
-        tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
-        pptx_path = tdir / "template.pptx"
-        if not pptx_path.exists():
-            print(json.dumps({"template": args.template, "status": "error", "error": f"template.pptx not found: {pptx_path}"}, indent=2))
-            return 1
-
-        out_dir = Path(args.out_dir).expanduser().resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        inv = inspect_pptx(str(pptx_path))
-
-        # v1.1 MVP: write manifest only. Image export is best-effort and may be added later.
-        manifest = {
-            "version": 1,
-            "template_id": args.template,
-            "template_pptx": inv.pptx,
-            "slide_size": inv.slide_size,
-            "layouts": [
-                {
-                    **layout,
-                    "preview_png": None,
-                }
-                for layout in inv.layouts
-            ],
-        }
-
-        manifest_path = out_dir / "manifest.json"
-        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-        print(json.dumps({"template": args.template, "status": "ok", "manifest": str(manifest_path)}, indent=2))
-        return 0
+        code, out = handle_export_previews(
+            template=args.template,
+            templates_dir=getattr(args, "templates_dir", None),
+            out_dir=args.out_dir,
+            mode=getattr(args, "mode", "layouts"),
+        )
+        print(out)
+        return code
 
     if args.command == "inspect-pptx":
         from slide_smith.pptx_inspector import inspect_pptx
