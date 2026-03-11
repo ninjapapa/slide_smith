@@ -31,7 +31,7 @@ pytest -q
 
 ## Commands
 
-### Bootstrap a template from an example PPTX (v1 workflow)
+### Bootstrap → map → validate a template from an example PPTX (standard workflow)
 
 Inspect a PPTX to see layouts and placeholder indices:
 
@@ -39,7 +39,7 @@ Inspect a PPTX to see layouts and placeholder indices:
 slide-smith inspect-pptx --pptx /path/to/template.pptx
 ```
 
-Bootstrap a template package (copies PPTX + generates starter template.json):
+Bootstrap a template package (copies PPTX + generates starter template.json containing `layout__*` archetypes):
 
 ```bash
 slide-smith bootstrap-template \
@@ -48,10 +48,38 @@ slide-smith bootstrap-template \
   --out-dir ./templates
 ```
 
+Map the bootstrapped layout inventory onto **standard archetypes** (adds `title`, `section`, `title_and_bullets`, `image_left_text_right`):
+
+Non-interactive best-effort mapping (prints updated spec JSON):
+
+```bash
+slide-smith map-template --template my_template --templates-dir ./templates
+```
+
+Interactive mapping / review + write back to `template.json`:
+
+```bash
+slide-smith map-template --template my_template --templates-dir ./templates --interactive --write
+```
+
+Tooling-friendly output (print only the standard-archetype patch):
+
+```bash
+slide-smith map-template --template my_template --templates-dir ./templates --print patch
+```
+
 Validate the generated template package:
+
+Structural validation (layouts/placeholders exist):
 
 ```bash
 slide-smith validate-template --template my_template --templates-dir ./templates
+```
+
+Standard-compat validation (standard archetypes + required slots are mapped):
+
+```bash
+slide-smith validate-template --template my_template --templates-dir ./templates --profile standard
 ```
 
 Render a dummy deck for human review:
@@ -114,6 +142,8 @@ slide-smith inspect-template --template default --templates-dir /path/to/templat
 
 ### Validate a template package
 
+Structural validation (layouts/placeholders exist):
+
 ```bash
 slide-smith validate-template --template default
 ```
@@ -122,8 +152,15 @@ slide-smith validate-template --template default
 slide-smith validate-template --template default --templates-dir /path/to/templates
 ```
 
+Standard-compatibility validation (ensures the template can render standard deck inputs):
+
+```bash
+slide-smith validate-template --template default --profile standard
+```
+
 Notes:
 - If `templates/<id>/template.pptx` is missing, validation exits 0 with a warning (JSON-only templates are allowed early-stage).
+- `--profile standard` checks for the standard archetypes + required semantic slots having `placeholder_idx` mappings.
 
 ### Iterative edit ops (on an existing PPTX)
 
