@@ -218,3 +218,18 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
     out_spec["deck"] = deck
 
     return out_spec
+
+
+def standard_patch(template_spec: dict[str, Any]) -> dict[str, Any]:
+    """Return a minimal patch-like object containing only standard archetypes + deck.supported_archetypes.
+
+    This is useful for tooling that wants to apply/merge changes without rewriting the entire template spec.
+    """
+
+    archetypes = [a for a in (template_spec.get("archetypes") or []) if isinstance(a, dict)]
+    std = [a for a in archetypes if a.get("id") in set(STANDARD_ARCHETYPES.keys())]
+    deck = template_spec.get("deck") or {}
+    return {
+        "deck": {"supported_archetypes": list(deck.get("supported_archetypes") or list(STANDARD_ARCHETYPES.keys()))},
+        "archetypes": std,
+    }
