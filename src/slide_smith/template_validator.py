@@ -33,17 +33,20 @@ def validate_template(
     if profile not in {"structural", "standard", "extended"}:
         raise TemplateValidationError(f"Unknown validation profile: {profile}")
 
+    has_pptx = pptx_path.exists()
+
     # Allow templates that are JSON-only (no pptx) for early-stage prototyping.
-    if not pptx_path.exists():
+    # For semantic profiles (standard/extended), we still validate the *template.json* expectations even if pptx is missing.
+    if not has_pptx and profile == "structural":
         return TemplateValidationResult(
             ok=True,
             errors=[f"warning: template.pptx not found; skipping layout/placeholder checks: {pptx_path}"],
         )
 
-    prs = Presentation(str(pptx_path))
+    prs = Presentation(str(pptx_path)) if has_pptx else None
 
     # Layout existence check.
-    layout_names = {layout.name for layout in prs.slide_layouts}
+    layout_names = {layout.name for layout in prs.slide_layouts} if prs is not None else set()
 
     archetypes = spec.get("archetypes") or []
     if not isinstance(archetypes, list) or not archetypes:
@@ -114,6 +117,8 @@ def validate_template(
             return TemplateValidationResult(False, errors)
 
     def layout_by_name(name: str):
+        if prs is None:
+            return None
         for layout in prs.slide_layouts:
             if layout.name == name:
                 return layout
@@ -131,17 +136,22 @@ def validate_template(
         if not isinstance(layout_name, str) or not layout_name:
             errors.append(f"archetype '{aid}' missing required 'layout'")
             continue
-        if layout_name not in layout_names:
-            errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
-            continue
+        if prs is not None:
+            if layout_name not in layout_names:
+                errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
+                continue
 
         layout = layout_by_name(layout_name)
-        if layout is None:
+        if prs is not None and layout is None:
             # defensive
             errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
             continue
 
         # Placeholder indices exist check.
+        # Only possible when pptx is present.
+        if layout is None:
+            continue
+
         for slot in a.get("slots") or []:
             if not isinstance(slot, dict):
                 errors.append(f"archetype '{aid}': slot entries must be objects")
