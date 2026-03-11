@@ -47,14 +47,16 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
     slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
     base_dir = Path(input_path).resolve().parent
 
+    archetype_spec = archetypes[archetype]
+
     if archetype == "title":
-        _render_title(slide, slide_spec, styles)
+        _render_title(slide, slide_spec, styles, archetype_spec, archetype)
     elif archetype == "section":
-        _render_section(slide, slide_spec, styles)
+        _render_section(slide, slide_spec, styles, archetype_spec, archetype)
     elif archetype == "title_and_bullets":
-        _render_title_and_bullets(slide, slide_spec, styles)
+        _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype)
     elif archetype == "image_left_text_right":
-        _render_image_left_text_right(slide, slide_spec, base_dir, styles)
+        _render_image_left_text_right(slide, slide_spec, base_dir, styles, archetype_spec, archetype)
     else:
         raise EditError(f"Archetype '{archetype}' is not implemented")
 
