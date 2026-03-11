@@ -120,9 +120,14 @@ def build_parser() -> argparse.ArgumentParser:
     map_template.add_argument(
         "--print",
         dest="map_print_mode",
-        choices=["spec", "patch"],
+        choices=["spec", "patch", "help-request"],
         default="spec",
-        help="Output mode when not using --write: 'spec' prints full updated template.json; 'patch' prints only standard archetype additions.",
+        help="Output mode when not using --write: 'spec' prints full updated template.json; 'patch' prints only standard archetype additions; 'help-request' prints a structured request for caller-agent hints.",
+    )
+    map_template.add_argument(
+        "--hints",
+        default=None,
+        help="Optional JSON file containing caller-agent mapping hints (v1.1).",
     )
 
     bootstrap = subparsers.add_parser(
@@ -155,6 +160,24 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["report", "json", "none"],
         default="report",
         help="Output mode: report (human), json (machine), or none.",
+    )
+
+    export_previews = subparsers.add_parser(
+        "export-previews",
+        help="Export layout preview artifacts for caller-agent assistance (manifest now; images best-effort).",
+    )
+    export_previews.add_argument("--template", required=True, help="Template id to export previews for.")
+    export_previews.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
+    export_previews.add_argument("--out-dir", required=True, help="Output directory for previews + manifest.")
+    export_previews.add_argument(
+        "--mode",
+        choices=["layouts"],
+        default="layouts",
+        help="Export mode (v1.1 supports layouts).",
     )
 
     inspect_pptx = subparsers.add_parser(
@@ -370,6 +393,7 @@ def main() -> int:
         return 0
 
     if args.command == "map-template":
+        from slide_smith.hints import apply_hints_to_template_spec, build_help_request, load_hints
         from slide_smith.pptx_inspector import inspect_pptx
         from slide_smith.template_loader import template_dir
         from slide_smith.template_mapper import infer_standard_mappings, standard_patch
@@ -378,6 +402,9 @@ def main() -> int:
         path = tdir / "template.json"
         spec = load_template_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
         updated = infer_standard_mappings(spec)
+
+        hints = load_hints(getattr(args, "hints", None))
+        updated = apply_hints_to_template_spec(updated, hints)
 
         if getattr(args, "interactive", False):
             pptx_path = tdir / "template.pptx"
@@ -448,6 +475,22 @@ def main() -> int:
         mode = getattr(args, "map_print_mode", "spec")
         if mode == "patch":
             print(json.dumps(standard_patch(updated), indent=2, sort_keys=True))
+        elif mode == "help-request":
+            pptx_path = tdir / "template.pptx"
+            layouts_payload = []
+            if pptx_path.exists():
+                inv = inspect_pptx(str(pptx_path))
+                layouts_payload = inv.layouts
+
+            # For v1.1 we request help for the extended archetypes (hardcoded here; will be sourced from a registry later).
+            missing = ["two_col", "three_col", "four_col", "pillars_3", "pillars_4", "table", "table_plus_description", "timeline_horizontal"]
+            req = build_help_request(
+                template_id=args.template,
+                template_pptx=pptx_path,
+                layouts=layouts_payload,
+                missing=missing,
+            )
+            print(json.dumps(req, indent=2, sort_keys=True))
         else:
             print(json.dumps(updated, indent=2, sort_keys=True))
         return 0
@@ -499,6 +542,41 @@ def main() -> int:
             print("excluded_layouts:")
             for n in res.excluded_layouts:
                 print(f"- {n}")
+        return 0
+
+    if args.command == "export-previews":
+        from slide_smith.pptx_inspector import inspect_pptx
+        from slide_smith.template_loader import template_dir
+
+        tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
+        pptx_path = tdir / "template.pptx"
+        if not pptx_path.exists():
+            print(json.dumps({"template": args.template, "status": "error", "error": f"template.pptx not found: {pptx_path}"}, indent=2))
+            return 1
+
+        out_dir = Path(args.out_dir).expanduser().resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        inv = inspect_pptx(str(pptx_path))
+
+        # v1.1 MVP: write manifest only. Image export is best-effort and may be added later.
+        manifest = {
+            "version": 1,
+            "template_id": args.template,
+            "template_pptx": inv.pptx,
+            "slide_size": inv.slide_size,
+            "layouts": [
+                {
+                    **layout,
+                    "preview_png": None,
+                }
+                for layout in inv.layouts
+            ],
+        }
+
+        manifest_path = out_dir / "manifest.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+        print(json.dumps({"template": args.template, "status": "ok", "manifest": str(manifest_path)}, indent=2))
         return 0
 
     if args.command == "inspect-pptx":
