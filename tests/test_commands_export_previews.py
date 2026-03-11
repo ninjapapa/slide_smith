@@ -22,6 +22,11 @@ def test_handle_export_previews_ok_for_default_template(tmp_path: Path) -> None:
     repo_root = Path(slide_smith.__file__).resolve().parents[2]
     templates_dir = repo_root / "templates"
 
+    # In some environments the default template.pptx may be absent (e.g. repo-only installs).
+    pptx_path = templates_dir / "default" / "template.pptx"
+    if not pptx_path.exists():
+        pytest.skip("default template.pptx not present")
+
     code, out = handle_export_previews(template="default", templates_dir=str(templates_dir), out_dir=str(tmp_path / "o"))
     assert code == 0
     payload = json.loads(out)
