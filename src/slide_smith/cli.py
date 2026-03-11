@@ -112,6 +112,18 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write changes back to template.json (otherwise prints the updated spec JSON).",
     )
+    map_template.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Interactively confirm/override inferred mappings (layout + placeholder_idx per slot).",
+    )
+    map_template.add_argument(
+        "--print",
+        dest="map_print_mode",
+        choices=["spec", "patch"],
+        default="spec",
+        help="Output mode when not using --write: 'spec' prints full updated template.json; 'patch' prints only standard archetype additions.",
+    )
 
     bootstrap = subparsers.add_parser(
         "bootstrap-template",
@@ -358,20 +370,86 @@ def main() -> int:
         return 0
 
     if args.command == "map-template":
+        from slide_smith.pptx_inspector import inspect_pptx
         from slide_smith.template_loader import template_dir
-        from slide_smith.template_mapper import infer_standard_mappings
+        from slide_smith.template_mapper import infer_standard_mappings, standard_patch
 
         tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
         path = tdir / "template.json"
         spec = load_template_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
         updated = infer_standard_mappings(spec)
 
+        if getattr(args, "interactive", False):
+            pptx_path = tdir / "template.pptx"
+            layouts = {}
+            if pptx_path.exists():
+                try:
+                    inv = inspect_pptx(str(pptx_path))
+                    layouts = {item["name"]: item for item in inv.layouts}
+                except Exception:
+                    layouts = {}
+
+            # Build lookup of bootstrapped archetypes by id and by layout name.
+            boot = {a.get("id"): a for a in (spec.get("archetypes") or []) if isinstance(a, dict)}
+            boot_by_layout = {a.get("layout"): a for a in (spec.get("archetypes") or []) if isinstance(a, dict)}
+
+            updated_by_id = {a.get("id"): a for a in (updated.get("archetypes") or []) if isinstance(a, dict)}
+            for std_id in ["title", "section", "title_and_bullets", "image_left_text_right"]:
+                a = updated_by_id.get(std_id)
+                if not a:
+                    continue
+
+                inf = a.get("inference") or {}
+                default_src = inf.get("source_archetype") if isinstance(inf, dict) else None
+                print(f"\n== map '{std_id}' ==")
+                if default_src:
+                    print(f"suggested source: {default_src}")
+                print(f"current layout: {a.get('layout')}")
+
+                yn = input("accept suggested mapping? [Y/n] ").strip().lower()
+                if yn == "n":
+                    choice = input("enter source archetype id (layout__*) OR layout name (blank to keep): ").strip()
+                    if choice:
+                        src = boot.get(choice) or boot_by_layout.get(choice)
+                        if not src:
+                            print("  ! not found; keeping existing")
+                        else:
+                            a["layout"] = src.get("layout")
+                            a["inference"] = {"manual": True, "source_archetype": src.get("id")}
+
+                layout_name = a.get("layout")
+                if isinstance(layout_name, str) and layout_name in layouts:
+                    print("placeholders:")
+                    for ph in layouts[layout_name].get("placeholders", []):
+                        print(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
+
+                for slot in a.get("slots") or []:
+                    if not isinstance(slot, dict):
+                        continue
+                    sname = slot.get("name")
+                    cur = slot.get("placeholder_idx")
+                    prompt = f"slot '{sname}' placeholder_idx [{cur if cur is not None else ''}]: "
+                    raw = input(prompt).strip()
+                    if not raw:
+                        continue
+                    if raw.lower() in {"none", "null", "skip"}:
+                        slot.pop("placeholder_idx", None)
+                        continue
+                    try:
+                        slot["placeholder_idx"] = int(raw)
+                    except Exception:
+                        print("  ! invalid int; keeping existing")
+
         if getattr(args, "write", False):
             path.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n")
             print(json.dumps({"template": args.template, "status": "mapped", "template_json": str(path)}, indent=2))
             return 0
 
-        print(json.dumps(updated, indent=2, sort_keys=True))
+        mode = getattr(args, "map_print_mode", "spec")
+        if mode == "patch":
+            print(json.dumps(standard_patch(updated), indent=2, sort_keys=True))
+        else:
+            print(json.dumps(updated, indent=2, sort_keys=True))
         return 0
 
     if args.command == "bootstrap-template":
