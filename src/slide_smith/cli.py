@@ -397,11 +397,13 @@ def main() -> int:
         from slide_smith.pptx_inspector import inspect_pptx
         from slide_smith.template_loader import template_dir
         from slide_smith.template_mapper import infer_standard_mappings, standard_patch
+        from slide_smith.template_mapper_extended import infer_extended_mappings
 
         tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
         path = tdir / "template.json"
         spec = load_template_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
         updated = infer_standard_mappings(spec)
+        updated = infer_extended_mappings(updated)
 
         hints = load_hints(getattr(args, "hints", None))
         updated = apply_hints_to_template_spec(updated, hints)
@@ -482,8 +484,10 @@ def main() -> int:
                 inv = inspect_pptx(str(pptx_path))
                 layouts_payload = inv.layouts
 
-            # For v1.1 we request help for the extended archetypes (hardcoded here; will be sourced from a registry later).
-            missing = ["two_col", "three_col", "four_col", "pillars_3", "pillars_4", "table", "table_plus_description", "timeline_horizontal"]
+            from slide_smith.archetype_registry import EXTENDED_ARCHETYPES
+
+            # v1.1: request help for extended archetypes.
+            missing = list(EXTENDED_ARCHETYPES)
             req = build_help_request(
                 template_id=args.template,
                 template_pptx=pptx_path,
