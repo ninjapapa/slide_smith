@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 
@@ -354,43 +355,23 @@ def main() -> int:
         return code
 
     if args.command == "inspect-pptx":
-        from slide_smith.pptx_inspector import inspect_pptx
+        from slide_smith.commands.inspect_pptx import handle_inspect_pptx
 
-        try:
-            res = inspect_pptx(args.pptx)
-        except Exception as exc:
-            print(f"Inspect failed: {exc}")
-            return 1
-
-        if getattr(args, "format", "json") == "text":
-            print(f"pptx: {res.pptx}")
-            print(f"slide_size: {res.slide_size['width_emu']}x{res.slide_size['height_emu']} emu")
-            for layout in res.layouts:
-                print(f"\nlayout[{layout['index']}]: {layout['name']}")
-                for ph in layout.get("placeholders", []):
-                    print(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
-        else:
-            print(
-                json.dumps(
-                    {"pptx": res.pptx, "slide_size": res.slide_size, "layouts": res.layouts},
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-        return 0
+        code, out = handle_inspect_pptx(pptx=args.pptx, fmt=getattr(args, "format", "json"))
+        print(out)
+        return code
 
     if args.command == "make-dummy-deck-spec":
-        from slide_smith.dummy_deck import make_dummy_deck_spec
+        from slide_smith.commands.dummy_deck import handle_make_dummy_deck_spec
 
-        res = make_dummy_deck_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
-        payload = json.dumps(res.deck_spec, indent=2, sort_keys=True) + "\n"
+        code, payload = handle_make_dummy_deck_spec(template=args.template, templates_dir=getattr(args, "templates_dir", None))
 
         out_path = getattr(args, "output", "-")
         if out_path == "-":
             print(payload, end="")
         else:
             Path(out_path).expanduser().resolve().write_text(payload)
-        return 0
+        return code
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
     return 0
