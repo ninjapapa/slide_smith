@@ -212,6 +212,73 @@ def _render_image_left_text_right(slide, spec: dict[str, Any], base_dir: Path, s
 
 
 
+def _render_extended(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any], archetype_id: str) -> None:
+    """MVP renderer for v1.1 extended archetypes.
+
+    This implementation is intentionally placeholder-driven and template-mapping-driven.
+    It treats the template spec slot mappings as the source of truth.
+
+    Conventions (per docs/design/v1.1-archetype-library-and-hints.md):
+    - Columns: col1_body..colN_body
+    - Pillars: pillar1_body..pillarN_body
+    - Table: table_text
+    - Table+desc: table_text + body
+    - Timeline: milestone1_body..milestoneN_body (N best-effort)
+    """
+
+    title = spec.get("title", "")
+    _set_placeholder_text(
+        slide,
+        _slot_index(archetype_spec, "title", 0),
+        title,
+        styles.get("title"),
+        context=f"archetype={archetype_id} slot=title",
+    )
+
+    def set_text_slot(slot_name: str, value: str | None, style_key: str = "body"):
+        _set_placeholder_text(
+            slide,
+            _slot_index(archetype_spec, slot_name),
+            value,
+            styles.get(style_key),
+            context=f"archetype={archetype_id} slot={slot_name}",
+        )
+
+    if archetype_id in {"two_col", "three_col", "four_col"}:
+        n = {"two_col": 2, "three_col": 3, "four_col": 4}[archetype_id]
+        for i in range(1, n + 1):
+            set_text_slot(f"col{i}_body", spec.get(f"col{i}_body"))
+        return
+
+    if archetype_id in {"pillars_3", "pillars_4"}:
+        n = 3 if archetype_id == "pillars_3" else 4
+        for i in range(1, n + 1):
+            set_text_slot(f"pillar{i}_body", spec.get(f"pillar{i}_body"))
+        return
+
+    if archetype_id == "table":
+        # MVP: treat table content as text.
+        set_text_slot("table_text", spec.get("table_text"), style_key="body")
+        return
+
+    if archetype_id == "table_plus_description":
+        set_text_slot("table_text", spec.get("table_text"), style_key="body")
+        # Use body slot for description.
+        set_text_slot("body", spec.get("body"), style_key="body")
+        return
+
+    if archetype_id == "timeline_horizontal":
+        # Best-effort: fill milestone{i}_body for i=1..10.
+        for i in range(1, 11):
+            k = f"milestone{i}_body"
+            if k in spec:
+                set_text_slot(k, spec.get(k))
+        return
+
+    raise RenderingError(f"Extended archetype '{archetype_id}' is not implemented")
+
+
+
 def _set_notes(slide, notes: str | None) -> None:
     if not notes:
         return
@@ -251,6 +318,8 @@ def render_deck(
             _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype)
         elif archetype == "image_left_text_right":
             _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, archetype)
+        elif archetype in {"two_col", "three_col", "four_col", "pillars_3", "pillars_4", "table", "table_plus_description", "timeline_horizontal"}:
+            _render_extended(slide, slide_spec, styles, archetype_spec, archetype)
         else:
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
 
