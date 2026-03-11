@@ -4,19 +4,6 @@ import argparse
 import json
 from pathlib import Path
 
-from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
-from slide_smith.editor import (
-    EditError,
-    add_slide_to_deck,
-    delete_slide_from_deck,
-    list_slides_in_deck,
-    update_slide_in_deck,
-)
-from slide_smith.markdown_parser import parse_markdown
-from slide_smith.renderer import RenderingError, render_deck
-from slide_smith.template_loader import load_template_spec
-from slide_smith.template_validator import validate_template
-
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -212,102 +199,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 
-def handle_inspect_template(template_id: str, templates_dir: str | None = None) -> int:
-    spec = load_template_spec(template_id, templates_dir=templates_dir)
-    print(f"template: {spec['template_id']} ({spec.get('name', 'unnamed')})")
-    print(f"version: {spec.get('version', 'n/a')}")
-    deck = spec.get("deck", {})
-    print(f"aspect_ratio: {deck.get('aspect_ratio', 'unknown')}")
-
-    if spec.get("styles"):
-        print("styles:")
-        for k, v in (spec.get("styles") or {}).items():
-            print(f"- {k}: {v}")
-
-    print("supported_archetypes:")
-    for archetype in spec.get("archetypes", []):
-        print(f"- {archetype['id']}: {archetype.get('description', '')}")
-        print(f"  layout: {archetype.get('layout', 'unknown')}")
-        for slot in archetype.get("slots", []):
-            required = "required" if slot.get("required") else "optional"
-            extras = []
-            if "placeholder_idx" in slot:
-                extras.append(f"placeholder_idx={slot['placeholder_idx']}")
-            if "max_items" in slot:
-                extras.append(f"max_items={slot['max_items']}")
-            if "aspect_ratio" in slot:
-                extras.append(f"aspect_ratio={slot['aspect_ratio']}")
-            extra_text = f" ({', '.join(extras)})" if extras else ""
-            print(f"  - slot {slot['name']}: {slot['type']} [{required}]{extra_text}")
-    return 0
-
-
-
-def handle_create(
-    input_path: str,
-    template_id: str,
-    output_path: str,
-    assets_dir: str | None = None,
-    print_mode: str = "normalized",
-    templates_dir: str | None = None,
-) -> int:
-    template_spec = load_template_spec(template_id, templates_dir=templates_dir)
-    if input_path.endswith(".json"):
-        spec = load_deck_spec(input_path)
-    elif input_path.endswith(".md"):
-        spec = parse_markdown(input_path)
-    else:
-        print("Unsupported input type. Use .json or .md")
-        return 1
-
-    if assets_dir:
-        from slide_smith.assets import AssetError, collect_assets
-
-        try:
-            spec = collect_assets(spec, base_dir=str(Path(input_path).resolve().parent), assets_dir=assets_dir)
-        except AssetError as exc:
-            print(f"Asset collection failed: {exc}")
-            return 1
-
-    errors = validate_deck_spec(spec)
-    if errors:
-        print("Deck spec validation failed:")
-        for error in errors:
-            print(f"- {error}")
-        return 1
-
-    # Schema validation is the source of truth when jsonschema is available.
-    try:
-        from slide_smith.schema_validation import validate_against_schema
-
-        schema_res = validate_against_schema(spec)
-        if not schema_res.ok:
-            print("Deck spec schema validation failed:")
-            for error in schema_res.errors:
-                print(f"- {error}")
-            return 1
-    except Exception:
-        # jsonschema not installed or schema unavailable; keep runtime flexible.
-        pass
-
-    try:
-        rendered_path = render_deck(
-            spec,
-            template_spec,
-            template_id,
-            output_path,
-            base_dir=str(Path(input_path).resolve().parent),
-            templates_dir=templates_dir,
-        )
-    except RenderingError as exc:
-        print(f"Rendering failed: {exc}")
-        return 1
-
-    if print_mode == "none":
-        print(json.dumps({"output": rendered_path}, indent=2))
-    else:
-        print(json.dumps({"template": template_id, "output": rendered_path, "deck": spec}, indent=2))
-    return 0
 
 
 
@@ -329,68 +220,64 @@ def main() -> int:
         return 0
 
     if args.command == "inspect-template":
-        return handle_inspect_template(args.template, templates_dir=getattr(args, "templates_dir", None))
+        from slide_smith.commands.inspect_template import handle_inspect_template
+
+        code, out = handle_inspect_template(template=args.template, templates_dir=getattr(args, "templates_dir", None))
+        print(out)
+        return code
+
     if args.command == "create":
-        return handle_create(
-            args.input,
-            args.template,
-            args.output,
+        from slide_smith.commands.create import handle_create
+
+        code, out = handle_create(
+            input_path=args.input,
+            template=args.template,
+            output=args.output,
             assets_dir=getattr(args, "assets_dir", None),
             print_mode=getattr(args, "print_mode", "normalized"),
             templates_dir=getattr(args, "templates_dir", None),
         )
+        print(out)
+        return code
+
     if args.command == "add-slide":
-        try:
-            path = add_slide_to_deck(args.deck, args.after, args.type, args.input)
-        except EditError as exc:
-            print(f"Add-slide failed: {exc}")
-            return 1
-        print(json.dumps({"deck": path, "status": "slide added"}, indent=2))
-        return 0
+        from slide_smith.commands.edit_ops import handle_add_slide
+
+        code, out = handle_add_slide(deck=args.deck, after=args.after, archetype=args.type, input_path=args.input)
+        print(out)
+        return code
+
     if args.command == "update-slide":
-        try:
-            path = update_slide_in_deck(args.deck, args.index, args.input)
-        except EditError as exc:
-            print(f"Update-slide failed: {exc}")
-            return 1
-        print(json.dumps({"deck": path, "status": "slide updated"}, indent=2))
-        return 0
+        from slide_smith.commands.edit_ops import handle_update_slide
+
+        code, out = handle_update_slide(deck=args.deck, index=args.index, input_path=args.input)
+        print(out)
+        return code
 
     if args.command == "list-slides":
-        try:
-            items = list_slides_in_deck(args.deck)
-        except EditError as exc:
-            print(f"List-slides failed: {exc}")
-            return 1
-        print(json.dumps({"deck": args.deck, "slides": items}, indent=2))
-        return 0
+        from slide_smith.commands.edit_ops import handle_list_slides
+
+        code, out = handle_list_slides(deck=args.deck)
+        print(out)
+        return code
 
     if args.command == "delete-slide":
-        try:
-            path = delete_slide_from_deck(args.deck, args.index)
-        except EditError as exc:
-            print(f"Delete-slide failed: {exc}")
-            return 1
-        print(json.dumps({"deck": path, "status": "slide deleted"}, indent=2))
-        return 0
+        from slide_smith.commands.edit_ops import handle_delete_slide
+
+        code, out = handle_delete_slide(deck=args.deck, index=args.index)
+        print(out)
+        return code
 
     if args.command == "validate-template":
-        result = validate_template(
-            args.template,
+        from slide_smith.commands.validate_template import handle_validate_template
+
+        code, out = handle_validate_template(
+            template=args.template,
             templates_dir=getattr(args, "templates_dir", None),
             profile=getattr(args, "profile", "structural"),
         )
-        if not result.ok:
-            print("Template validation failed:")
-            for e in result.errors:
-                print(f"- {e}")
-            return 1
-        # If we returned warnings, surface them but still exit 0.
-        if result.errors:
-            for e in result.errors:
-                print(e)
-        print(json.dumps({"template": args.template, "status": "ok"}, indent=2))
-        return 0
+        print(out)
+        return code
 
     if args.command == "map-template":
         from slide_smith.commands.map_template import handle_map_template
@@ -468,43 +355,23 @@ def main() -> int:
         return code
 
     if args.command == "inspect-pptx":
-        from slide_smith.pptx_inspector import inspect_pptx
+        from slide_smith.commands.inspect_pptx import handle_inspect_pptx
 
-        try:
-            res = inspect_pptx(args.pptx)
-        except Exception as exc:
-            print(f"Inspect failed: {exc}")
-            return 1
-
-        if getattr(args, "format", "json") == "text":
-            print(f"pptx: {res.pptx}")
-            print(f"slide_size: {res.slide_size['width_emu']}x{res.slide_size['height_emu']} emu")
-            for layout in res.layouts:
-                print(f"\nlayout[{layout['index']}]: {layout['name']}")
-                for ph in layout.get("placeholders", []):
-                    print(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
-        else:
-            print(
-                json.dumps(
-                    {"pptx": res.pptx, "slide_size": res.slide_size, "layouts": res.layouts},
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-        return 0
+        code, out = handle_inspect_pptx(pptx=args.pptx, fmt=getattr(args, "format", "json"))
+        print(out)
+        return code
 
     if args.command == "make-dummy-deck-spec":
-        from slide_smith.dummy_deck import make_dummy_deck_spec
+        from slide_smith.commands.dummy_deck import handle_make_dummy_deck_spec
 
-        res = make_dummy_deck_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
-        payload = json.dumps(res.deck_spec, indent=2, sort_keys=True) + "\n"
+        code, payload = handle_make_dummy_deck_spec(template=args.template, templates_dir=getattr(args, "templates_dir", None))
 
         out_path = getattr(args, "output", "-")
         if out_path == "-":
             print(payload, end="")
         else:
             Path(out_path).expanduser().resolve().write_text(payload)
-        return 0
+        return code
 
     print(f"Command '{args.command}' is scaffolded but not implemented yet.")
     return 0
