@@ -90,6 +90,28 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional root directory containing template packages (defaults to repo-local templates/).",
     )
+    validate_template_cmd.add_argument(
+        "--profile",
+        choices=["structural", "standard"],
+        default="structural",
+        help="Validation profile: 'structural' checks layouts/placeholders; 'standard' also checks standard archetype compatibility.",
+    )
+
+    map_template = subparsers.add_parser(
+        "map-template",
+        help="Add best-effort standard archetype mappings to a bootstrapped template.json (reviewable).",
+    )
+    map_template.add_argument("--template", required=True, help="Template id to map.")
+    map_template.add_argument(
+        "--templates-dir",
+        default=None,
+        help="Optional root directory containing template packages (defaults to repo-local templates/).",
+    )
+    map_template.add_argument(
+        "--write",
+        action="store_true",
+        help="Write changes back to template.json (otherwise prints the updated spec JSON).",
+    )
 
     bootstrap = subparsers.add_parser(
         "bootstrap-template",
@@ -318,7 +340,11 @@ def main() -> int:
         return 0
 
     if args.command == "validate-template":
-        result = validate_template(args.template, templates_dir=getattr(args, "templates_dir", None))
+        result = validate_template(
+            args.template,
+            templates_dir=getattr(args, "templates_dir", None),
+            profile=getattr(args, "profile", "structural"),
+        )
         if not result.ok:
             print("Template validation failed:")
             for e in result.errors:
@@ -329,6 +355,23 @@ def main() -> int:
             for e in result.errors:
                 print(e)
         print(json.dumps({"template": args.template, "status": "ok"}, indent=2))
+        return 0
+
+    if args.command == "map-template":
+        from slide_smith.template_loader import template_dir
+        from slide_smith.template_mapper import infer_standard_mappings
+
+        tdir = template_dir(args.template, templates_dir=getattr(args, "templates_dir", None))
+        path = tdir / "template.json"
+        spec = load_template_spec(args.template, templates_dir=getattr(args, "templates_dir", None))
+        updated = infer_standard_mappings(spec)
+
+        if getattr(args, "write", False):
+            path.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n")
+            print(json.dumps({"template": args.template, "status": "mapped", "template_json": str(path)}, indent=2))
+            return 0
+
+        print(json.dumps(updated, indent=2, sort_keys=True))
         return 0
 
     if args.command == "bootstrap-template":

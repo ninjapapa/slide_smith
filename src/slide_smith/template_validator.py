@@ -19,12 +19,19 @@ class TemplateValidationError(Exception):
     pass
 
 
-def validate_template(template_id: str, templates_dir: str | None = None) -> TemplateValidationResult:
+def validate_template(
+    template_id: str,
+    templates_dir: str | None = None,
+    profile: str = "structural",
+) -> TemplateValidationResult:
     errors: list[str] = []
 
     spec = load_template_spec(template_id, templates_dir=templates_dir)
     tdir = template_dir(template_id, templates_dir=templates_dir)
     pptx_path = tdir / "template.pptx"
+
+    if profile not in {"structural", "standard"}:
+        raise TemplateValidationError(f"Unknown validation profile: {profile}")
 
     # Allow templates that are JSON-only (no pptx) for early-stage prototyping.
     if not pptx_path.exists():
@@ -42,6 +49,42 @@ def validate_template(template_id: str, templates_dir: str | None = None) -> Tem
     if not isinstance(archetypes, list) or not archetypes:
         errors.append("template spec must include non-empty 'archetypes' list")
         return TemplateValidationResult(False, errors)
+
+    if profile == "standard":
+        # Standard compatibility checks (semantic expectations) in addition to structural ones.
+        required = {
+            "title": {"title": True},
+            "section": {"title": True},
+            "title_and_bullets": {"title": True, "bullets": True},
+            "image_left_text_right": {"title": True, "image": True, "body": True},
+        }
+        by_id = {a.get("id"): a for a in archetypes if isinstance(a, dict)}
+        for aid, req_slots in required.items():
+            if aid not in by_id:
+                errors.append(f"standard profile: missing required archetype '{aid}'")
+                continue
+            a = by_id[aid]
+            slots = a.get("slots") or []
+            if not isinstance(slots, list):
+                errors.append(f"standard profile: archetype '{aid}' slots must be a list")
+                continue
+            slot_by_name = {s.get("name"): s for s in slots if isinstance(s, dict)}
+            for slot_name, must in req_slots.items():
+                if not must:
+                    continue
+                if slot_name not in slot_by_name:
+                    errors.append(f"standard profile: archetype '{aid}' missing required slot '{slot_name}'")
+                    continue
+                slot = slot_by_name[slot_name]
+                idx = slot.get("placeholder_idx")
+                if not isinstance(idx, int):
+                    errors.append(
+                        f"standard profile: archetype '{aid}' slot '{slot_name}' missing int placeholder_idx"
+                    )
+
+        # If we're already failing the standard semantic requirements, stop early to avoid noisy placeholder checks.
+        if errors:
+            return TemplateValidationResult(False, errors)
 
     def layout_by_name(name: str):
         for layout in prs.slide_layouts:
