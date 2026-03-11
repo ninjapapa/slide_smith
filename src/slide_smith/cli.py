@@ -92,9 +92,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_template_cmd.add_argument(
         "--profile",
-        choices=["structural", "standard"],
+        choices=["structural", "standard", "extended"],
         default="structural",
-        help="Validation profile: 'structural' checks layouts/placeholders; 'standard' also checks standard archetype compatibility.",
+        help="Validation profile: 'structural' checks layouts/placeholders; 'standard' checks core archetypes; 'extended' checks extended archetype library compatibility.",
     )
 
     map_template = subparsers.add_parser(
