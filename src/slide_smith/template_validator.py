@@ -30,63 +30,95 @@ def validate_template(
     tdir = template_dir(template_id, templates_dir=templates_dir)
     pptx_path = tdir / "template.pptx"
 
-    if profile not in {"structural", "standard"}:
+    if profile not in {"structural", "standard", "extended"}:
         raise TemplateValidationError(f"Unknown validation profile: {profile}")
 
+    has_pptx = pptx_path.exists()
+
     # Allow templates that are JSON-only (no pptx) for early-stage prototyping.
-    if not pptx_path.exists():
+    # For semantic profiles (standard/extended), we still validate the *template.json* expectations even if pptx is missing.
+    if not has_pptx and profile == "structural":
         return TemplateValidationResult(
             ok=True,
             errors=[f"warning: template.pptx not found; skipping layout/placeholder checks: {pptx_path}"],
         )
 
-    prs = Presentation(str(pptx_path))
+    prs = Presentation(str(pptx_path)) if has_pptx else None
 
     # Layout existence check.
-    layout_names = {layout.name for layout in prs.slide_layouts}
+    layout_names = {layout.name for layout in prs.slide_layouts} if prs is not None else set()
 
     archetypes = spec.get("archetypes") or []
     if not isinstance(archetypes, list) or not archetypes:
         errors.append("template spec must include non-empty 'archetypes' list")
         return TemplateValidationResult(False, errors)
 
-    if profile == "standard":
-        # Standard compatibility checks (semantic expectations) in addition to structural ones.
+    if profile in {"standard", "extended"}:
+        # Semantic compatibility checks (in addition to structural ones).
         required = {
+            # Core standard archetypes.
             "title": {"title": True},
             "section": {"title": True},
             "title_and_bullets": {"title": True, "bullets": True},
             "image_left_text_right": {"title": True, "image": True, "body": True},
         }
+
+        if profile == "extended":
+            # Extended archetypes (v1.1). Slot requirements are intentionally minimal at this layer:
+            # we validate that a mapping exists, not that the renderer fully supports it.
+            required |= {
+                "two_col": {"title": True, "col1_body": True, "col2_body": True},
+                "three_col": {"title": True, "col1_body": True, "col2_body": True, "col3_body": True},
+                "four_col": {
+                    "title": True,
+                    "col1_body": True,
+                    "col2_body": True,
+                    "col3_body": True,
+                    "col4_body": True,
+                },
+                "pillars_3": {"title": True, "pillar1_body": True, "pillar2_body": True, "pillar3_body": True},
+                "pillars_4": {
+                    "title": True,
+                    "pillar1_body": True,
+                    "pillar2_body": True,
+                    "pillar3_body": True,
+                    "pillar4_body": True,
+                },
+                "table": {"title": True, "table_text": True},
+                "table_plus_description": {"title": True, "table_text": True, "body": True},
+                "timeline_horizontal": {"title": True, "milestone1_body": True},
+            }
+
         by_id = {a.get("id"): a for a in archetypes if isinstance(a, dict)}
+        prefix = f"{profile} profile"
         for aid, req_slots in required.items():
             if aid not in by_id:
-                errors.append(f"standard profile: missing required archetype '{aid}'")
+                errors.append(f"{prefix}: missing required archetype '{aid}'")
                 continue
             a = by_id[aid]
             slots = a.get("slots") or []
             if not isinstance(slots, list):
-                errors.append(f"standard profile: archetype '{aid}' slots must be a list")
+                errors.append(f"{prefix}: archetype '{aid}' slots must be a list")
                 continue
             slot_by_name = {s.get("name"): s for s in slots if isinstance(s, dict)}
             for slot_name, must in req_slots.items():
                 if not must:
                     continue
                 if slot_name not in slot_by_name:
-                    errors.append(f"standard profile: archetype '{aid}' missing required slot '{slot_name}'")
+                    errors.append(f"{prefix}: archetype '{aid}' missing required slot '{slot_name}'")
                     continue
                 slot = slot_by_name[slot_name]
                 idx = slot.get("placeholder_idx")
                 if not isinstance(idx, int):
-                    errors.append(
-                        f"standard profile: archetype '{aid}' slot '{slot_name}' missing int placeholder_idx"
-                    )
+                    errors.append(f"{prefix}: archetype '{aid}' slot '{slot_name}' missing int placeholder_idx")
 
-        # If we're already failing the standard semantic requirements, stop early to avoid noisy placeholder checks.
+        # If we're already failing semantic requirements, stop early to avoid noisy placeholder checks.
         if errors:
             return TemplateValidationResult(False, errors)
 
     def layout_by_name(name: str):
+        if prs is None:
+            return None
         for layout in prs.slide_layouts:
             if layout.name == name:
                 return layout
@@ -104,17 +136,22 @@ def validate_template(
         if not isinstance(layout_name, str) or not layout_name:
             errors.append(f"archetype '{aid}' missing required 'layout'")
             continue
-        if layout_name not in layout_names:
-            errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
-            continue
+        if prs is not None:
+            if layout_name not in layout_names:
+                errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
+                continue
 
         layout = layout_by_name(layout_name)
-        if layout is None:
+        if prs is not None and layout is None:
             # defensive
             errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
             continue
 
         # Placeholder indices exist check.
+        # Only possible when pptx is present.
+        if layout is None:
+            continue
+
         for slot in a.get("slots") or []:
             if not isinstance(slot, dict):
                 errors.append(f"archetype '{aid}': slot entries must be objects")
