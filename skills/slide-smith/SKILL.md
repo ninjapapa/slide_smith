@@ -56,16 +56,30 @@ Non-interactive best-effort mapping (prints updated spec JSON):
 slide-smith map-template --template my_template --templates-dir ./templates
 ```
 
+Apply caller-agent hints (optional):
+
+```bash
+slide-smith map-template --template my_template --templates-dir ./templates --hints /path/to/hints.json
+```
+
 Interactive mapping / review + write back to `template.json`:
 
 ```bash
 slide-smith map-template --template my_template --templates-dir ./templates --interactive --write
 ```
 
-Tooling-friendly output (print only the standard-archetype patch):
+Tooling-friendly output:
+
+- print only the standard-archetype patch:
 
 ```bash
 slide-smith map-template --template my_template --templates-dir ./templates --print patch
+```
+
+- print a structured help request (for caller-agent hint generation):
+
+```bash
+slide-smith map-template --template my_template --templates-dir ./templates --print help-request
 ```
 
 Validate the generated template package:
@@ -80,6 +94,12 @@ Standard-compat validation (standard archetypes + required slots are mapped):
 
 ```bash
 slide-smith validate-template --template my_template --templates-dir ./templates --profile standard
+```
+
+Extended-compat validation (extended archetypes library):
+
+```bash
+slide-smith validate-template --template my_template --templates-dir ./templates --profile extended
 ```
 
 Render a dummy deck for human review:
@@ -128,6 +148,14 @@ slide-smith create \
   --output /tmp/out.pptx
 ```
 
+### Export previews for caller-agent assistance (v1.1)
+
+`export-previews` produces a machine-readable manifest of layouts/placeholders for a template (and will later grow optional PNG exports).
+
+```bash
+slide-smith export-previews --template my_template --templates-dir ./templates --out-dir /tmp/my_template-previews --mode layouts
+```
+
 ### Inspect a template
 
 ```bash
@@ -159,8 +187,10 @@ slide-smith validate-template --template default --profile standard
 ```
 
 Notes:
-- If `templates/<id>/template.pptx` is missing, validation exits 0 with a warning (JSON-only templates are allowed early-stage).
+- If `templates/<id>/template.pptx` is missing, **structural** validation exits 0 with a warning (JSON-only templates are allowed early-stage).
+- For `--profile standard` / `--profile extended`, semantic validation still runs against `template.json` even if `template.pptx` is missing.
 - `--profile standard` checks for the standard archetypes + required semantic slots having `placeholder_idx` mappings.
+- `--profile extended` checks for the extended archetype library slot mappings.
 
 ### Iterative edit ops (on an existing PPTX)
 
