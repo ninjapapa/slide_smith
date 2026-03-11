@@ -1,0 +1,80 @@
+{
+  "title": "Extended Archetypes Sample",
+  "slides": [
+    {
+      "archetype": "title",
+      "title": "Extended Archetypes",
+      "subtitle": "v1.1 kitchen-sink sample"
+    },
+    {
+      "archetype": "section",
+      "title": "Columns"
+    },
+    {
+      "archetype": "two_col",
+      "title": "Two-column layout",
+      "col1_body": "Left column body text.",
+      "col2_body": "Right column body text."
+    },
+    {
+      "archetype": "three_col",
+      "title": "Three-column layout",
+      "col1_body": "Column 1",
+      "col2_body": "Column 2",
+      "col3_body": "Column 3"
+    },
+    {
+      "archetype": "four_col",
+      "title": "Four-column layout",
+      "col1_body": "One",
+      "col2_body": "Two",
+      "col3_body": "Three",
+      "col4_body": "Four"
+    },
+    {
+      "archetype": "section",
+      "title": "Pillars"
+    },
+    {
+      "archetype": "pillars_3",
+      "title": "Three pillars",
+      "pillar1_body": "Pillar 1 body",
+      "pillar2_body": "Pillar 2 body",
+      "pillar3_body": "Pillar 3 body"
+    },
+    {
+      "archetype": "pillars_4",
+      "title": "Four pillars",
+      "pillar1_body": "Pillar 1 body",
+      "pillar2_body": "Pillar 2 body",
+      "pillar3_body": "Pillar 3 body",
+      "pillar4_body": "Pillar 4 body"
+    },
+    {
+      "archetype": "section",
+      "title": "Tables"
+    },
+    {
+      "archetype": "table",
+      "title": "Table (text MVP)",
+      "table_text": "Header1 | Header2\n------- | -------\nA      | B\nC      | D"
+    },
+    {
+      "archetype": "table_plus_description",
+      "title": "Table + description (text MVP)",
+      "table_text": "Metric | Value\n------ | -----\nUsers  | 123\nARR    | $456k",
+      "body": "Narrative next to the table."
+    },
+    {
+      "archetype": "section",
+      "title": "Timeline"
+    },
+    {
+      "archetype": "timeline_horizontal",
+      "title": "Milestones",
+      "milestone1_body": "M1: Kickoff",
+      "milestone2_body": "M2: Beta",
+      "milestone3_body": "M3: Launch"
+    }
+  ]
+}
