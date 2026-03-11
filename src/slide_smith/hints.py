@@ -56,7 +56,6 @@ def apply_hints_to_template_spec(updated_spec: dict[str, Any], hints: dict[str, 
 
     out = dict(updated_spec)
     archetypes = [a for a in (out.get("archetypes") or []) if isinstance(a, dict)]
-    by_id = {a.get("id"): a for a in archetypes if isinstance(a.get("id"), str)}
 
     layouts = hints.get("layouts") if isinstance(hints, dict) else None
     if not isinstance(layouts, dict):

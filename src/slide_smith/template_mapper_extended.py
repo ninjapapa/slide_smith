@@ -142,7 +142,17 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
             continue
 
         # Minimal slot set for v1.1 mapping: just bodies; caller can refine with hints/interactive.
-        slots: list[dict[str, Any]] = [{"name": "title", "type": "text", "required": True, "placeholder_idx": (src.get("slots") or [{}])[0].get("placeholder_idx", 0)}]
+        title_idx = None
+        for s in src.get("slots") or []:
+            if isinstance(s, dict) and s.get("name") == "title":
+                if isinstance(s.get("placeholder_idx"), int):
+                    title_idx = int(s.get("placeholder_idx"))
+                break
+
+        title_slot: dict[str, Any] = {"name": "title", "type": "text", "required": True}
+        if title_idx is not None:
+            title_slot["placeholder_idx"] = title_idx
+        slots: list[dict[str, Any]] = [title_slot]
 
         def add_slot(name: str):
             # Choose the next placeholder idx from the source that isn't title.
