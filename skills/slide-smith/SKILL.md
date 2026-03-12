@@ -39,6 +39,14 @@ Inspect a PPTX to see layouts and placeholder indices:
 slide-smith inspect-pptx --pptx /path/to/template.pptx
 ```
 
+Inspect a *slide instance* (shapes + geometry), useful for decks that use free-positioned boxes rather than layout placeholders:
+
+```bash
+slide-smith inspect-slide --pptx /path/to/deck.pptx --slide 10
+# text output:
+slide-smith inspect-slide --pptx /path/to/deck.pptx --slide 10 --format text
+```
+
 Bootstrap a template package (copies PPTX + generates starter template.json containing `layout__*` archetypes):
 
 ```bash
@@ -47,6 +55,22 @@ slide-smith bootstrap-template \
   --template-id my_template \
   --out-dir ./templates
 ```
+
+Bootstrap a template *from a specific slide instance* (MVP: generates a **box-based** archetype draft; great for hand-designed decks with weak masters):
+
+```bash
+slide-smith bootstrap-from-slide \
+  --pptx /path/to/deck.pptx \
+  --slide 10 \
+  --template-id my_template \
+  --out-dir ./templates \
+  --archetype image_left_text_right \
+  --write
+```
+
+Notes:
+- This creates `templates/my_template/template.pptx` (copy of the input PPTX) + `template.json`.
+- The generated archetype slots use `box` geometry (`units: relative`) instead of `placeholder_idx`.
 
 Map the bootstrapped layout inventory onto **standard archetypes** (adds `title`, `section`, `title_and_bullets`, `image_left_text_right`):
 
@@ -191,6 +215,7 @@ Notes:
 - For `--profile standard` / `--profile extended`, semantic validation still runs against `template.json` even if `template.pptx` is missing.
 - `--profile standard` checks for the standard archetypes + required semantic slots having `placeholder_idx` mappings.
 - `--profile extended` checks for the extended archetype library slot mappings.
+- Box-based slots: rendering supports `slot.box` (units `relative|emu`) as a fallback when `placeholder_idx` is absent (useful for slide-instance-derived templates).
 
 ### Iterative edit ops (on an existing PPTX)
 
