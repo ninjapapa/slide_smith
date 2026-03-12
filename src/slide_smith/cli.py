@@ -149,6 +149,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output mode: report (human), json (machine), or none.",
     )
 
+    bootstrap_from_slide = subparsers.add_parser(
+        "bootstrap-from-slide",
+        help="Bootstrap a template package + archetype from a specific slide instance (box-based).",
+    )
+    bootstrap_from_slide.add_argument("--pptx", required=True, help="Path to example .pptx.")
+    bootstrap_from_slide.add_argument("--slide", type=int, required=True, help="1-indexed slide number to bootstrap from.")
+    bootstrap_from_slide.add_argument("--template-id", required=True, help="Template id for the new template package.")
+    bootstrap_from_slide.add_argument("--out-dir", required=True, help="Directory to write the new template package into.")
+    bootstrap_from_slide.add_argument("--archetype", required=True, help="Archetype id to bootstrap (e.g. image_left_text_right).")
+    bootstrap_from_slide.add_argument("--write", action="store_true", help="Write template package to disk (otherwise prints template.json).")
+
     export_previews = subparsers.add_parser(
         "export-previews",
         help="Export layout preview artifacts for caller-agent assistance (manifest now; images best-effort).",
@@ -173,6 +184,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     inspect_pptx.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
     inspect_pptx.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+        help="Output format (default: json).",
+    )
+
+    inspect_slide = subparsers.add_parser(
+        "inspect-slide",
+        help="Inspect a specific slide instance (shapes + geometry), not just layouts.",
+    )
+    inspect_slide.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
+    inspect_slide.add_argument(
+        "--slide",
+        type=int,
+        required=True,
+        help="1-indexed slide number to inspect.",
+    )
+    inspect_slide.add_argument(
         "--format",
         choices=["json", "text"],
         default="json",
@@ -342,6 +371,20 @@ def main() -> int:
                 print(f"- {n}")
         return 0
 
+    if args.command == "bootstrap-from-slide":
+        from slide_smith.commands.bootstrap_from_slide import handle_bootstrap_from_slide
+
+        code, out = handle_bootstrap_from_slide(
+            pptx=args.pptx,
+            slide_number=args.slide,
+            template_id=args.template_id,
+            out_dir=args.out_dir,
+            archetype=args.archetype,
+            write=getattr(args, "write", False),
+        )
+        print(out)
+        return code
+
     if args.command == "export-previews":
         from slide_smith.commands.export_previews import handle_export_previews
 
@@ -358,6 +401,13 @@ def main() -> int:
         from slide_smith.commands.inspect_pptx import handle_inspect_pptx
 
         code, out = handle_inspect_pptx(pptx=args.pptx, fmt=getattr(args, "format", "json"))
+        print(out)
+        return code
+
+    if args.command == "inspect-slide":
+        from slide_smith.commands.inspect_slide import handle_inspect_slide
+
+        code, out = handle_inspect_slide(pptx=args.pptx, slide_number=args.slide, fmt=getattr(args, "format", "json"))
         print(out)
         return code
 
