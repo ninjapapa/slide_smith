@@ -179,6 +179,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format (default: json).",
     )
 
+    inspect_slide = subparsers.add_parser(
+        "inspect-slide",
+        help="Inspect a specific slide instance (shapes + geometry), not just layouts.",
+    )
+    inspect_slide.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
+    inspect_slide.add_argument(
+        "--slide",
+        type=int,
+        required=True,
+        help="1-indexed slide number to inspect.",
+    )
+    inspect_slide.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="json",
+        help="Output format (default: json).",
+    )
+
     dummy = subparsers.add_parser(
         "make-dummy-deck-spec",
         help="Generate a dummy deck spec JSON that exercises a template's archetypes.",
@@ -358,6 +376,13 @@ def main() -> int:
         from slide_smith.commands.inspect_pptx import handle_inspect_pptx
 
         code, out = handle_inspect_pptx(pptx=args.pptx, fmt=getattr(args, "format", "json"))
+        print(out)
+        return code
+
+    if args.command == "inspect-slide":
+        from slide_smith.commands.inspect_slide import handle_inspect_slide
+
+        code, out = handle_inspect_slide(pptx=args.pptx, slide_number=args.slide, fmt=getattr(args, "format", "json"))
         print(out)
         return code
 

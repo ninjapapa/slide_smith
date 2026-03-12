@@ -30,6 +30,8 @@ def _load_json(path: str) -> dict[str, Any]:
 
 def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_path: str, template_id: str = "default") -> str:
     prs = Presentation(deck_path)
+    slide_w_emu = int(prs.slide_width)
+    slide_h_emu = int(prs.slide_height)
     if after_index != len(prs.slides) - 1:
         raise EditError(
             "Only append-style add-slide is supported right now; use --after with the current last slide index"
@@ -50,13 +52,13 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
     archetype_spec = archetypes[archetype]
 
     if archetype == "title":
-        _render_title(slide, slide_spec, styles, archetype_spec, archetype)
+        _render_title(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
     elif archetype == "section":
-        _render_section(slide, slide_spec, styles, archetype_spec, archetype)
+        _render_section(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
     elif archetype == "title_and_bullets":
-        _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype)
+        _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
     elif archetype == "image_left_text_right":
-        _render_image_left_text_right(slide, slide_spec, base_dir, styles, archetype_spec, archetype)
+        _render_image_left_text_right(slide, slide_spec, base_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
     else:
         raise EditError(f"Archetype '{archetype}' is not implemented")
 
