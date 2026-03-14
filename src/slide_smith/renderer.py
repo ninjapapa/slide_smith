@@ -13,11 +13,40 @@ class RenderingError(Exception):
     """Raised when a deck cannot be rendered."""
 
 
-def _presentation_for_template(template_id: str, templates_dir: str | None = None) -> Presentation:
+def _presentation_for_template(
+    template_id: str,
+    templates_dir: str | None = None,
+    *,
+    preserve_template_slides: bool = False,
+) -> Presentation:
+    """Load a Presentation for rendering.
+
+    By default we treat template.pptx as a *theme/layout source* and start with zero
+    content slides (rich templates often include many sample slides that should not
+    be preserved in generated outputs).
+
+    If preserve_template_slides=True, keep any existing slides from template.pptx.
+    """
+
     pptx_path = template_dir(template_id, templates_dir) / "template.pptx"
-    if pptx_path.exists():
-        return Presentation(str(pptx_path))
-    return Presentation()
+    if not pptx_path.exists():
+        return Presentation()
+
+    prs = Presentation(str(pptx_path))
+
+    if preserve_template_slides:
+        return prs
+
+    # Drop all existing slides (keep masters/layouts/theme).
+    try:
+        from slide_smith.pptx_edit import delete_slide
+
+        while len(prs.slides) > 0:
+            delete_slide(prs, 0)
+    except Exception as exc:
+        raise RenderingError(f"Failed to clear template slides: {exc}") from exc
+
+    return prs
 
 
 def _layout_by_name(prs: Presentation, name: str):
@@ -703,7 +732,10 @@ def render_deck(
     base_dir: str | None = None,
     templates_dir: str | None = None,
 ) -> str:
-    prs = _presentation_for_template(template_id, templates_dir=templates_dir)
+    # Default behavior: do NOT preserve existing template slides.
+    # This avoids rich templates polluting the output with sample pages.
+    preserve = bool(deck_spec.get("preserve_template_slides"))
+    prs = _presentation_for_template(template_id, templates_dir=templates_dir, preserve_template_slides=preserve)
     source_dir = Path(base_dir or ".").resolve()
 
     slide_w_emu = int(prs.slide_width)
