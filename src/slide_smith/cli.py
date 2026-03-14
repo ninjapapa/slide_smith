@@ -251,6 +251,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Layout inventory mode: pptx (python-pptx) or raw (OpenXML slideLayout parts).",
     )
 
+    convert_potx = subparsers.add_parser(
+        "convert-potx",
+        help="Convert a POTX template to a PPTX (rewrites content types) for tools that reject .potx.",
+    )
+    convert_potx.add_argument("--potx", required=True, help="Path to input .potx")
+    convert_potx.add_argument("--out", required=True, help="Output .pptx path")
+    convert_potx.add_argument("--overwrite", action="store_true", help="Overwrite output if it exists")
+
     inspect_slide = subparsers.add_parser(
         "inspect-slide",
         help="Inspect a specific slide instance (shapes + geometry), not just layouts.",
@@ -512,6 +520,13 @@ def main() -> int:
             fmt=getattr(args, "format", "json"),
             mode=getattr(args, "mode", "pptx"),
         )
+        print(out)
+        return code
+
+    if args.command == "convert-potx":
+        from slide_smith.commands.convert_potx import handle_convert_potx
+
+        code, out = handle_convert_potx(potx=args.potx, out=args.out, overwrite=getattr(args, "overwrite", False))
         print(out)
         return code
 
