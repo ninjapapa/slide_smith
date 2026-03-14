@@ -214,6 +214,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Base directory to resolve relative asset paths (images) from deck spec.",
     )
 
+    validate_exemplar = subparsers.add_parser(
+        "validate-exemplar",
+        help="Validate an output PPTX against a reference deck StyleProfile (v1.2).",
+    )
+    validate_exemplar.add_argument("--reference", required=True, help="Path to reference .pptx")
+    validate_exemplar.add_argument("--pptx", required=True, help="Path to output .pptx")
+    validate_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
+    validate_exemplar.add_argument(
+        "--out",
+        default=None,
+        help="Optional output path for validation report JSON (default: print report).",
+    )
+
     inspect_pptx = subparsers.add_parser(
         "inspect-pptx",
         help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
@@ -463,6 +476,18 @@ def main() -> int:
             deck_spec=args.deck_spec,
             out=args.out,
             assets_base_dir=getattr(args, "assets_base_dir", None),
+        )
+        print(out)
+        return code
+
+    if args.command == "validate-exemplar":
+        from slide_smith.commands.validate_exemplar import handle_validate_exemplar
+
+        code, out = handle_validate_exemplar(
+            reference=args.reference,
+            pptx=args.pptx,
+            style_profile=args.style_profile,
+            out=getattr(args, "out", None),
         )
         print(out)
         return code
