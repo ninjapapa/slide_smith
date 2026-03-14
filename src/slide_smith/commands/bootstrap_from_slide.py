@@ -15,6 +15,7 @@ def handle_bootstrap_from_slide(
     template_id: str,
     out_dir: str,
     archetype: str,
+    boxes_only: bool,
     write: bool,
 ) -> tuple[int, str]:
     """Bootstrap a new template package from a specific slide instance.
@@ -27,7 +28,12 @@ def handle_bootstrap_from_slide(
     """
 
     try:
-        boot = bootstrap_archetype_from_slide(pptx, slide_number=slide_number, archetype_id=archetype)
+        boot = bootstrap_archetype_from_slide(
+            pptx,
+            slide_number=slide_number,
+            archetype_id=archetype,
+            prefer_placeholders=(not boxes_only),
+        )
     except BootstrapFromSlideError as exc:
         return 1, f"bootstrap-from-slide failed: {exc}"
 

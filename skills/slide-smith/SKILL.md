@@ -113,7 +113,7 @@ slide-smith bootstrap-template \
   --out-dir ./templates
 ```
 
-Bootstrap a template *from a specific slide instance* (MVP: generates a **box-based** archetype draft; great for hand-designed decks with weak masters):
+Bootstrap a template *from a specific slide instance* (**placeholder-first**, box fallback). Great for rich branded templates where you want to populate *real placeholders* (editability, style inheritance) rather than overlaying new boxes:
 
 ```bash
 slide-smith bootstrap-from-slide \
@@ -123,11 +123,23 @@ slide-smith bootstrap-from-slide \
   --out-dir ./templates \
   --archetype image_left_text_right \
   --write
+
+# Force box-only (debug/compat):
+slide-smith bootstrap-from-slide \
+  --pptx /path/to/deck.pptx \
+  --slide 10 \
+  --template-id my_template \
+  --out-dir ./templates \
+  --archetype image_left_text_right \
+  --boxes-only \
+  --write
 ```
 
 Notes:
 - This creates `templates/my_template/template.pptx` (copy of the input PPTX) + `template.json`.
-- The generated archetype slots use `box` geometry (`units: relative`) instead of `placeholder_idx`.
+- Default behavior is **placeholder-first**: when the slide/layout exposes real placeholders, the archetype slots use `placeholder_idx`.
+- If placeholders can’t be inferred reliably, it falls back to `box` geometry (`units: relative`).
+- You can force legacy behavior with `--boxes-only`.
 
 Map the bootstrapped layout inventory onto **standard archetypes** (adds `title`, `section`, `title_and_bullets`, `image_left_text_right`):
 
@@ -330,6 +342,23 @@ Near-term recommended flow:
 2) Manually apply branded styling in PowerPoint (or bootstrap a template package from the branded file and switch to template-first `create` once mappings validate).
 
 See `docs/design/rich-potx-and-hybrid-workflow.md`.
+
+## Caller-agent workflow notes (important)
+
+Slide Smith has **no LLM**. The intended split of responsibilities is:
+
+- **Caller agent (LLM)**:
+  - chooses which template/layouts/slides to use as exemplars
+  - decides which archetypes it wants (core or template-native)
+  - supplies mapping hints only when needed
+
+- **Slide Smith (deterministic tool)**:
+  - inspects PPTX/POTX structure
+  - prefers **placeholder-first** mappings (populate real placeholders)
+  - falls back to box geometry only when placeholders are not available/usable
+  - validates mappings and renders output PPTX
+
+If output shows duplicated text or “boxes on top of placeholders”, it usually means you bootstrapped/mapped using boxes when the layout actually has placeholders. Re-run bootstrap/mapping with placeholder-first.
 
 ## Agent guidance
 
