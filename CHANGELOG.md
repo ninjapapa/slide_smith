@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- v1.2 (WIP): exemplar-first / reference deck pipeline (LLM-free):
+  - `analyze` → StyleProfile
+  - `plan` → SlidePlan
+  - `compile-exemplar` → DeckSpec
+  - `render-exemplar` → PPTX
+  - `validate-exemplar` → validation report
+
 ## v1.0.0 — 2026-03-10
 
 - CI workflow (pytest on PR/push)

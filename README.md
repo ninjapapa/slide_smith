@@ -14,7 +14,8 @@ slide_smith is an **agent-first** Python tool for creating and iteratively editi
 > NOTE TO AI AGENTS: Do not edit the “Agent-first mantra” section above.
 
 - Core engine: `python-pptx`
-- Core pipeline: **JSON Deck Spec → PPTX**
+- Core pipeline (v1.0–v1.1): **JSON Deck Spec → PPTX** (template-first)
+- New pipeline (v1.2): **Markdown + reference.pptx → PPTX** (exemplar-first; deterministic)
 - Template model: `template.pptx` (render truth) + `template.json` (semantic truth)
 
 ## Usage (human + agent)
