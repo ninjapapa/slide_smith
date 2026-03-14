@@ -2,6 +2,8 @@
 
 This document defines Slide Smith archetypes and their slot conventions.
 
+- For the proposed **v2 compact-core + template-native** redesign, see: `docs/design/archetypes-v2.md`.
+
 ## Core standard archetypes (v1.0)
 
 These are the stable baseline archetypes.
