@@ -5,6 +5,17 @@ description: "Generate and iteratively edit PowerPoint (.pptx) decks using the s
 
 # Slide Smith (agent-first PPTX tool)
 
+## Role split: caller agent vs. Slide Smith (important)
+
+Slide Smith is a **deterministic PPTX tool, not an LLM**.
+
+Use this responsibility split:
+
+- **Caller agent**: do semantic reasoning; decide the story; pick candidate slides/layouts; map intent → archetype; provide hints only when mappings are ambiguous.
+- **Slide Smith**: inspect PPTX/POTX structure; discover layouts/placeholders; build/update `template.json`; prefer **placeholder-first** mappings; render decks; validate output.
+
+If output looks “visually OK” but is structurally wrong (duplicated text, overlay boxes, titles not discoverable), you likely used box mappings where placeholders were available.
+
 ## Canonical workflow (template-first, JSON-first)
 
 Slide Smith’s v1.0–v1.1 core pipeline is:
@@ -78,6 +89,66 @@ uv pip install .
 pytest -q
 slide-smith --help
 ```
+
+## Rich branded template workflow (recommended)
+
+Use this workflow when the source file is a branded PPTX/POTX with many example slides/layouts.
+
+1) **Inspect inventory**
+- `inspect-pptx` to see layouts + placeholder indices
+- `inspect-slide` on representative slides to understand real geometry + patterns
+
+2) **Decide the story before mapping**
+- Determine narrative + slide intents first
+- Then map intent → archetype/layout
+
+3) **Choose candidate layouts deliberately**
+- Prefer layouts that expose real placeholders when editability matters
+
+4) **Prefer placeholder-first**
+- Use `placeholder_idx` when possible
+- Use `box` slots only as fallback (or `--boxes-only` for debug/compat)
+
+5) **Validate + smoke test**
+- `validate-template` before rendering a real deck
+- render a small dummy deck first (`make-dummy-deck-spec` + `create`)
+
+6) **Inspect output critically**
+- no unwanted sample/template slides preserved
+- text is in placeholders (not overlay boxes)
+- no duplicated “sample” text visible
+
+## Common failure modes (diagnosis)
+
+1) **Output keeps sample/template slides at the front**
+- fix: render should start from zero content slides (template as theme/layout source)
+
+2) **Text appears in the right place but sits on top of existing template text**
+- likely cause: box slots used where placeholders exist
+- fix: rebuild mapping placeholder-first
+
+3) **All slides look like the same background/layout**
+- likely cause: template exposes only one usable layout to python-pptx
+- fix: inspect layout inventory; consider raw OpenXML mode + rebuild template package
+
+4) **Generated titles are blank in inspection tools**
+- likely cause: overlay boxes rather than title placeholders
+- fix: ensure title maps to TITLE placeholder idx
+
+## Caller-agent checklist
+
+Before rendering:
+- story/intents decided?
+- best-fit archetype chosen per slide?
+- layouts inspected?
+- placeholder-first mapping used?
+- smoke test deck rendered?
+- template sample slides not preserved?
+
+After rendering:
+- layouts/backgrounds match intent?
+- no duplicate text?
+- images land in intended placeholders?
 
 ## Commands
 
