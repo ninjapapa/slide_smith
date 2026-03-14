@@ -5,11 +5,24 @@ from pathlib import Path
 from typing import Any
 
 
+# NOTE: This list should track what the renderer supports.
+# v1.0 core + v1.1 extended (renderer supports both).
 SUPPORTED_ARCHETYPES = {
+    # v1.0 core
     "title",
     "section",
     "title_and_bullets",
     "image_left_text_right",
+
+    # v1.1 extended
+    "two_col",
+    "three_col",
+    "four_col",
+    "pillars_3",
+    "pillars_4",
+    "table",
+    "table_plus_description",
+    "timeline_horizontal",
 }
 
 
@@ -61,7 +74,20 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
             if not isinstance(slide.get(field), str) or not slide.get(field):
                 errors.append(f"{_path(sp, field)}: required non-empty string")
 
-        if archetype in {"title", "section", "title_and_bullets", "image_left_text_right"}:
+        if archetype in {
+            "title",
+            "section",
+            "title_and_bullets",
+            "image_left_text_right",
+            "two_col",
+            "three_col",
+            "four_col",
+            "pillars_3",
+            "pillars_4",
+            "table",
+            "table_plus_description",
+            "timeline_horizontal",
+        }:
             req_str("title")
 
         if archetype == "title":
@@ -104,5 +130,36 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
                     errors.append(f"{_path(sp, 'image.alt')}: must be a string")
             else:
                 errors.append(f"{_path(sp, 'image')}: must be a string or an object")
+
+        elif archetype in {"two_col", "three_col", "four_col"}:
+            n = {"two_col": 2, "three_col": 3, "four_col": 4}[archetype]
+            for i in range(1, n + 1):
+                f = f"col{i}_body"
+                if not isinstance(slide.get(f), str) or not slide.get(f):
+                    errors.append(f"{_path(sp, f)}: required non-empty string")
+
+        elif archetype in {"pillars_3", "pillars_4"}:
+            n = 3 if archetype == "pillars_3" else 4
+            for i in range(1, n + 1):
+                f = f"pillar{i}_body"
+                if not isinstance(slide.get(f), str) or not slide.get(f):
+                    errors.append(f"{_path(sp, f)}: required non-empty string")
+
+        elif archetype == "table":
+            if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
+                errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
+
+        elif archetype == "table_plus_description":
+            if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
+                errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
+            if not isinstance(slide.get("body"), str) or not slide.get("body"):
+                errors.append(f"{_path(sp, 'body')}: required non-empty string")
+
+        elif archetype == "timeline_horizontal":
+            # milestoneN_body are optional, but must be strings when present.
+            for i in range(1, 11):
+                f = f"milestone{i}_body"
+                if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
+                    errors.append(f"{_path(sp, f)}: must be a string")
 
     return errors

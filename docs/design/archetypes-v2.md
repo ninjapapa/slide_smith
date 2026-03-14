@@ -191,10 +191,37 @@ In `template.json`:
 
 
 ## Deck spec impact (schema changes)
-We likely need a v2 deck-spec evolution that supports:
-- `archetype`: string ID (core or template-native)
-- optional `params`: object (e.g. `image_side`, `columns`)
-- typed slot structures for list/table/metrics
+
+### Current (v1.x) shape
+Today, each slide is a **flat object** with `archetype` plus top-level fields like `title`, `body`, `bullets`, etc.
+
+Example (today):
+
+```json
+{
+  "slides": [
+    {"archetype": "title_and_bullets", "title": "Overview", "bullets": ["A", "B"]}
+  ]
+}
+```
+
+### Proposed v2 evolution (still flat, but adds canonical list/table/metrics fields)
+To keep the migration lightweight (and avoid a wholesale `slots{}` rewrite), v2 can remain **flat** but introduce:
+
+- optional `params` object (e.g. `{ "columns": 4 }`, `{ "image_side": "left" }`)
+- canonical list-like fields (`items`, `metrics`) as arrays of objects
+- a canonical `table` object (while allowing `table_text` to remain as MVP)
+
+This lets us normalize legacy v1.1 shapes (`three_col`, `pillars_4`, etc.) into v2 canonical shapes without breaking the whole deck-spec format.
+
+#### Concrete field-level diffs (v2 additions)
+- New archetypes: `message`, `multi_col`, `image_text`, `list_visual`, `metrics` (renderer work is tracked separately)
+- New shared field:
+  - `params?: object`
+- New fields:
+  - `items?: [{ heading?, body, label?, number?, icon? }]` for `multi_col` and `list_visual`
+  - `metrics?: [{ value, label, detail?, icon? }]` for `metrics`
+  - `table?: { headers?: string[], rows: string[][] }` for `table`
 
 Example (conceptual):
 
