@@ -93,13 +93,20 @@ def analyze_reference(pptx_path: str, *, mode: str = "pptx") -> AnalyzeReference
     if mode not in ("pptx", "raw"):
         raise ValueError(f"Unsupported mode: {mode} (expected 'pptx' or 'raw')")
 
-    prs = Presentation(str(abs_path))
+    # Slide size: use python-pptx in pptx mode; raw OpenXML in raw mode.
+    if mode == "pptx":
+        prs = Presentation(str(abs_path))
+        slide_size = {"widthEmu": int(prs.slide_width), "heightEmu": int(prs.slide_height)}
+    else:
+        from slide_smith.openxml_presentation import inspect_openxml_presentation
 
-    slide_size = {"widthEmu": int(prs.slide_width), "heightEmu": int(prs.slide_height)}
+        pres = inspect_openxml_presentation(str(abs_path))
+        slide_size = {"widthEmu": int(pres.slide_size["width_emu"]), "heightEmu": int(pres.slide_size["height_emu"])}
 
     layouts: list[dict[str, Any]] = []
 
     if mode == "pptx":
+        # prs defined above in pptx mode
         for idx, layout in enumerate(prs.slide_layouts):
             placeholders: list[dict[str, Any]] = []
 

@@ -11,14 +11,20 @@ def handle_inspect_pptx(*, pptx: str, fmt: str = "json", mode: str = "pptx") -> 
     if mode not in {"pptx", "raw"}:
         return 1, f"Invalid --mode: {mode} (expected pptx|raw)"
 
-    try:
-        base = inspect_pptx(pptx)
-    except Exception as exc:
-        return 1, f"Inspect failed: {exc}"
-
     if mode == "pptx":
+        try:
+            base = inspect_pptx(pptx)
+        except Exception as exc:
+            return 1, f"Inspect failed: {exc}"
+        slide_size = base.slide_size
         layouts = base.layouts
     else:
+        # raw mode should work for both pptx and potx without python-pptx
+        from slide_smith.openxml_presentation import inspect_openxml_presentation
+
+        pres = inspect_openxml_presentation(pptx)
+        slide_size = pres.slide_size
+
         raw = inspect_openxml_layouts(pptx)
         # Normalize raw layouts into the inspect-pptx shape.
         layouts = []
@@ -45,9 +51,9 @@ def handle_inspect_pptx(*, pptx: str, fmt: str = "json", mode: str = "pptx") -> 
 
     if fmt == "text":
         lines = [
-            f"pptx: {base.pptx}",
+            f"pptx: {pptx}",
             f"mode: {mode}",
-            f"slide_size: {base.slide_size['width_emu']}x{base.slide_size['height_emu']} emu",
+            f"slide_size: {slide_size['width_emu']}x{slide_size['height_emu']} emu",
         ]
         for layout in layouts:
             lines.append(f"\nlayout[{layout.get('index','?')}]: {layout.get('name','')}")
@@ -58,7 +64,7 @@ def handle_inspect_pptx(*, pptx: str, fmt: str = "json", mode: str = "pptx") -> 
         return 0, "\n".join(lines)
 
     return 0, json.dumps(
-        {"pptx": base.pptx, "mode": mode, "slide_size": base.slide_size, "layouts": layouts},
+        {"pptx": pptx, "mode": mode, "slide_size": slide_size, "layouts": layouts},
         indent=2,
         sort_keys=True,
     )
