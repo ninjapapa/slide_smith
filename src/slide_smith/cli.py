@@ -185,6 +185,13 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--reference", required=True, help="Path to reference .pptx")
     analyze.add_argument("--out", required=True, help="Output path for style.profile.json")
 
+    plan = subparsers.add_parser(
+        "plan",
+        help="Convert Markdown into a SlidePlan JSON artifact (v1.2 exemplar-first; deterministic).",
+    )
+    plan.add_argument("--input", required=True, help="Path to markdown input")
+    plan.add_argument("--out", required=True, help="Output path for slide.plan.json")
+
     inspect_pptx = subparsers.add_parser(
         "inspect-pptx",
         help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
@@ -408,6 +415,13 @@ def main() -> int:
         from slide_smith.commands.analyze import handle_analyze
 
         code, out = handle_analyze(reference=args.reference, out=args.out)
+        print(out)
+        return code
+
+    if args.command == "plan":
+        from slide_smith.commands.plan import handle_plan
+
+        code, out = handle_plan(input_path=args.input, out=args.out)
         print(out)
         return code
 
