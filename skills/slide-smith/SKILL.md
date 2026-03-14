@@ -5,13 +5,37 @@ description: "Generate and iteratively edit PowerPoint (.pptx) decks using the s
 
 # Slide Smith (agent-first PPTX tool)
 
-## Canonical workflow (JSON-first)
+## Canonical workflow (template-first, JSON-first)
 
-Slide Smith’s core pipeline is:
+Slide Smith’s v1.0–v1.1 core pipeline is:
 
-1) **JSON Deck Spec** → 2) **PPTX**
+1) **JSON Deck Spec** → 2) **PPTX** (using a template package)
 
 Markdown ingestion is optional; prefer caller-side skills/tools to convert Markdown → JSON.
+
+## v1.2 workflow (exemplar-first / reference deck)
+
+v1.2 adds an LLM-free, deterministic pipeline for: **Markdown + reference.pptx → output.pptx**.
+
+Pipeline commands:
+
+```bash
+# 1) reference.pptx -> style.profile.json
+slide-smith analyze --reference ref.pptx --out style.profile.json
+
+# 2) markdown -> slide.plan.json
+slide-smith plan --input deck.md --out slide.plan.json
+
+# 3) (plan + profile) -> deck.spec.json
+slide-smith compile-exemplar --plan slide.plan.json --style-profile style.profile.json --out deck.spec.json
+
+# 4) (spec + reference) -> out.pptx
+slide-smith render-exemplar --reference ref.pptx --style-profile style.profile.json --deck-spec deck.spec.json --out out.pptx \
+  --assets-base-dir .
+
+# 5) validate out.pptx vs reference/profile
+slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profile style.profile.json
+```
 
 ### Inputs
 - Deck Spec schema: `docs/design/deck-spec.schema.json`
