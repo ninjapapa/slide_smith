@@ -126,14 +126,23 @@ def bootstrap_template(
                 }
             )
 
-        archetypes.append(
-            {
-                "id": aid,
-                "description": f"Bootstrap from layout '{lname}'",
-                "layout": lname,
-                "slots": slots,
-            }
-        )
+        layout_part = None
+        try:
+            # Typically like '/ppt/slideLayouts/slideLayout1.xml'
+            layout_part = str(layout.part.partname)  # type: ignore[attr-defined]
+        except Exception:
+            layout_part = None
+
+        archetype: dict[str, Any] = {
+            "id": aid,
+            "description": f"Bootstrap from layout '{lname}'",
+            "layout": lname,
+            "slots": slots,
+        }
+        if layout_part:
+            archetype["layout_part"] = layout_part.lstrip("/")
+
+        archetypes.append(archetype)
 
     if not archetypes:
         raise BootstrapError(

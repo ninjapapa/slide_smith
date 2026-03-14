@@ -72,7 +72,7 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
     return errors
 
 
-def _validate_structural(archetypes: list[object], prs: Presentation) -> list[str]:
+def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_path: str) -> list[str]:
     errors: list[str] = []
 
     layout_names = {layout.name for layout in prs.slide_layouts}
@@ -82,6 +82,19 @@ def _validate_structural(archetypes: list[object], prs: Presentation) -> list[st
             if layout.name == name:
                 return layout
         return None
+
+    # Raw OpenXML inventory (for part-based matching when names don't resolve)
+    raw_by_part: dict[str, dict[str, Any]] = {}
+    try:
+        from slide_smith.openxml_layouts import inspect_openxml_layouts
+
+        raw = inspect_openxml_layouts(pptx_path)
+        for l in raw.layouts:
+            part = l.get("part")
+            if isinstance(part, str) and part:
+                raw_by_part[part] = l
+    except Exception:
+        raw_by_part = {}
 
     for a in archetypes:
         if not isinstance(a, dict):
@@ -107,7 +120,43 @@ def _validate_structural(archetypes: list[object], prs: Presentation) -> list[st
             errors.append(f"archetype '{aid}' missing required 'layout'")
             continue
 
+        layout_part = a.get("layout_part")
+        if isinstance(layout_part, str) and layout_part.startswith("/"):
+            layout_part = layout_part.lstrip("/")
+
         if layout_name not in layout_names:
+            # Try part-based match using raw OpenXML inventory.
+            if isinstance(layout_part, str) and layout_part in raw_by_part:
+                # We'll validate placeholder_idx against raw placeholder idx set.
+                raw_layout = raw_by_part[layout_part]
+                raw_idxs = {
+                    int(ph.get("idx"))
+                    for ph in (raw_layout.get("placeholders") or [])
+                    if isinstance(ph, dict) and isinstance(ph.get("idx"), int)
+                }
+
+                for slot in a.get("slots") or []:
+                    if not isinstance(slot, dict):
+                        errors.append(f"archetype '{aid}': slot entries must be objects")
+                        continue
+                    if "placeholder_idx" not in slot:
+                        continue
+                    idx = slot.get("placeholder_idx")
+                    if not isinstance(idx, int):
+                        errors.append(f"archetype '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
+                        continue
+                    if idx not in raw_idxs:
+                        errors.append(
+                            f"archetype '{aid}': layout_part '{layout_part}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
+                        )
+
+                # If it's box-only, treat missing layout name as warning but still ok.
+                if box_only:
+                    errors.append(
+                        f"warning: archetype '{aid}': slide layout name not found: '{layout_name}' (matched by layout_part)"
+                    )
+                continue
+
             if box_only:
                 errors.append(
                     f"warning: archetype '{aid}': slide layout not found: '{layout_name}' (box-only archetype; skipping layout checks)"
@@ -185,7 +234,7 @@ def validate_template(
 
     if has_pptx:
         prs = Presentation(str(pptx_path))
-        errors.extend(_validate_structural(archetypes, prs))
+        errors.extend(_validate_structural(archetypes, prs, pptx_path=str(pptx_path)))
 
     fatal = [e for e in errors if not str(e).startswith("warning:")]
     return TemplateValidationResult(ok=(len(fatal) == 0), errors=errors)
