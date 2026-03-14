@@ -200,6 +200,20 @@ def build_parser() -> argparse.ArgumentParser:
     compile_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
     compile_exemplar.add_argument("--out", required=True, help="Output path for deck.spec.json")
 
+    render_exemplar = subparsers.add_parser(
+        "render-exemplar",
+        help="Render an exemplar-first DeckSpec using the reference PPTX's layouts (v1.2).",
+    )
+    render_exemplar.add_argument("--reference", required=True, help="Path to reference .pptx")
+    render_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
+    render_exemplar.add_argument("--deck-spec", required=True, help="Path to deck.spec.json")
+    render_exemplar.add_argument("--out", required=True, help="Output .pptx path")
+    render_exemplar.add_argument(
+        "--assets-base-dir",
+        default=None,
+        help="Base directory to resolve relative asset paths (images) from deck spec.",
+    )
+
     inspect_pptx = subparsers.add_parser(
         "inspect-pptx",
         help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
@@ -437,6 +451,19 @@ def main() -> int:
         from slide_smith.commands.compile_exemplar import handle_compile_exemplar
 
         code, out = handle_compile_exemplar(plan=args.plan, style_profile=args.style_profile, out=args.out)
+        print(out)
+        return code
+
+    if args.command == "render-exemplar":
+        from slide_smith.commands.render_exemplar import handle_render_exemplar
+
+        code, out = handle_render_exemplar(
+            reference=args.reference,
+            style_profile=args.style_profile,
+            deck_spec=args.deck_spec,
+            out=args.out,
+            assets_base_dir=getattr(args, "assets_base_dir", None),
+        )
         print(out)
         return code
 
