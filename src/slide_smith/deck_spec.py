@@ -5,11 +5,24 @@ from pathlib import Path
 from typing import Any
 
 
+# NOTE: This list should track what the renderer supports.
+# v1.0 core + v1.1 extended (renderer supports both).
 SUPPORTED_ARCHETYPES = {
+    # v1.0 core
     "title",
     "section",
     "title_and_bullets",
     "image_left_text_right",
+
+    # v1.1 extended
+    "two_col",
+    "three_col",
+    "four_col",
+    "pillars_3",
+    "pillars_4",
+    "table",
+    "table_plus_description",
+    "timeline_horizontal",
 }
 
 
@@ -24,11 +37,16 @@ def _path(*parts: str) -> str:
 
 
 
-def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
+def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list[str]:
     """Lightweight validation with human-friendly error paths.
 
-    This intentionally does not depend on jsonschema; it validates the small subset
-    we actively render/edit.
+    This intentionally does not depend on jsonschema.
+
+    Profiles:
+    - legacy: v1.0 core + v1.1 extended archetypes (current renderer support)
+    - core_v2: enables proposed v2 families (message/multi_col/image_text/list_visual/metrics)
+
+    The goal is to let new archetype families iterate without immediately freezing a full schema.
     """
 
     errors: list[str] = []
@@ -36,6 +54,10 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
     slides = spec.get("slides")
     if not isinstance(slides, list) or not slides:
         return [f"{_path('slides')}: must be a non-empty array"]
+
+    allowed = set(SUPPORTED_ARCHETYPES)
+    if profile == "core_v2":
+        allowed |= {"message", "multi_col", "image_text", "list_visual", "metrics"}
 
     for idx, slide in enumerate(slides):
         sp = f"slides[{idx}]"
@@ -47,10 +69,8 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
         if not isinstance(archetype, str):
             errors.append(f"{_path(sp, 'archetype')}: must be a string")
             continue
-        if archetype not in SUPPORTED_ARCHETYPES:
-            errors.append(
-                f"{_path(sp, 'archetype')}: must be one of: {', '.join(sorted(SUPPORTED_ARCHETYPES))}"
-            )
+        if archetype not in allowed:
+            errors.append(f"{_path(sp, 'archetype')}: must be one of: {', '.join(sorted(allowed))}")
             continue
 
         # Common fields
@@ -61,7 +81,27 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
             if not isinstance(slide.get(field), str) or not slide.get(field):
                 errors.append(f"{_path(sp, field)}: required non-empty string")
 
-        if archetype in {"title", "section", "title_and_bullets", "image_left_text_right"}:
+        if archetype in {
+            "title",
+            "section",
+            "title_and_bullets",
+            "image_left_text_right",
+            # v1.1 extended
+            "two_col",
+            "three_col",
+            "four_col",
+            "pillars_3",
+            "pillars_4",
+            "table",
+            "table_plus_description",
+            "timeline_horizontal",
+            # v2 families
+            "message",
+            "multi_col",
+            "image_text",
+            "list_visual",
+            "metrics",
+        }:
             req_str("title")
 
         if archetype == "title":
@@ -104,5 +144,123 @@ def validate_deck_spec(spec: dict[str, Any]) -> list[str]:
                     errors.append(f"{_path(sp, 'image.alt')}: must be a string")
             else:
                 errors.append(f"{_path(sp, 'image')}: must be a string or an object")
+
+        elif archetype in {"two_col", "three_col", "four_col"}:
+            n = {"two_col": 2, "three_col": 3, "four_col": 4}[archetype]
+            for i in range(1, n + 1):
+                f = f"col{i}_body"
+                if not isinstance(slide.get(f), str) or not slide.get(f):
+                    errors.append(f"{_path(sp, f)}: required non-empty string")
+
+        elif archetype in {"pillars_3", "pillars_4"}:
+            n = 3 if archetype == "pillars_3" else 4
+            for i in range(1, n + 1):
+                f = f"pillar{i}_body"
+                if not isinstance(slide.get(f), str) or not slide.get(f):
+                    errors.append(f"{_path(sp, f)}: required non-empty string")
+
+        elif archetype == "table":
+            if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
+                errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
+
+        elif archetype == "table_plus_description":
+            if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
+                errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
+            if not isinstance(slide.get("body"), str) or not slide.get("body"):
+                errors.append(f"{_path(sp, 'body')}: required non-empty string")
+
+        elif archetype == "timeline_horizontal":
+            # milestoneN_body are optional, but must be strings when present.
+            for i in range(1, 11):
+                f = f"milestone{i}_body"
+                if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
+                    errors.append(f"{_path(sp, f)}: must be a string")
+
+        # --- v2 profiles ---
+
+        elif archetype == "message":
+            body = slide.get("body")
+            quote = slide.get("quote")
+            if body is None and quote is None:
+                errors.append(f"{_path(sp)}: must provide either 'body' or 'quote'")
+            for f in ("body", "quote", "attribution"):
+                if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
+                    errors.append(f"{_path(sp, f)}: must be a string")
+
+        elif archetype == "multi_col":
+            items = slide.get("items")
+            if items is None:
+                errors.append(f"{_path(sp, 'items')}: required for multi_col")
+            elif not isinstance(items, list) or not items:
+                errors.append(f"{_path(sp, 'items')}: must be a non-empty array")
+            else:
+                for j, it in enumerate(items):
+                    if not isinstance(it, dict):
+                        errors.append(f"{_path(sp, f'items[{j}]')}: must be an object")
+                        continue
+                    if not isinstance(it.get("body"), str) or not it.get("body"):
+                        errors.append(f"{_path(sp, f'items[{j}].body')}: required non-empty string")
+                    for k in ("heading", "label", "number"):
+                        if k in it and it.get(k) is not None and not isinstance(it.get(k), str):
+                            errors.append(f"{_path(sp, f'items[{j}].{k}')}: must be a string")
+
+        elif archetype == "image_text":
+            req_str("body")
+            image = slide.get("image")
+            if isinstance(image, str):
+                if not image:
+                    errors.append(f"{_path(sp, 'image')}: required non-empty string")
+            elif isinstance(image, dict):
+                ip = image.get("path")
+                if not isinstance(ip, str) or not ip:
+                    errors.append(f"{_path(sp, 'image.path')}: required non-empty string")
+                alt = image.get("alt")
+                if alt is not None and not isinstance(alt, str):
+                    errors.append(f"{_path(sp, 'image.alt')}: must be a string")
+            else:
+                errors.append(f"{_path(sp, 'image')}: must be a string or an object")
+
+            params = slide.get("params")
+            if params is not None and not isinstance(params, dict):
+                errors.append(f"{_path(sp, 'params')}: must be an object")
+            if isinstance(params, dict) and "image_side" in params:
+                v = params.get("image_side")
+                if v not in {"left", "right"}:
+                    errors.append(f"{_path(sp, 'params.image_side')}: must be 'left' or 'right'")
+
+        elif archetype == "list_visual":
+            items = slide.get("items")
+            if items is None:
+                errors.append(f"{_path(sp, 'items')}: required for list_visual")
+            elif not isinstance(items, list) or not items:
+                errors.append(f"{_path(sp, 'items')}: must be a non-empty array")
+            else:
+                for j, it in enumerate(items):
+                    if not isinstance(it, dict):
+                        errors.append(f"{_path(sp, f'items[{j}]')}: must be an object")
+                        continue
+                    if not isinstance(it.get("body"), str) or not it.get("body"):
+                        errors.append(f"{_path(sp, f'items[{j}].body')}: required non-empty string")
+                    for k in ("label", "number"):
+                        if k in it and it.get(k) is not None and not isinstance(it.get(k), str):
+                            errors.append(f"{_path(sp, f'items[{j}].{k}')}: must be a string")
+
+        elif archetype == "metrics":
+            ms = slide.get("metrics")
+            if ms is None:
+                errors.append(f"{_path(sp, 'metrics')}: required for metrics")
+            elif not isinstance(ms, list) or not ms:
+                errors.append(f"{_path(sp, 'metrics')}: must be a non-empty array")
+            else:
+                for j, m in enumerate(ms):
+                    if not isinstance(m, dict):
+                        errors.append(f"{_path(sp, f'metrics[{j}]')}: must be an object")
+                        continue
+                    if not isinstance(m.get("value"), str) or not m.get("value"):
+                        errors.append(f"{_path(sp, f'metrics[{j}].value')}: required non-empty string")
+                    if not isinstance(m.get("label"), str) or not m.get("label"):
+                        errors.append(f"{_path(sp, f'metrics[{j}].label')}: required non-empty string")
+                    if "detail" in m and m.get("detail") is not None and not isinstance(m.get("detail"), str):
+                        errors.append(f"{_path(sp, f'metrics[{j}].detail')}: must be a string")
 
     return errors
