@@ -163,13 +163,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     bootstrap_from_slide = subparsers.add_parser(
         "bootstrap-from-slide",
-        help="Bootstrap a template package + archetype from a specific slide instance (box-based).",
+        help="Bootstrap a template package + archetype from a specific slide instance (placeholder-first, box fallback).",
     )
     bootstrap_from_slide.add_argument("--pptx", required=True, help="Path to example .pptx.")
     bootstrap_from_slide.add_argument("--slide", type=int, required=True, help="1-indexed slide number to bootstrap from.")
     bootstrap_from_slide.add_argument("--template-id", required=True, help="Template id for the new template package.")
     bootstrap_from_slide.add_argument("--out-dir", required=True, help="Directory to write the new template package into.")
     bootstrap_from_slide.add_argument("--archetype", required=True, help="Archetype id to bootstrap (e.g. image_left_text_right).")
+    bootstrap_from_slide.add_argument(
+        "--boxes-only",
+        action="store_true",
+        help="Force box-based slot mappings even if placeholders are available (debug/compat).",
+    )
     bootstrap_from_slide.add_argument("--write", action="store_true", help="Write template package to disk (otherwise prints template.json).")
 
     export_previews = subparsers.add_parser(
@@ -468,6 +473,7 @@ def main() -> int:
             template_id=args.template_id,
             out_dir=args.out_dir,
             archetype=args.archetype,
+            boxes_only=getattr(args, "boxes_only", False),
             write=getattr(args, "write", False),
         )
         print(out)

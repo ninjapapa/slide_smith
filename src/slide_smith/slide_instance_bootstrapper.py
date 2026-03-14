@@ -37,6 +37,7 @@ def bootstrap_archetype_from_slide(
     *,
     slide_number: int,
     archetype_id: str,
+    prefer_placeholders: bool = True,
 ) -> BootstrappedArchetype:
     """Infer a box-based archetype spec from a concrete slide instance.
 
@@ -122,13 +123,57 @@ def bootstrap_archetype_from_slide(
     body_box = pick_body_box()
     image_box = pick_image_box()
 
+    def placeholder_idx_by_type(*want_types: set[int]) -> int | None:
+        # Best-effort placeholder discovery on the concrete slide.
+        for ph in getattr(slide, "placeholders", []):
+            try:
+                pht = int(ph.placeholder_format.type)  # type: ignore[attr-defined]
+                idx = int(ph.placeholder_format.idx)  # type: ignore[attr-defined]
+            except Exception:
+                continue
+            if pht in want_types:
+                return idx
+        return None
+
     if archetype_id == "image_left_text_right":
-        if title_box is None:
-            raise BootstrapFromSlideError("Could not infer title box (no non-empty text shapes)")
-        if body_box is None:
-            raise BootstrapFromSlideError("Could not infer body box (need at least 2 non-empty text shapes)")
-        if image_box is None:
-            raise BootstrapFromSlideError("Could not infer image box (no picture shapes)")
+        # Prefer real placeholders when possible (placeholder-first).
+        title_idx = None
+        body_idx = None
+        image_idx = None
+
+        if prefer_placeholders:
+            try:
+                from pptx.enum.shapes import PP_PLACEHOLDER  # type: ignore
+
+                title_idx = placeholder_idx_by_type({int(PP_PLACEHOLDER.TITLE), int(PP_PLACEHOLDER.CENTER_TITLE)})
+                body_idx = placeholder_idx_by_type({int(PP_PLACEHOLDER.BODY)})
+                image_idx = placeholder_idx_by_type({int(PP_PLACEHOLDER.PICTURE)})
+            except Exception:
+                title_idx = body_idx = image_idx = None
+
+        slots: list[dict[str, Any]] = []
+        heuristic = []
+
+        if title_idx is not None and body_idx is not None and image_idx is not None:
+            heuristic.append("placeholder-first: TITLE/BODY/PICTURE placeholders")
+            slots = [
+                {"name": "title", "type": "text", "required": True, "placeholder_idx": int(title_idx)},
+                {"name": "image", "type": "image", "required": True, "placeholder_idx": int(image_idx)},
+                {"name": "body", "type": "text", "required": True, "placeholder_idx": int(body_idx)},
+            ]
+        else:
+            heuristic.append("box-fallback: topmost text=title, next text=body, largest picture=image")
+            if title_box is None:
+                raise BootstrapFromSlideError("Could not infer title box (no non-empty text shapes)")
+            if body_box is None:
+                raise BootstrapFromSlideError("Could not infer body box (need at least 2 non-empty text shapes)")
+            if image_box is None:
+                raise BootstrapFromSlideError("Could not infer image box (no picture shapes)")
+            slots = [
+                {"name": "title", "type": "text", "required": True, "box": title_box},
+                {"name": "image", "type": "image", "required": True, "box": image_box},
+                {"name": "body", "type": "text", "required": True, "box": body_box},
+            ]
 
         archetype_spec = {
             "id": archetype_id,
@@ -136,13 +181,10 @@ def bootstrap_archetype_from_slide(
             "description": f"Bootstrapped from slide {slide_number} of {p.name}",
             "bootstrap": {
                 "source": {"pptx": str(p.resolve()), "slide_number": int(slide_number)},
-                "heuristic": "topmost text=title, next text=body, largest picture=image",
+                "heuristic": "; ".join(heuristic),
+                "prefer_placeholders": bool(prefer_placeholders),
             },
-            "slots": [
-                {"name": "title", "type": "text", "required": True, "box": title_box},
-                {"name": "image", "type": "image", "required": True, "box": image_box},
-                {"name": "body", "type": "text", "required": True, "box": body_box},
-            ],
+            "slots": slots,
         }
         return BootstrappedArchetype(
             pptx=str(p.resolve()),
