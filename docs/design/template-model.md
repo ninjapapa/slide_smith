@@ -1,5 +1,7 @@
 # Template Storage and Representation Model
 
+> v2 note: templates may optionally define **template-native archetypes** (namespaced) in addition to the global core archetype set, and can map core → native via `deck.native_preferred`. See: `docs/design/archetypes-v2.md`.
+
 ## Decision
 
 `slide_smith` should use a **dual-artifact template model**:
