@@ -6,8 +6,8 @@ from pathlib import Path
 from slide_smith.reference_analyzer import analyze_reference
 
 
-def handle_analyze(*, reference: str, out: str) -> tuple[int, str]:
-    res = analyze_reference(reference)
+def handle_analyze(*, reference: str, out: str, mode: str = "pptx") -> tuple[int, str]:
+    res = analyze_reference(reference, mode=mode)
 
     out_path = Path(out).expanduser().resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)

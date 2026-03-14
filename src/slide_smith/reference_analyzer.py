@@ -66,7 +66,7 @@ class AnalyzeReferenceResult:
     style_profile: dict[str, Any]
 
 
-def analyze_reference(pptx_path: str) -> AnalyzeReferenceResult:
+def analyze_reference(pptx_path: str, *, mode: str = "pptx") -> AnalyzeReferenceResult:
     path = Path(pptx_path).expanduser()
     if not path.exists():
         raise FileNotFoundError(f"PPTX not found: {path}")
@@ -76,43 +76,80 @@ def analyze_reference(pptx_path: str) -> AnalyzeReferenceResult:
     abs_path = path.resolve()
     sha256 = _sha256_file(abs_path)
 
+    mode = (mode or "pptx").strip().lower()
+    if mode not in ("pptx", "raw"):
+        raise ValueError(f"Unsupported mode: {mode} (expected 'pptx' or 'raw')")
+
     prs = Presentation(str(abs_path))
 
     slide_size = {"widthEmu": int(prs.slide_width), "heightEmu": int(prs.slide_height)}
 
     layouts: list[dict[str, Any]] = []
-    for idx, layout in enumerate(prs.slide_layouts):
-        placeholders: list[dict[str, Any]] = []
 
-        # Note: layout.placeholders are placeholder shapes on the layout.
-        # They have geometry (left/top/width/height) in EMU.
-        for ph in sorted(layout.placeholders, key=lambda p: int(p.placeholder_format.idx)):
-            left = int(getattr(ph, "left", 0) or 0)
-            top = int(getattr(ph, "top", 0) or 0)
-            width = int(getattr(ph, "width", 0) or 0)
-            height = int(getattr(ph, "height", 0) or 0)
+    if mode == "pptx":
+        for idx, layout in enumerate(prs.slide_layouts):
+            placeholders: list[dict[str, Any]] = []
 
-            placeholders.append(
+            # Note: layout.placeholders are placeholder shapes on the layout.
+            # They have geometry (left/top/width/height) in EMU.
+            for ph in sorted(layout.placeholders, key=lambda p: int(p.placeholder_format.idx)):
+                left = int(getattr(ph, "left", 0) or 0)
+                top = int(getattr(ph, "top", 0) or 0)
+                width = int(getattr(ph, "width", 0) or 0)
+                height = int(getattr(ph, "height", 0) or 0)
+
+                placeholders.append(
+                    {
+                        "type": _enum_name(ph.placeholder_format.type),
+                        "idx": int(ph.placeholder_format.idx),
+                        "name": getattr(ph, "name", ""),
+                        "shapeType": _enum_name(getattr(ph, "shape_type", None)),
+                        "bbox": {"x": left, "y": top, "w": width, "h": height},
+                    }
+                )
+
+            layout_name = getattr(layout, "name", "") or f"Layout {idx}"
+            layout_id = _stable_layout_id(layout_index=idx, layout_name=layout_name, placeholders=placeholders)
+
+            layouts.append(
                 {
-                    "type": _enum_name(ph.placeholder_format.type),
-                    "idx": int(ph.placeholder_format.idx),
-                    "name": getattr(ph, "name", ""),
-                    "shapeType": _enum_name(getattr(ph, "shape_type", None)),
-                    "bbox": {"x": left, "y": top, "w": width, "h": height},
+                    "layoutId": layout_id,
+                    "name": layout_name,
+                    "index": int(idx),
+                    "placeholders": placeholders,
                 }
             )
 
-        layout_name = getattr(layout, "name", "") or f"Layout {idx}"
-        layout_id = _stable_layout_id(layout_index=idx, layout_name=layout_name, placeholders=placeholders)
+    else:
+        # raw openxml mode: enumerate ppt/slideLayouts/ parts.
+        from slide_smith.openxml_layouts import inspect_openxml_layouts
 
-        layouts.append(
-            {
-                "layoutId": layout_id,
-                "name": layout_name,
-                "index": int(idx),
-                "placeholders": placeholders,
-            }
-        )
+        raw = inspect_openxml_layouts(str(abs_path))
+        for idx, layout in enumerate(raw.layouts):
+            placeholders = []
+            for ph in layout.get("placeholders") or []:
+                # raw types are already strings
+                placeholders.append(
+                    {
+                        "type": str(ph.get("type", "")),
+                        "idx": int(ph.get("idx", -1)),
+                        "name": "",
+                        "shapeType": "",
+                        "bbox": ph.get("bbox") or {"x": 0, "y": 0, "w": 0, "h": 0},
+                    }
+                )
+
+            layout_name = str(layout.get("name") or f"Layout {idx}")
+            layout_id = _stable_layout_id(layout_index=idx, layout_name=layout_name, placeholders=placeholders)
+            layouts.append(
+                {
+                    "layoutId": layout_id,
+                    "name": layout_name,
+                    "index": int(idx),
+                    "part": str(layout.get("part", "")),
+                    "placeholders": placeholders,
+                }
+            )
 
     # Theme extraction: best-effort. python-pptx doesn't expose full theme reliably.
     # Keep this as a placeholder structure for now.

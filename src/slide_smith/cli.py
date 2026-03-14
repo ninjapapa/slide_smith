@@ -182,8 +182,14 @@ def build_parser() -> argparse.ArgumentParser:
         "analyze",
         help="Analyze a reference PPTX and emit a StyleProfile JSON artifact (v1.2 exemplar-first).",
     )
-    analyze.add_argument("--reference", required=True, help="Path to reference .pptx")
+    analyze.add_argument("--reference", required=True, help="Path to reference .pptx/.potx")
     analyze.add_argument("--out", required=True, help="Output path for style.profile.json")
+    analyze.add_argument(
+        "--mode",
+        choices=["pptx", "raw"],
+        default="pptx",
+        help="Layout extraction mode: pptx (python-pptx) or raw (OpenXML slideLayout parts).",
+    )
 
     plan = subparsers.add_parser(
         "plan",
@@ -449,7 +455,7 @@ def main() -> int:
     if args.command == "analyze":
         from slide_smith.commands.analyze import handle_analyze
 
-        code, out = handle_analyze(reference=args.reference, out=args.out)
+        code, out = handle_analyze(reference=args.reference, out=args.out, mode=getattr(args, "mode", "pptx"))
         print(out)
         return code
 
