@@ -15,7 +15,11 @@ Markdown ingestion is optional; prefer caller-side skills/tools to convert Markd
 
 ## v1.2 workflow (exemplar-first / reference deck)
 
-v1.2 adds an LLM-free, deterministic pipeline for: **Markdown + reference.pptx → output.pptx**.
+v1.2 adds an LLM-free, deterministic pipeline for: **Markdown + reference.(pptx|potx) → output.pptx**.
+
+Notes:
+- `.potx` (PowerPoint template) is supported anywhere a reference PPTX is accepted; it contains the same layout/theme structures.
+- If any tool in your environment refuses `.potx`, a workaround is to copy/rename it to `.pptx` (OpenXML container is compatible).
 
 Pipeline commands:
 
@@ -35,6 +39,9 @@ slide-smith render-exemplar --reference ref.pptx --style-profile style.profile.j
 
 # 5) validate out.pptx vs reference/profile
 slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profile style.profile.json
+
+# Optional: also write a validation report JSON
+slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profile style.profile.json --out validate.report.json
 ```
 
 ### Inputs
@@ -45,12 +52,26 @@ slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profi
 
 ## Local setup (recommended)
 
+Option 1: project-local venv
+
 ```bash
 cd ~/slide_smith
 python3 -m venv .venv
 source .venv/bin/activate
 pip install .
 pytest -q
+slide-smith --help
+```
+
+Option 2: using `uv`
+
+```bash
+cd ~/slide_smith
+uv venv .venv
+source .venv/bin/activate
+uv pip install .
+pytest -q
+slide-smith --help
 ```
 
 ## Commands
@@ -150,11 +171,20 @@ Extended-compat validation (extended archetypes library):
 slide-smith validate-template --template my_template --templates-dir ./templates --profile extended
 ```
 
-Render a dummy deck for human review:
+Generate a dummy deck spec that exercises a template’s archetypes:
+
+```bash
+slide-smith make-dummy-deck-spec \
+  --template my_template \
+  --templates-dir ./templates \
+  --output /tmp/dummy-deck.json
+```
+
+Render that dummy deck for human review:
 
 ```bash
 slide-smith create \
-  --input docs/design/examples/deck-spec.dummy.sample.json \
+  --input /tmp/dummy-deck.json \
   --template my_template \
   --templates-dir ./templates \
   --output /tmp/dummy-review.pptx
