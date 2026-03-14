@@ -26,7 +26,16 @@
         { "$ref": "#/$defs/title_slide" },
         { "$ref": "#/$defs/section_slide" },
         { "$ref": "#/$defs/title_and_bullets_slide" },
-        { "$ref": "#/$defs/image_left_text_right_slide" }
+        { "$ref": "#/$defs/image_left_text_right_slide" },
+
+        { "$ref": "#/$defs/two_col_slide" },
+        { "$ref": "#/$defs/three_col_slide" },
+        { "$ref": "#/$defs/four_col_slide" },
+        { "$ref": "#/$defs/pillars_3_slide" },
+        { "$ref": "#/$defs/pillars_4_slide" },
+        { "$ref": "#/$defs/table_slide" },
+        { "$ref": "#/$defs/table_plus_description_slide" },
+        { "$ref": "#/$defs/timeline_horizontal_slide" }
       ]
     },
 
@@ -98,6 +107,131 @@
         {
           "properties": { "archetype": { "const": "image_left_text_right" } },
           "required": ["archetype", "title", "body", "image"]
+        }
+      ]
+    },
+
+    "two_col_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "two_col" } },
+          "required": ["archetype", "title", "col1_body", "col2_body"],
+          "properties": {
+            "col1_body": { "type": "string" },
+            "col2_body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "three_col_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "three_col" } },
+          "required": ["archetype", "title", "col1_body", "col2_body", "col3_body"],
+          "properties": {
+            "col1_body": { "type": "string" },
+            "col2_body": { "type": "string" },
+            "col3_body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "four_col_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "four_col" } },
+          "required": ["archetype", "title", "col1_body", "col2_body", "col3_body", "col4_body"],
+          "properties": {
+            "col1_body": { "type": "string" },
+            "col2_body": { "type": "string" },
+            "col3_body": { "type": "string" },
+            "col4_body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "pillars_3_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "pillars_3" } },
+          "required": ["archetype", "title", "pillar1_body", "pillar2_body", "pillar3_body"],
+          "properties": {
+            "pillar1_body": { "type": "string" },
+            "pillar2_body": { "type": "string" },
+            "pillar3_body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "pillars_4_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "pillars_4" } },
+          "required": ["archetype", "title", "pillar1_body", "pillar2_body", "pillar3_body", "pillar4_body"],
+          "properties": {
+            "pillar1_body": { "type": "string" },
+            "pillar2_body": { "type": "string" },
+            "pillar3_body": { "type": "string" },
+            "pillar4_body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "table_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "table" } },
+          "required": ["archetype", "title", "table_text"],
+          "properties": {
+            "table_text": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "table_plus_description_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "table_plus_description" } },
+          "required": ["archetype", "title", "table_text", "body"],
+          "properties": {
+            "table_text": { "type": "string" },
+            "body": { "type": "string" }
+          }
+        }
+      ]
+    },
+
+    "timeline_horizontal_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "timeline_horizontal" } },
+          "required": ["archetype", "title"],
+          "properties": {
+            "milestone1_body": { "type": "string" },
+            "milestone2_body": { "type": "string" },
+            "milestone3_body": { "type": "string" },
+            "milestone4_body": { "type": "string" },
+            "milestone5_body": { "type": "string" },
+            "milestone6_body": { "type": "string" },
+            "milestone7_body": { "type": "string" },
+            "milestone8_body": { "type": "string" },
+            "milestone9_body": { "type": "string" },
+            "milestone10_body": { "type": "string" }
+          }
         }
       ]
     }
