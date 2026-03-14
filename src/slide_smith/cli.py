@@ -244,6 +244,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
         help="Output format (default: json).",
     )
+    inspect_pptx.add_argument(
+        "--mode",
+        choices=["pptx", "raw"],
+        default="pptx",
+        help="Layout inventory mode: pptx (python-pptx) or raw (OpenXML slideLayout parts).",
+    )
 
     inspect_slide = subparsers.add_parser(
         "inspect-slide",
@@ -501,7 +507,11 @@ def main() -> int:
     if args.command == "inspect-pptx":
         from slide_smith.commands.inspect_pptx import handle_inspect_pptx
 
-        code, out = handle_inspect_pptx(pptx=args.pptx, fmt=getattr(args, "format", "json"))
+        code, out = handle_inspect_pptx(
+            pptx=args.pptx,
+            fmt=getattr(args, "format", "json"),
+            mode=getattr(args, "mode", "pptx"),
+        )
         print(out)
         return code
 

@@ -2,24 +2,63 @@ from __future__ import annotations
 
 import json
 
+from slide_smith.openxml_layouts import inspect_openxml_layouts
 from slide_smith.pptx_inspector import inspect_pptx
 
 
-def handle_inspect_pptx(*, pptx: str, fmt: str = "json") -> tuple[int, str]:
+def handle_inspect_pptx(*, pptx: str, fmt: str = "json", mode: str = "pptx") -> tuple[int, str]:
+    mode = (mode or "pptx").strip().lower()
+    if mode not in {"pptx", "raw"}:
+        return 1, f"Invalid --mode: {mode} (expected pptx|raw)"
+
     try:
-        res = inspect_pptx(pptx)
+        base = inspect_pptx(pptx)
     except Exception as exc:
         return 1, f"Inspect failed: {exc}"
 
+    if mode == "pptx":
+        layouts = base.layouts
+    else:
+        raw = inspect_openxml_layouts(pptx)
+        # Normalize raw layouts into the inspect-pptx shape.
+        layouts = []
+        for i, l in enumerate(raw.layouts):
+            placeholders = []
+            for ph in l.get("placeholders") or []:
+                placeholders.append(
+                    {
+                        "idx": int(ph.get("idx", -1)),
+                        "name": "",
+                        "ph_type": str(ph.get("type", "")),
+                        "shape_type": "",
+                        **({"bbox": ph.get("bbox")} if isinstance(ph.get("bbox"), dict) else {}),
+                    }
+                )
+            layouts.append(
+                {
+                    "name": l.get("name", ""),
+                    "index": i,
+                    "part": l.get("part", ""),
+                    "placeholders": placeholders,
+                }
+            )
+
     if fmt == "text":
         lines = [
-            f"pptx: {res.pptx}",
-            f"slide_size: {res.slide_size['width_emu']}x{res.slide_size['height_emu']} emu",
+            f"pptx: {base.pptx}",
+            f"mode: {mode}",
+            f"slide_size: {base.slide_size['width_emu']}x{base.slide_size['height_emu']} emu",
         ]
-        for layout in res.layouts:
-            lines.append(f"\nlayout[{layout['index']}]: {layout['name']}")
+        for layout in layouts:
+            lines.append(f"\nlayout[{layout.get('index','?')}]: {layout.get('name','')}")
+            if layout.get("part"):
+                lines.append(f"  part: {layout.get('part')}")
             for ph in layout.get("placeholders", []):
-                lines.append(f"  - idx={ph['idx']} type={ph['ph_type']} name={ph.get('name','')}")
+                lines.append(f"  - idx={ph['idx']} type={ph.get('ph_type','')} name={ph.get('name','')}")
         return 0, "\n".join(lines)
 
-    return 0, json.dumps({"pptx": res.pptx, "slide_size": res.slide_size, "layouts": res.layouts}, indent=2, sort_keys=True)
+    return 0, json.dumps(
+        {"pptx": base.pptx, "mode": mode, "slide_size": base.slide_size, "layouts": layouts},
+        indent=2,
+        sort_keys=True,
+    )
