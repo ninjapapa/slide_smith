@@ -35,7 +35,9 @@ def handle_create(
         except AssetError as exc:
             return 1, f"Asset collection failed: {exc}"
 
-    errors = validate_deck_spec(spec)
+    # Default to legacy validation (v1 core + v1.1 extended). New v2 families are
+    # behind an explicit profile until they are fully stabilized.
+    errors = validate_deck_spec(spec, profile="legacy")
     if errors:
         lines = ["Deck spec validation failed:"] + [f"- {e}" for e in errors]
         return 1, "\n".join(lines)

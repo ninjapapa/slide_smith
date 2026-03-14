@@ -71,6 +71,18 @@ def build_parser() -> argparse.ArgumentParser:
     validate_template_cmd = subparsers.add_parser(
         "validate-template", help="Validate that a template package matches its PPTX (layouts/placeholders)."
     )
+
+    validate_deck = subparsers.add_parser(
+        "validate-deck-spec",
+        help="Validate a deck spec (.json or .md). Supports profiles for legacy vs v2 families.",
+    )
+    validate_deck.add_argument("--input", required=True, help="Path to deck spec (.json or .md)")
+    validate_deck.add_argument(
+        "--profile",
+        default="legacy",
+        choices=["legacy", "core_v2"],
+        help="Validation profile: legacy (default) or core_v2 (enables v2 families)",
+    )
     validate_template_cmd.add_argument("--template", required=True, help="Template id to validate.")
     validate_template_cmd.add_argument(
         "--templates-dir",
@@ -374,6 +386,13 @@ def main() -> int:
             templates_dir=getattr(args, "templates_dir", None),
             profile=getattr(args, "profile", "structural"),
         )
+        print(out)
+        return code
+
+    if args.command == "validate-deck-spec":
+        from slide_smith.commands.validate_deck_spec import handle_validate_deck_spec
+
+        code, out = handle_validate_deck_spec(input_path=args.input, profile=getattr(args, "profile", "legacy"))
         print(out)
         return code
 
