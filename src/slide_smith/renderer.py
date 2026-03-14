@@ -27,6 +27,24 @@ def _layout_by_name(prs: Presentation, name: str):
     raise RenderingError(f"Slide layout '{name}' not found in template presentation")
 
 
+def _layout_for_archetype(prs: Presentation, archetype_spec: dict[str, Any]):
+    """Resolve a layout for an archetype.
+
+    Prefer `layout_part` when available (more stable for rich branded templates).
+    Fallback to `layout` name.
+    """
+
+    from slide_smith.layout_resolver import LayoutResolveError, resolve_layout
+
+    layout_name = archetype_spec.get("layout")
+    layout_part = archetype_spec.get("layout_part")
+
+    try:
+        return resolve_layout(prs=prs, layout_name=layout_name, layout_part=layout_part).layout
+    except LayoutResolveError as exc:
+        raise RenderingError(str(exc)) from exc
+
+
 def _slot_spec(archetype_spec: dict[str, Any], slot_name: str) -> dict[str, Any] | None:
     for slot in archetype_spec.get("slots", []):
         if isinstance(slot, dict) and slot.get("name") == slot_name:
@@ -497,8 +515,7 @@ def render_deck(
         if archetype not in archetypes:
             raise RenderingError(f"Archetype '{archetype}' not supported by template '{template_id}'")
         archetype_spec = archetypes[archetype]
-        layout_name = archetype_spec["layout"]
-        slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
+        slide = prs.slides.add_slide(_layout_for_archetype(prs, archetype_spec))
 
         if archetype == "title":
             _render_title(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
