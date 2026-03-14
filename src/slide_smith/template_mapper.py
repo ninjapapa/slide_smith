@@ -173,6 +173,10 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(layout, str) or not layout:
             continue
 
+        layout_part = src.get("layout_part")
+        if isinstance(layout_part, str) and layout_part.startswith("/"):
+            layout_part = layout_part.lstrip("/")
+
         slots: list[dict[str, Any]] = []
         for slot_req in STANDARD_ARCHETYPES[std_id]["required_slots"]:
             name = slot_req["name"]
@@ -197,16 +201,18 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
                 out["placeholder_idx"] = idx
             slots.append(out)
 
-        generated.append(
-            {
-                "id": std_id,
-                "layout": layout,
-                "description": f"Generated mapping from '{cand.archetype_id}' (score={cand.score:.1f})",
-                "generated": True,
-                "inference": {"source_archetype": cand.archetype_id, "score": cand.score, "reason": cand.reason},
-                "slots": slots,
-            }
-        )
+        out_arch: dict[str, Any] = {
+            "id": std_id,
+            "layout": layout,
+            "description": f"Generated mapping from '{cand.archetype_id}' (score={cand.score:.1f})",
+            "generated": True,
+            "inference": {"source_archetype": cand.archetype_id, "score": cand.score, "reason": cand.reason},
+            "slots": slots,
+        }
+        if isinstance(layout_part, str) and layout_part:
+            out_arch["layout_part"] = layout_part
+
+        generated.append(out_arch)
 
     # Merge into output spec: replace existing standard archetypes if present.
     existing = [a for a in archetypes if a.get("id") not in set(STANDARD_ARCHETYPES.keys())]
