@@ -1,0 +1,36 @@
+{
+  "version": "1",
+  "reference": {
+    "path": "ref.pptx",
+    "sha256": "TBD",
+    "slideSize": {"widthEmu": 12192000, "heightEmu": 6858000}
+  },
+  "layouts": [
+    {
+      "layoutId": "layout:TitleSlide",
+      "name": "Title Slide",
+      "placeholders": [
+        {"type": "title", "idx": 0, "bbox": {"x": 1000000, "y": 800000, "w": 10000000, "h": 1000000}},
+        {"type": "body", "idx": 1, "bbox": {"x": 1000000, "y": 2000000, "w": 10000000, "h": 800000}}
+      ]
+    },
+    {
+      "layoutId": "layout:TitleAndBody",
+      "name": "Title and Content",
+      "placeholders": [
+        {"type": "title", "idx": 0, "bbox": {"x": 900000, "y": 400000, "w": 10300000, "h": 900000}},
+        {"type": "body", "idx": 1, "bbox": {"x": 900000, "y": 1600000, "w": 10300000, "h": 4500000}}
+      ]
+    },
+    {
+      "layoutId": "layout:TitleBodyPicture",
+      "name": "Title, Content, Picture",
+      "placeholders": [
+        {"type": "title", "idx": 0, "bbox": {"x": 900000, "y": 400000, "w": 10300000, "h": 900000}},
+        {"type": "body", "idx": 1, "bbox": {"x": 900000, "y": 1600000, "w": 6000000, "h": 4500000}},
+        {"type": "picture", "idx": 2, "bbox": {"x": 7200000, "y": 1600000, "w": 4000000, "h": 4500000}}
+      ]
+    }
+  ],
+  "constraints": {"placeholderOnly": true, "allowNewShapes": false}
+}

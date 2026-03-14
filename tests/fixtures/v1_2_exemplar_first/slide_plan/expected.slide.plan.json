@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "source": {"path": "sample.md", "sha256": "TBD"},
+  "slides": [
+    {
+      "intent": "title",
+      "fields": {"title": "My Deck"}
+    },
+    {
+      "intent": "bullets",
+      "fields": {
+        "title": "Agenda",
+        "bullets": ["One", "Two", "Three"]
+      }
+    },
+    {
+      "intent": "bullets",
+      "fields": {
+        "title": "Approach",
+        "bullets": ["Step A", "Step B"]
+      }
+    },
+    {
+      "intent": "image",
+      "fields": {
+        "title": "Approach",
+        "image": {"path": "assets/diagram.png", "alt": "Diagram"}
+      }
+    }
+  ]
+}

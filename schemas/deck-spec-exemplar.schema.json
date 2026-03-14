@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ninjapapa/slide_smith/schemas/deck-spec-exemplar.schema.json",
+  "title": "slide_smith DeckSpec (exemplar-first, v1.2 draft)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "reference", "slides"],
+  "properties": {
+    "version": {"type": "string"},
+    "reference": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string"}
+      }
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["layoutId", "fills"],
+        "properties": {
+          "layoutId": {"type": "string"},
+          "fills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["placeholder"],
+              "properties": {
+                "placeholder": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["type", "idx"],
+                  "properties": {
+                    "type": {"type": "string"},
+                    "idx": {"type": "integer"}
+                  }
+                },
+                "text": {"type": "string"},
+                "image": {"type": "object"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

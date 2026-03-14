@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ninjapapa/slide_smith/schemas/style-profile.schema.json",
+  "title": "slide_smith StyleProfile (v1.2 draft)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "reference", "layouts"],
+  "properties": {
+    "version": {"type": "string"},
+    "reference": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string"},
+        "slideSize": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "widthEmu": {"type": "integer"},
+            "heightEmu": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "theme": {"type": "object"},
+    "layouts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["layoutId", "name", "placeholders"],
+        "properties": {
+          "layoutId": {"type": "string"},
+          "name": {"type": "string"},
+          "placeholders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["type", "idx"],
+              "properties": {
+                "type": {"type": "string"},
+                "idx": {"type": "integer"},
+                "bbox": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "x": {"type": "integer"},
+                    "y": {"type": "integer"},
+                    "w": {"type": "integer"},
+                    "h": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {"type": "object"},
+    "hints": {"type": "object"}
+  }
+}
