@@ -92,15 +92,37 @@ def _validate_structural(archetypes: list[object], prs: Presentation) -> list[st
         if not isinstance(aid, str) or not aid:
             errors.append("archetype missing required 'id'")
             continue
+        # Box-only archetypes (slide-instance-derived) may not require a resolvable layout.
+        slots = a.get("slots") or []
+        box_only = False
+        if isinstance(slots, list) and slots:
+            typed_slots = [s for s in slots if isinstance(s, dict)]
+            if typed_slots and all(("placeholder_idx" not in s) and isinstance(s.get("box"), dict) for s in typed_slots):
+                box_only = True
+
         if not isinstance(layout_name, str) or not layout_name:
+            if box_only:
+                errors.append(f"warning: archetype '{aid}' missing layout (box-only archetype; skipping layout checks)")
+                continue
             errors.append(f"archetype '{aid}' missing required 'layout'")
             continue
+
         if layout_name not in layout_names:
+            if box_only:
+                errors.append(
+                    f"warning: archetype '{aid}': slide layout not found: '{layout_name}' (box-only archetype; skipping layout checks)"
+                )
+                continue
             errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
             continue
 
         layout = layout_by_name(layout_name)
         if layout is None:
+            if box_only:
+                errors.append(
+                    f"warning: archetype '{aid}': slide layout not found: '{layout_name}' (box-only archetype; skipping layout checks)"
+                )
+                continue
             errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
             continue
 
@@ -165,4 +187,5 @@ def validate_template(
         prs = Presentation(str(pptx_path))
         errors.extend(_validate_structural(archetypes, prs))
 
-    return TemplateValidationResult(ok=(len(errors) == 0), errors=errors)
+    fatal = [e for e in errors if not str(e).startswith("warning:")]
+    return TemplateValidationResult(ok=(len(fatal) == 0), errors=errors)
