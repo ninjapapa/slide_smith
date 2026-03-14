@@ -419,6 +419,208 @@ def _render_image_left_text_right(
         _set_box_text(slide, box_emu, body_text, styles.get("body"))
 
 
+def _render_v2_families(
+    slide,
+    spec: dict[str, Any],
+    base_dir: Path,
+    styles,
+    archetype_spec: dict[str, Any],
+    archetype_id: str,
+    *,
+    slide_w_emu: int,
+    slide_h_emu: int,
+) -> None:
+    """MVP renderer for proposed v2 archetype families.
+
+    Notes:
+    - This is intentionally conservative/minimal.
+    - These archetypes are not yet part of the v1 deck-spec schema; they are introduced
+      for forward compatibility + early template experiments.
+    - Slot mapping is still driven entirely by template.json.
+
+    Expected template slots (convention):
+    - message: title, body (or quote), attribution (optional)
+    - multi_col: title, col1_body..col4_body (best-effort)
+    - image_text: title, image, body (image_side is a param only; mapping decides actual layout)
+    - list_visual: title, bullets (preferred) OR body (fallback)
+    - metrics: title, body (metrics rendered as text for MVP)
+    """
+
+    def set_text_slot(slot_name: str, value: str | None, style_key: str = "body"):
+        _set_slot_text(
+            slide,
+            archetype_id,
+            archetype_spec,
+            slot_name,
+            value,
+            styles.get(style_key),
+            slide_w_emu=slide_w_emu,
+            slide_h_emu=slide_h_emu,
+            context=f"archetype={archetype_id} slot={slot_name}",
+        )
+
+    # Title is shared across the families.
+    _set_slot_text(
+        slide,
+        archetype_id,
+        archetype_spec,
+        "title",
+        spec.get("title", ""),
+        styles.get("title"),
+        slide_w_emu=slide_w_emu,
+        slide_h_emu=slide_h_emu,
+        default_idx=0,
+        context=f"archetype={archetype_id} slot=title",
+    )
+
+    if archetype_id == "message":
+        # Prefer explicit body/quote; templates can choose which slot they expose.
+        body = spec.get("body") or spec.get("quote") or ""
+        attribution = spec.get("attribution") or ""
+
+        # Try to populate both body and quote if template declares them.
+        if _slot_spec(archetype_spec, "body") is not None:
+            set_text_slot("body", body, style_key="body")
+        if _slot_spec(archetype_spec, "quote") is not None:
+            set_text_slot("quote", body, style_key="body")
+        if _slot_spec(archetype_spec, "attribution") is not None:
+            set_text_slot("attribution", attribution, style_key="subtitle")
+        elif _slot_spec(archetype_spec, "subtitle") is not None:
+            set_text_slot("subtitle", attribution, style_key="subtitle")
+        return
+
+    if archetype_id == "multi_col":
+        # Canonical v2 shape: items[] of objects with body/heading/label.
+        # MVP: render each item as text in colN_body slots.
+        items = spec.get("items") or []
+        if not isinstance(items, list):
+            items = []
+        # Fallback to legacy colN_body if user provided it.
+        if not items:
+            for i in range(1, 5):
+                k = f"col{i}_body"
+                if k in spec and isinstance(spec.get(k), str):
+                    items.append({"body": spec.get(k)})
+
+        for i, item in enumerate(items[:4], start=1):
+            if not isinstance(item, dict):
+                continue
+            heading = item.get("heading")
+            body = item.get("body")
+            label = item.get("label") or item.get("number")
+            parts = []
+            if isinstance(label, str) and label:
+                parts.append(label)
+            if isinstance(heading, str) and heading:
+                parts.append(heading)
+            if isinstance(body, str) and body:
+                parts.append(body)
+            text = "\n".join(parts)
+            set_text_slot(f"col{i}_body", text, style_key="body")
+        return
+
+    if archetype_id == "image_text":
+        # Same semantics as image_left_text_right, but param-driven and template decides layout.
+        # MVP implementation: reuse image rendering logic; expect slots: image + body.
+        image_field = spec.get("image")
+        image_path = None
+        if isinstance(image_field, str):
+            image_path = image_field
+        elif isinstance(image_field, dict):
+            image_path = image_field.get("path")
+
+        image_idx, image_box = _required_slot_target(archetype_id, archetype_spec, "image", default_idx=1)
+        body_idx, body_box = _required_slot_target(archetype_id, archetype_spec, "body", default_idx=2)
+
+        resolved_image: Path | None = None
+        if image_path:
+            p = Path(str(image_path)).expanduser()
+            resolved_image = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
+            if not resolved_image.exists():
+                raise RenderingError(f"Image file not found: {resolved_image}")
+            if not resolved_image.is_file():
+                raise RenderingError(f"Image path is not a file: {resolved_image}")
+
+        if resolved_image is not None:
+            if image_idx is not None:
+                try:
+                    image_placeholder = slide.placeholders[image_idx]
+                except KeyError as exc:
+                    raise RenderingError(
+                        f"Placeholder idx={image_idx} not found on slide (archetype={archetype_id} slot=image)"
+                    ) from exc
+                slide.shapes.add_picture(
+                    str(resolved_image),
+                    image_placeholder.left,
+                    image_placeholder.top,
+                    width=image_placeholder.width,
+                    height=image_placeholder.height,
+                )
+            elif image_box is not None:
+                box_emu = _box_to_emu(image_box, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+                _set_box_image(slide, box_emu, resolved_image)
+
+        body_text = spec.get("body", "")
+        if body_idx is not None:
+            try:
+                body_placeholder = slide.placeholders[body_idx]
+            except KeyError as exc:
+                raise RenderingError(
+                    f"Placeholder idx={body_idx} not found on slide (archetype={archetype_id} slot=body)"
+                ) from exc
+            body_placeholder.text = body_text
+            apply_text_style(body_placeholder.text_frame, styles.get("body"))
+        elif body_box is not None:
+            box_emu = _box_to_emu(body_box, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _set_box_text(slide, box_emu, body_text, styles.get("body"))
+        return
+
+    if archetype_id == "list_visual":
+        # MVP: treat as bullets/body.
+        items = spec.get("items") or []
+        bullets = []
+        if isinstance(items, list):
+            for it in items:
+                if not isinstance(it, dict):
+                    continue
+                label = it.get("label") or it.get("number")
+                body = it.get("body")
+                if isinstance(label, str) and label and isinstance(body, str) and body:
+                    bullets.append(f"{label} {body}")
+                elif isinstance(body, str) and body:
+                    bullets.append(body)
+
+        # Prefer a bullets slot if present; otherwise fall back to body.
+        if _slot_spec(archetype_spec, "bullets") is not None:
+            # Reuse the bullets helper by delegating to title_and_bullets-ish behavior.
+            proxy = dict(spec)
+            proxy["bullets"] = bullets
+            _render_title_and_bullets(slide, proxy, styles, archetype_spec, archetype_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        else:
+            set_text_slot("body", "\n".join(bullets), style_key="body")
+        return
+
+    if archetype_id == "metrics":
+        ms = spec.get("metrics") or []
+        lines = []
+        if isinstance(ms, list):
+            for m in ms:
+                if not isinstance(m, dict):
+                    continue
+                value = m.get("value")
+                label = m.get("label")
+                detail = m.get("detail")
+                if isinstance(value, str) and isinstance(label, str):
+                    s = f"{value} — {label}" if label else value
+                    if isinstance(detail, str) and detail:
+                        s += f"\n{detail}"
+                    lines.append(s)
+        set_text_slot("body", "\n\n".join(lines), style_key="body")
+        return
+
+    raise RenderingError(f"v2 archetype family '{archetype_id}' is not implemented")
+
+
 def _render_extended(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any], archetype_id: str, *, slide_w_emu: int, slide_h_emu: int) -> None:
     """MVP renderer for v1.1 extended archetypes.
 
@@ -548,6 +750,8 @@ def render_deck(
             _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif archetype in {"two_col", "three_col", "four_col", "pillars_3", "pillars_4", "table", "table_plus_description", "timeline_horizontal"}:
             _render_extended(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif archetype in {"message", "multi_col", "image_text", "list_visual", "metrics"}:
+            _render_v2_families(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
 
