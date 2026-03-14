@@ -192,6 +192,14 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--input", required=True, help="Path to markdown input")
     plan.add_argument("--out", required=True, help="Output path for slide.plan.json")
 
+    compile_exemplar = subparsers.add_parser(
+        "compile-exemplar",
+        help="Compile SlidePlan + StyleProfile into an exemplar-first DeckSpec JSON (v1.2).",
+    )
+    compile_exemplar.add_argument("--plan", required=True, help="Path to slide.plan.json")
+    compile_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
+    compile_exemplar.add_argument("--out", required=True, help="Output path for deck.spec.json")
+
     inspect_pptx = subparsers.add_parser(
         "inspect-pptx",
         help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
@@ -422,6 +430,13 @@ def main() -> int:
         from slide_smith.commands.plan import handle_plan
 
         code, out = handle_plan(input_path=args.input, out=args.out)
+        print(out)
+        return code
+
+    if args.command == "compile-exemplar":
+        from slide_smith.commands.compile_exemplar import handle_compile_exemplar
+
+        code, out = handle_compile_exemplar(plan=args.plan, style_profile=args.style_profile, out=args.out)
         print(out)
         return code
 
