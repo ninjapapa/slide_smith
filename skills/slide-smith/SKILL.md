@@ -20,14 +20,17 @@ Also see: `docs/design/rich-potx-and-hybrid-workflow.md` for POTX-heavy template
 v1.2 adds an LLM-free, deterministic pipeline for: **Markdown + reference.(pptx|potx) → output.pptx**.
 
 Notes:
-- `.potx` (PowerPoint template) is supported anywhere a reference PPTX is accepted; it contains the same layout/theme structures.
-- If any tool in your environment refuses `.potx`, a workaround is to copy/rename it to `.pptx` (OpenXML container is compatible).
+- `.potx` (PowerPoint template) is supported as a **reference** for v1.2 when using `--mode raw` (no python-pptx dependency).
+- Some python-pptx-based commands may reject `.potx` due to content-type checks.
+  - Use `slide-smith convert-potx --potx in.potx --out out.pptx` to generate a `.pptx` compatible with python-pptx.
 
 Pipeline commands:
 
 ```bash
-# 1) reference.pptx -> style.profile.json
+# 1) reference.(pptx|potx) -> style.profile.json
+# For .potx, use --mode raw.
 slide-smith analyze --reference ref.pptx --out style.profile.json
+slide-smith analyze --reference ref.potx --out style.profile.json --mode raw
 
 # 2) markdown -> slide.plan.json
 slide-smith plan --input deck.md --out slide.plan.json
@@ -80,10 +83,14 @@ slide-smith --help
 
 ### Bootstrap → map → validate a template from an example PPTX (standard workflow)
 
-Inspect a PPTX to see layouts and placeholder indices:
+Inspect a PPTX/POTX to see layouts and placeholder indices:
 
 ```bash
+# Standard mode (python-pptx; works on .pptx)
 slide-smith inspect-pptx --pptx /path/to/template.pptx
+
+# Raw OpenXML mode (works on .pptx and .potx)
+slide-smith inspect-pptx --pptx /path/to/template.potx --mode raw
 ```
 
 Inspect a *slide instance* (shapes + geometry), useful for decks that use free-positioned boxes rather than layout placeholders:
@@ -97,8 +104,11 @@ slide-smith inspect-slide --pptx /path/to/deck.pptx --slide 10 --format text
 Bootstrap a template package (copies PPTX + generates starter template.json containing `layout__*` archetypes):
 
 ```bash
+# Works on .pptx. If you have a .potx, convert it first:
+slide-smith convert-potx --potx /path/to/template.potx --out /tmp/template.pptx
+
 slide-smith bootstrap-template \
-  --pptx /path/to/template.pptx \
+  --pptx /tmp/template.pptx \
   --template-id my_template \
   --out-dir ./templates
 ```
