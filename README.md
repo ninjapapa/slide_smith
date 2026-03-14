@@ -20,9 +20,34 @@ slide_smith is an **agent-first** Python tool for creating and iteratively editi
 
 ## Usage (human + agent)
 
-All “how to use it” instructions live in the canonical skill doc:
+Most “how to use it” instructions live in the canonical skill doc:
 
 - `skills/slide-smith/SKILL.md`
+
+### v1.2 exemplar-first quickstart (reference deck)
+
+```bash
+# 1) reference.pptx -> style.profile.json
+slide-smith analyze --reference ref.pptx --out style.profile.json
+
+# 2) markdown -> slide.plan.json
+slide-smith plan --input deck.md --out slide.plan.json
+
+# 3) (plan + profile) -> deck.spec.json
+slide-smith compile-exemplar --plan slide.plan.json --style-profile style.profile.json --out deck.spec.json
+
+# 4) (spec + reference) -> out.pptx
+slide-smith render-exemplar --reference ref.pptx --style-profile style.profile.json --deck-spec deck.spec.json --out out.pptx \
+  --assets-base-dir .
+
+# 5) validate out.pptx vs reference/profile
+slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profile style.profile.json
+```
+
+### Migration note (template-first → exemplar-first)
+
+- If you already have a **template package** (`template.json` + `template.pptx`), keep using `create`.
+- If you have an **example PPTX to mimic**, use the v1.2 exemplar-first pipeline above.
 
 That doc is written to be usable by both humans and calling agents (command examples, recommended workflow, fixtures).
 
