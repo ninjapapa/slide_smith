@@ -178,6 +178,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Export mode (v1.1 supports layouts).",
     )
 
+    analyze = subparsers.add_parser(
+        "analyze",
+        help="Analyze a reference PPTX and emit a StyleProfile JSON artifact (v1.2 exemplar-first).",
+    )
+    analyze.add_argument("--reference", required=True, help="Path to reference .pptx")
+    analyze.add_argument("--out", required=True, help="Output path for style.profile.json")
+
     inspect_pptx = subparsers.add_parser(
         "inspect-pptx",
         help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
@@ -394,6 +401,13 @@ def main() -> int:
             out_dir=args.out_dir,
             mode=getattr(args, "mode", "layouts"),
         )
+        print(out)
+        return code
+
+    if args.command == "analyze":
+        from slide_smith.commands.analyze import handle_analyze
+
+        code, out = handle_analyze(reference=args.reference, out=args.out)
         print(out)
         return code
 
