@@ -15,6 +15,8 @@ Markdown ingestion is optional; prefer caller-side skills/tools to convert Markd
 
 ## v1.2 workflow (exemplar-first / reference deck)
 
+Also see: `docs/design/rich-potx-and-hybrid-workflow.md` for POTX-heavy templates and hybrid workflows.
+
 v1.2 adds an LLM-free, deterministic pipeline for: **Markdown + reference.(pptx|potx) → output.pptx**.
 
 Notes:
@@ -303,6 +305,21 @@ Delete slide:
 ```bash
 slide-smith delete-slide --deck /tmp/out.pptx --index 0
 ```
+
+## Hybrid workflow (branded style source + reliable structural exemplar)
+
+When a branded `.potx` is visually rich but unreliable for full end-to-end generation:
+
+- Use a **reliable structural reference** (pptx/potx) for layout-driven generation.
+- Use the branded template as a **style source** for manual review and iterative refinements.
+
+Near-term recommended flow:
+
+1) Generate a first-pass deck with a structural exemplar:
+   - `analyze` / `plan` / `compile-exemplar` / `render-exemplar`
+2) Manually apply branded styling in PowerPoint (or bootstrap a template package from the branded file and switch to template-first `create` once mappings validate).
+
+See `docs/design/rich-potx-and-hybrid-workflow.md`.
 
 ## Agent guidance
 
