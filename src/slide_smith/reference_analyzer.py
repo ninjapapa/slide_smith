@@ -32,11 +32,20 @@ def _slug(s: str) -> str:
     return s or "layout"
 
 
-def _stable_layout_id(*, layout_index: int, layout_name: str, placeholders: list[dict[str, Any]]) -> str:
-    """Generate a stable ID for a layout for a given reference deck.
+def _stable_layout_id(
+    *,
+    layout_index: int,
+    layout_name: str,
+    placeholders: list[dict[str, Any]],
+    part: str | None = None,
+) -> str:
+    """Generate a stable-ish ID for a layout for a given reference deck.
 
-    We avoid depending on absolute paths. The ID is derived from:
-    - layout index
+    Prefer identifying layouts by OpenXML part name when available (raw mode),
+    because indices and names can shift.
+
+    Derived from:
+    - (optional) slideLayout part name, e.g. `ppt/slideLayouts/slideLayout12.xml`
     - layout name
     - placeholder signature (type+idx+bbox)
 
@@ -44,7 +53,7 @@ def _stable_layout_id(*, layout_index: int, layout_name: str, placeholders: list
     """
 
     signature = {
-        "index": int(layout_index),
+        "part": str(part or ""),
         "name": str(layout_name),
         "placeholders": [
             {
@@ -57,6 +66,10 @@ def _stable_layout_id(*, layout_index: int, layout_name: str, placeholders: list
     }
     raw = json.dumps(signature, sort_keys=True, separators=(",", ":")).encode("utf-8")
     digest = hashlib.sha1(raw).hexdigest()  # stable + short; not for security
+
+    if part:
+        part_slug = _slug(Path(part).stem)
+        return f"layout:{part_slug}:{digest[:10]}"
 
     return f"layout:{layout_index}:{_slug(layout_name)}:{digest[:10]}"
 
@@ -126,6 +139,7 @@ def analyze_reference(pptx_path: str, *, mode: str = "pptx") -> AnalyzeReference
 
         raw = inspect_openxml_layouts(str(abs_path))
         for idx, layout in enumerate(raw.layouts):
+            part = str(layout.get("part", ""))
             placeholders = []
             for ph in layout.get("placeholders") or []:
                 # raw types are already strings
@@ -140,13 +154,18 @@ def analyze_reference(pptx_path: str, *, mode: str = "pptx") -> AnalyzeReference
                 )
 
             layout_name = str(layout.get("name") or f"Layout {idx}")
-            layout_id = _stable_layout_id(layout_index=idx, layout_name=layout_name, placeholders=placeholders)
+            layout_id = _stable_layout_id(
+                layout_index=idx,
+                layout_name=layout_name,
+                placeholders=placeholders,
+                part=part or None,
+            )
             layouts.append(
                 {
                     "layoutId": layout_id,
                     "name": layout_name,
                     "index": int(idx),
-                    "part": str(layout.get("part", "")),
+                    "part": part,
                     "placeholders": placeholders,
                 }
             )
