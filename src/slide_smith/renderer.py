@@ -508,13 +508,34 @@ def render_deck(
     slide_h_emu = int(prs.slide_height)
 
     styles = load_styles(template_spec)
-    archetypes = {item["id"]: item for item in template_spec.get("archetypes", [])}
+    archetypes = {item["id"]: item for item in template_spec.get("archetypes", []) if isinstance(item, dict) and isinstance(item.get("id"), str)}
+
+    deck_meta = template_spec.get("deck") or {}
+    native_pref = deck_meta.get("native_preferred") or {}
+
+    def resolve_template_archetype_id(slide_archetype_id: str) -> str:
+        """Resolve the template archetype to use for a given slide archetype.
+
+        Allows templates to define a preferred template-native archetype for a core archetype.
+        The slide archetype (and therefore renderer code path) remains the slide's archetype;
+        only the *template mapping* (layout + slot placeholder indices/boxes) can be swapped.
+        """
+
+        if isinstance(native_pref, dict):
+            preferred = native_pref.get(slide_archetype_id)
+            if isinstance(preferred, str) and preferred in archetypes:
+                return preferred
+        return slide_archetype_id
 
     for slide_spec in deck_spec.get("slides", []):
         archetype = slide_spec["archetype"]
-        if archetype not in archetypes:
-            raise RenderingError(f"Archetype '{archetype}' not supported by template '{template_id}'")
-        archetype_spec = archetypes[archetype]
+        template_archetype_id = resolve_template_archetype_id(archetype)
+        if template_archetype_id not in archetypes:
+            raise RenderingError(
+                f"Archetype '{archetype}' not supported by template '{template_id}'"
+                + (" (native_preferred mapping pointed to missing archetype)" if template_archetype_id != archetype else "")
+            )
+        archetype_spec = archetypes[template_archetype_id]
         slide = prs.slides.add_slide(_layout_for_archetype(prs, archetype_spec))
 
         if archetype == "title":

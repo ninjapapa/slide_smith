@@ -219,10 +219,45 @@ def validate_template(
     if not isinstance(archetypes, list) or not archetypes:
         return TemplateValidationResult(False, ["template spec must include non-empty 'archetypes' list"])
 
+    # Template-native archetypes (optional). These are additional archetype definitions that
+    # may be referenced directly by callers (namespaced IDs recommended), or used via
+    # deck.native_preferred to select a richer layout while keeping a core slide archetype.
+    native = spec.get("native") or {}
+    native_archetypes = []
+    if isinstance(native, dict):
+        native_archetypes = native.get("archetypes") or []
+
+    if native_archetypes and not isinstance(native_archetypes, list):
+        return TemplateValidationResult(False, ["template spec 'native.archetypes' must be a list when present"])
+
+    # Validate native_preferred mapping integrity (only when present).
+    deck = spec.get("deck") or {}
+    native_pref = deck.get("native_preferred")
+    if native_pref is not None and not isinstance(native_pref, dict):
+        return TemplateValidationResult(False, ["template spec 'deck.native_preferred' must be an object when present"])
+
     # Semantic checks can run without a pptx.
     if profile in {"standard", "extended"}:
         errors.extend(_validate_semantic(archetypes, profile))
         if errors:
+            return TemplateValidationResult(False, errors)
+
+    # Validate deck.native_preferred references.
+    if isinstance(native_pref, dict):
+        typed_core = [a for a in archetypes if isinstance(a, dict) and isinstance(a.get("id"), str)]
+        typed_native = [a for a in native_archetypes if isinstance(a, dict) and isinstance(a.get("id"), str)]
+        core_ids = {a["id"] for a in typed_core}
+        native_ids = {a["id"] for a in typed_native}
+        for core_id, preferred_id in native_pref.items():
+            if not isinstance(core_id, str) or not isinstance(preferred_id, str):
+                errors.append("deck.native_preferred: keys/values must be strings")
+                continue
+            if core_id not in core_ids:
+                errors.append(f"deck.native_preferred: unknown core archetype id '{core_id}'")
+            if preferred_id not in (core_ids | native_ids):
+                errors.append(f"deck.native_preferred: preferred archetype id '{preferred_id}' not found in archetypes/native.archetypes")
+
+        if errors and profile in {"standard", "extended"}:
             return TemplateValidationResult(False, errors)
 
     has_pptx = pptx_path.exists()
@@ -235,6 +270,8 @@ def validate_template(
     if has_pptx:
         prs = Presentation(str(pptx_path))
         errors.extend(_validate_structural(archetypes, prs, pptx_path=str(pptx_path)))
+        if native_archetypes:
+            errors.extend(_validate_structural(native_archetypes, prs, pptx_path=str(pptx_path)))
 
     fatal = [e for e in errors if not str(e).startswith("warning:")]
     return TemplateValidationResult(ok=(len(fatal) == 0), errors=errors)
