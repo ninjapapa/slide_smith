@@ -52,7 +52,12 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             # Redesign extended
             "title_subtitle": {"title": True, "subtitle": True},
             "version_page": {"title": True, "table_text": True},
-            "agenda_with_image": {"title": True, "image": True, "bullets": True},
+
+            # agenda_with_image supports two template approaches:
+            # - legacy: a single bullets/body box (slot=bullets)
+            # - preferred: dedicated item placeholders (slot=item1_body and optional item1_marker)
+            "agenda_with_image": {"title": True, "image": True, "bullets": False, "item1_body": False},
+
             "two_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True},
             "three_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True, "col3_body": True},
             "three_col_with_icons": {
@@ -104,6 +109,18 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             errors.append(f"{prefix}: archetype '{aid}' slots must be a list")
             continue
         slot_by_name = {s.get("name"): s for s in slots if isinstance(s, dict)}
+
+        # Special-case: agenda_with_image can be satisfied by either a bullets slot
+        # OR dedicated item placeholders.
+        if aid == "agenda_with_image":
+            has_bullets = "bullets" in slot_by_name
+            has_items = "item1_body" in slot_by_name
+            if not (has_bullets or has_items):
+                errors.append(
+                    f"{prefix}: archetype 'agenda_with_image' must define either slot 'bullets' (fallback) "
+                    f"or slot 'item1_body' (preferred item placeholders)"
+                )
+
         for slot_name, must in req_slots.items():
             if not must:
                 continue
