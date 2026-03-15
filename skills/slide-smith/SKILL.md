@@ -310,3 +310,142 @@ slide-smith create \
   --templates-dir /path/to/templates \
   --output /tmp/out.pptx
 ```
+
+Script-friendly output only:
+
+```bash
+slide-smith create \
+  --input <deck.json> \
+  --template default \
+  --output /tmp/out.pptx \
+  --print none
+```
+
+Collect assets for reproducible runs (copies images and rewrites deck JSON paths):
+
+```bash
+slide-smith create \
+  --input <deck.json> \
+  --template default \
+  --assets-dir /tmp/slide-smith-assets \
+  --output /tmp/out.pptx
+```
+
+### Export previews for caller-agent assistance (v1.1)
+
+`export-previews` produces a machine-readable manifest of layouts/placeholders for a template (and will later grow optional PNG exports).
+
+```bash
+slide-smith export-previews --template my_template --templates-dir ./templates --out-dir /tmp/my_template-previews --mode layouts
+```
+
+### Inspect a template
+
+```bash
+slide-smith inspect-template --template default
+```
+
+If your templates live outside the repo, pass a templates root:
+
+```bash
+slide-smith inspect-template --template default --templates-dir /path/to/templates
+```
+
+### Validate a template package
+
+Structural validation (layouts/placeholders exist):
+
+```bash
+slide-smith validate-template --template default
+```
+
+```bash
+slide-smith validate-template --template default --templates-dir /path/to/templates
+```
+
+Standard-compatibility validation (ensures the template can render standard deck inputs):
+
+```bash
+slide-smith validate-template --template default --profile standard
+```
+
+Notes:
+- If `templates/<id>/template.pptx` is missing, **structural** validation exits 0 with a warning (JSON-only templates are allowed early-stage).
+- For `--profile standard` / `--profile extended`, semantic validation still runs against `template.json` even if `template.pptx` is missing.
+- `--profile standard` checks for the standard archetypes + required semantic slots having `placeholder_idx` mappings.
+- `--profile extended` checks for the extended archetype library slot mappings.
+- Box-based slots: rendering supports `slot.box` (units `relative|emu`) as a fallback when `placeholder_idx` is absent (useful for slide-instance-derived templates).
+
+### Iterative edit ops (on an existing PPTX)
+
+List slides:
+
+```bash
+slide-smith list-slides --deck /tmp/out.pptx
+```
+
+Add slide (append-only right now; `--after` must be the current last index):
+
+```bash
+slide-smith add-slide \
+  --deck /tmp/out.pptx \
+  --after 2 \
+  --type title_and_bullets \
+  --input /path/to/slide.json
+```
+
+Update slide (patch JSON supports `title`, `subtitle`, `body`, `bullets`, `notes`, `image`):
+
+```bash
+slide-smith update-slide \
+  --deck /tmp/out.pptx \
+  --index 1 \
+  --input /path/to/patch.json
+```
+
+Delete slide:
+
+```bash
+slide-smith delete-slide --deck /tmp/out.pptx --index 0
+```
+
+## Hybrid workflow (branded style source + reliable structural exemplar)
+
+When a branded `.potx` is visually rich but unreliable for full end-to-end generation:
+
+- Use a **reliable structural reference** (pptx/potx) for layout-driven generation.
+- Use the branded template as a **style source** for manual review and iterative refinements.
+
+Near-term recommended flow:
+
+1) Generate a first-pass deck with a structural exemplar:
+   - `analyze` / `plan` / `compile-exemplar` / `render-exemplar`
+2) Manually apply branded styling in PowerPoint (or bootstrap a template package from the branded file and switch to template-first `create` once mappings validate).
+
+See `docs/design/rich-potx-and-hybrid-workflow.md`.
+
+## Caller-agent workflow notes (important)
+
+Slide Smith has **no LLM**. The intended split of responsibilities is:
+
+- **Caller agent (LLM)**:
+  - chooses which template/layouts/slides to use as exemplars
+  - decides which archetypes it wants (core or template-native)
+  - supplies mapping hints only when needed
+
+- **Slide Smith (deterministic tool)**:
+  - inspects PPTX/POTX structure
+  - prefers **placeholder-first** mappings (populate real placeholders)
+  - falls back to box geometry only when placeholders are not available/usable
+  - validates mappings and renders output PPTX
+
+If output shows duplicated text or “boxes on top of placeholders”, it usually means you bootstrapped/mapped using boxes when the layout actually has placeholders. Re-run bootstrap/mapping with placeholder-first.
+
+## Agent guidance
+
+- Prefer the **fixtures** in `docs/design/examples/` when writing tests or smoke commands.
+- When rendering with images, use `--assets-dir` to avoid fragile relative-path failures.
+- If validation fails:
+  - First read the printed path-qualified errors.
+  - Then check the schema: `docs/design/deck-spec.schema.json`.
+- Keep stdout deterministic for agents: use `--print none` unless the normalized deck JSON is explicitly needed.
