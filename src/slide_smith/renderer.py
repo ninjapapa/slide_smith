@@ -244,6 +244,61 @@ def _set_slot_text(
         _set_box_text(slide, box_emu, text, style)
 
 
+def _resolve_image_path(base_dir: Path, image_field: Any) -> Path | None:
+    image_path = None
+    if isinstance(image_field, str):
+        image_path = image_field
+    elif isinstance(image_field, dict):
+        image_path = image_field.get("path")
+
+    if not image_path:
+        return None
+
+    p = Path(str(image_path)).expanduser()
+    resolved = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
+    if not resolved.exists():
+        raise RenderingError(f"Image file not found: {resolved}")
+    if not resolved.is_file():
+        raise RenderingError(f"Image path is not a file: {resolved}")
+    return resolved
+
+
+def _set_slot_image(
+    slide,
+    archetype_id: str,
+    archetype_spec: dict[str, Any],
+    slot_name: str,
+    image_path: Path | None,
+    *,
+    slide_w_emu: int,
+    slide_h_emu: int,
+    default_idx: int | None = None,
+    context: str = "",
+) -> None:
+    if image_path is None:
+        return
+
+    idx, box = _required_slot_target(archetype_id, archetype_spec, slot_name, default_idx=default_idx)
+    if idx is not None:
+        try:
+            image_placeholder = slide.placeholders[idx]
+        except KeyError as exc:
+            ctx = f" ({context})" if context else ""
+            raise RenderingError(f"Placeholder idx={idx} not found on slide{ctx}") from exc
+        slide.shapes.add_picture(
+            str(image_path),
+            image_placeholder.left,
+            image_placeholder.top,
+            width=image_placeholder.width,
+            height=image_placeholder.height,
+        )
+        return
+
+    if box is not None:
+        box_emu = _box_to_emu(box, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        _set_box_image(slide, box_emu, image_path)
+
+
 def _render_title(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any], archetype_id: str, *, slide_w_emu: int, slide_h_emu: int) -> None:
     _set_slot_text(
         slide,
@@ -393,44 +448,21 @@ def _render_image_left_text_right(
         context=f"archetype={archetype_id} slot=title",
     )
 
-    image_field = spec.get("image")
-    image_path = None
-    if isinstance(image_field, str):
-        image_path = image_field
-    elif isinstance(image_field, dict):
-        image_path = image_field.get("path")
+    resolved_image = _resolve_image_path(base_dir, spec.get("image"))
 
-    image_idx, image_box = _required_slot_target(archetype_id, archetype_spec, "image", default_idx=1)
+    _set_slot_image(
+        slide,
+        archetype_id,
+        archetype_spec,
+        "image",
+        resolved_image,
+        slide_w_emu=slide_w_emu,
+        slide_h_emu=slide_h_emu,
+        default_idx=1,
+        context=f"archetype={archetype_id} slot=image",
+    )
+
     body_idx, body_box = _required_slot_target(archetype_id, archetype_spec, "body", default_idx=2)
-
-    resolved_image: Path | None = None
-    if image_path:
-        p = Path(str(image_path)).expanduser()
-        resolved_image = (base_dir / p).resolve() if not p.is_absolute() else p.resolve()
-        if not resolved_image.exists():
-            raise RenderingError(f"Image file not found: {resolved_image}")
-        if not resolved_image.is_file():
-            raise RenderingError(f"Image path is not a file: {resolved_image}")
-
-    # image
-    if resolved_image is not None:
-        if image_idx is not None:
-            try:
-                image_placeholder = slide.placeholders[image_idx]
-            except KeyError as exc:
-                raise RenderingError(
-                    f"Placeholder idx={image_idx} not found on slide (archetype={archetype_id} slot=image)"
-                ) from exc
-            slide.shapes.add_picture(
-                str(resolved_image),
-                image_placeholder.left,
-                image_placeholder.top,
-                width=image_placeholder.width,
-                height=image_placeholder.height,
-            )
-        elif image_box is not None:
-            box_emu = _box_to_emu(image_box, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-            _set_box_image(slide, box_emu, resolved_image)
 
     # body
     body_text = spec.get("body", "")
@@ -650,7 +682,17 @@ def _render_v2_families(
     raise RenderingError(f"v2 archetype family '{archetype_id}' is not implemented")
 
 
-def _render_extended(slide, spec: dict[str, Any], styles, archetype_spec: dict[str, Any], archetype_id: str, *, slide_w_emu: int, slide_h_emu: int) -> None:
+def _render_extended(
+    slide,
+    spec: dict[str, Any],
+    base_dir: Path,
+    styles,
+    archetype_spec: dict[str, Any],
+    archetype_id: str,
+    *,
+    slide_w_emu: int,
+    slide_h_emu: int,
+) -> None:
     """MVP renderer for v1.1 extended archetypes.
 
     This implementation is intentionally placeholder-driven and template-mapping-driven.
@@ -692,13 +734,19 @@ def _render_extended(slide, spec: dict[str, Any], styles, archetype_spec: dict[s
             set_text_slot(f"col{i}_body", spec.get(f"col{i}_body"))
         return
 
+    if archetype_id == "two_col_with_subtitle":
+        set_text_slot("subtitle", spec.get("subtitle"), style_key="subtitle")
+        for i in (1, 2):
+            set_text_slot(f"col{i}_body", spec.get(f"col{i}_body"))
+        return
+
     if archetype_id in {"pillars_3", "pillars_4"}:
         n = 3 if archetype_id == "pillars_3" else 4
         for i in range(1, n + 1):
             set_text_slot(f"pillar{i}_body", spec.get(f"pillar{i}_body"))
         return
 
-    if archetype_id == "table":
+    if archetype_id in {"table", "version_page"}:
         set_text_slot("table_text", spec.get("table_text"), style_key="body")
         return
 
@@ -712,6 +760,124 @@ def _render_extended(slide, spec: dict[str, Any], styles, archetype_spec: dict[s
             k = f"milestone{i}_body"
             if k in spec:
                 set_text_slot(k, spec.get(k))
+        return
+
+    if archetype_id == "title_subtitle":
+        set_text_slot("subtitle", spec.get("subtitle"), style_key="subtitle")
+        return
+
+    if archetype_id == "title_only_freeform":
+        return
+
+    if archetype_id == "picture_compare":
+        left = spec.get("left") or {}
+        right = spec.get("right") or {}
+
+        if isinstance(left, dict):
+            _set_slot_image(
+                slide,
+                archetype_id,
+                archetype_spec,
+                "left_image",
+                _resolve_image_path(base_dir, left.get("image")),
+                slide_w_emu=slide_w_emu,
+                slide_h_emu=slide_h_emu,
+                context=f"archetype={archetype_id} slot=left_image",
+            )
+            set_text_slot("left_title", left.get("title"), style_key="body")
+            set_text_slot("left_body", left.get("body"), style_key="body")
+
+        if isinstance(right, dict):
+            _set_slot_image(
+                slide,
+                archetype_id,
+                archetype_spec,
+                "right_image",
+                _resolve_image_path(base_dir, right.get("image")),
+                slide_w_emu=slide_w_emu,
+                slide_h_emu=slide_h_emu,
+                context=f"archetype={archetype_id} slot=right_image",
+            )
+            set_text_slot("right_title", right.get("title"), style_key="body")
+            set_text_slot("right_body", right.get("body"), style_key="body")
+        return
+
+    if archetype_id == "agenda_with_image":
+        _set_slot_image(
+            slide,
+            archetype_id,
+            archetype_spec,
+            "image",
+            _resolve_image_path(base_dir, spec.get("image")),
+            slide_w_emu=slide_w_emu,
+            slide_h_emu=slide_h_emu,
+            context=f"archetype={archetype_id} slot=image",
+        )
+        items = spec.get("items") or []
+        lines: list[str] = []
+        if isinstance(items, list):
+            for it in items:
+                if not isinstance(it, dict):
+                    continue
+                marker = it.get("marker")
+                body = it.get("body")
+                if isinstance(body, str) and body:
+                    if isinstance(marker, str) and marker:
+                        lines.append(f"{marker} {body}")
+                    else:
+                        lines.append(body)
+
+        # Prefer bullets slot when available; otherwise fall back to body.
+        if _slot_spec(archetype_spec, "bullets") is not None:
+            proxy = dict(spec)
+            proxy["bullets"] = lines
+            _render_title_and_bullets(slide, proxy, styles, archetype_spec, archetype_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        else:
+            set_text_slot("body", "\n".join(lines), style_key="body")
+        return
+
+    if archetype_id in {"three_col_with_subtitle", "three_col_with_icons", "five_col_with_icons"}:
+        items = spec.get("items") or []
+        if archetype_id == "three_col_with_subtitle":
+            set_text_slot("subtitle", spec.get("subtitle"), style_key="subtitle")
+
+        if not isinstance(items, list):
+            items = []
+
+        # Convention-based mapping into slot names.
+        for idx, it in enumerate(items, start=1):
+            if not isinstance(it, dict):
+                continue
+
+            if archetype_id == "three_col_with_subtitle":
+                set_text_slot(f"col{idx}_title", it.get("title"), style_key="body")
+                set_text_slot(f"col{idx}_body", it.get("body"), style_key="body")
+            elif archetype_id == "three_col_with_icons":
+                set_text_slot(f"col{idx}_title", it.get("title"), style_key="body")
+                set_text_slot(f"col{idx}_body", it.get("body"), style_key="body")
+                set_text_slot(f"col{idx}_caption", it.get("caption"), style_key="body")
+                _set_slot_image(
+                    slide,
+                    archetype_id,
+                    archetype_spec,
+                    f"col{idx}_icon",
+                    _resolve_image_path(base_dir, it.get("icon")),
+                    slide_w_emu=slide_w_emu,
+                    slide_h_emu=slide_h_emu,
+                    context=f"archetype={archetype_id} slot=col{idx}_icon",
+                )
+            else:  # five_col_with_icons
+                set_text_slot(f"item{idx}_body", it.get("body"), style_key="body")
+                _set_slot_image(
+                    slide,
+                    archetype_id,
+                    archetype_spec,
+                    f"item{idx}_icon",
+                    _resolve_image_path(base_dir, it.get("icon")),
+                    slide_w_emu=slide_w_emu,
+                    slide_h_emu=slide_h_emu,
+                    context=f"archetype={archetype_id} slot=item{idx}_icon",
+                )
         return
 
     raise RenderingError(f"Extended archetype '{archetype_id}' is not implemented")
@@ -780,8 +946,49 @@ def render_deck(
             _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif archetype in {"image_left_text_right", "text_with_image"}:
             _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif archetype in {"two_col", "three_col", "four_col", "pillars_3", "pillars_4", "table", "table_plus_description", "timeline_horizontal"}:
-            _render_extended(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif archetype == "title_subtitle_and_bullets":
+            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _set_slot_text(
+                slide,
+                archetype,
+                archetype_spec,
+                "subtitle",
+                slide_spec.get("subtitle"),
+                styles.get("subtitle"),
+                slide_w_emu=slide_w_emu,
+                slide_h_emu=slide_h_emu,
+                context=f"archetype={archetype} slot=subtitle",
+            )
+        elif archetype in {
+            "two_col",
+            "three_col",
+            "four_col",
+            "pillars_3",
+            "pillars_4",
+            "table",
+            "table_plus_description",
+            "timeline_horizontal",
+            # redesign extended
+            "title_subtitle",
+            "version_page",
+            "agenda_with_image",
+            "two_col_with_subtitle",
+            "three_col_with_subtitle",
+            "three_col_with_icons",
+            "five_col_with_icons",
+            "picture_compare",
+            "title_only_freeform",
+        }:
+            _render_extended(
+                slide,
+                slide_spec,
+                source_dir,
+                styles,
+                archetype_spec,
+                archetype,
+                slide_w_emu=slide_w_emu,
+                slide_h_emu=slide_h_emu,
+            )
         elif archetype in {"message", "multi_col", "image_text", "list_visual", "metrics"}:
             _render_v2_families(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
