@@ -218,9 +218,8 @@
       "allOf": [
         { "$ref": "#/$defs/base_slide" },
         {
-          "properties": { "archetype": { "const": "timeline_horizontal" } },
-          "required": ["archetype", "title"],
           "properties": {
+            "archetype": { "const": "timeline_horizontal" },
             "milestone1_body": { "type": "string" },
             "milestone2_body": { "type": "string" },
             "milestone3_body": { "type": "string" },
@@ -231,7 +230,8 @@
             "milestone8_body": { "type": "string" },
             "milestone9_body": { "type": "string" },
             "milestone10_body": { "type": "string" }
-          }
+          },
+          "required": ["archetype", "title", "milestone1_body"]
         }
       ]
     }
