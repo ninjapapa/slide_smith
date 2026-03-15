@@ -27,6 +27,7 @@
         { "$ref": "#/$defs/section_slide" },
         { "$ref": "#/$defs/title_and_bullets_slide" },
         { "$ref": "#/$defs/image_left_text_right_slide" },
+        { "$ref": "#/$defs/text_with_image_slide" },
 
         { "$ref": "#/$defs/two_col_slide" },
         { "$ref": "#/$defs/three_col_slide" },
@@ -106,6 +107,16 @@
         { "$ref": "#/$defs/base_slide" },
         {
           "properties": { "archetype": { "const": "image_left_text_right" } },
+          "required": ["archetype", "title", "body", "image"]
+        }
+      ]
+    },
+
+    "text_with_image_slide": {
+      "allOf": [
+        { "$ref": "#/$defs/base_slide" },
+        {
+          "properties": { "archetype": { "const": "text_with_image" } },
           "required": ["archetype", "title", "body", "image"]
         }
       ]

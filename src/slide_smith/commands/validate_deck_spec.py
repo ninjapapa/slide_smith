@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
+from slide_smith.deck_spec import load_deck_spec, normalize_deck_spec, validate_deck_spec
 from slide_smith.markdown_parser import parse_markdown
 
 
@@ -14,6 +14,8 @@ def handle_validate_deck_spec(*, input_path: str, profile: str) -> tuple[int, st
         spec = parse_markdown(input_path)
     else:
         return 1, "Unsupported input type. Use .json or .md"
+
+    spec, normalize_warnings = normalize_deck_spec(spec)
 
     errors = validate_deck_spec(spec, profile=profile)
     if errors:
@@ -42,4 +44,7 @@ def handle_validate_deck_spec(*, input_path: str, profile: str) -> tuple[int, st
     except Exception:
         pass
 
-    return 0, json.dumps({"ok": True, "profile": profile, "slides": len(spec.get('slides') or [])}, indent=2)
+    out = {"ok": True, "profile": profile, "slides": len(spec.get('slides') or [])}
+    if normalize_warnings:
+        out["warnings"] = normalize_warnings
+    return 0, json.dumps(out, indent=2)
