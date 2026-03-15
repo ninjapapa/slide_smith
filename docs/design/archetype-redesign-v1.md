@@ -112,6 +112,30 @@ When an archetype receives more items than a layout supports:
 - **Default:** truncate to capacity and add a warning.
 - Optional future enhancement: `params.overflow: "error" | "truncate"`.
 
+## Render-time slot naming conventions (template.json)
+
+Even when deck specs use structured fields (`items[]`, `left/right`), the renderer ultimately targets **template slots**.
+
+Conventions (proposed):
+
+- `agenda_with_image`
+  - `image`
+  - `item{n}_marker` (optional)
+  - `item{n}_body` (required)
+  - If these slots are absent, renderer falls back to `bullets`/`body`.
+
+- `three_col_with_icons`
+  - `col1_icon`, `col1_title`, `col1_body`, `col1_caption?`
+  - `col2_icon`, `col2_title`, `col2_body`, `col2_caption?`
+  - `col3_icon`, `col3_title`, `col3_body`, `col3_caption?`
+
+- `five_col_with_icons`
+  - `item1_icon`, `item1_body` … `item5_icon`, `item5_body`
+
+- `picture_compare`
+  - `left_image`, `left_title?`, `left_body?`
+  - `right_image`, `right_title?`, `right_body?`
+
 ---
 
 # Proposed Archetype Sets
