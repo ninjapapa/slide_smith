@@ -258,13 +258,13 @@ Structural validation (layouts/placeholders exist):
 slide-smith validate-template --template my_template --templates-dir ./templates
 ```
 
-Standard-compat validation (standard archetypes + required slots are mapped):
+Standard-compat validation (standard archetypes + required slots are mapped). For redesigned archetypes, remember: the **deck spec** may be structured (e.g. `items[]`), but the **template spec** still maps concrete render-time slot names (`col1_body`, `col1_icon`, `left_image`, etc.).
 
 ```bash
 slide-smith validate-template --template my_template --templates-dir ./templates --profile standard
 ```
 
-Extended-compat validation (extended archetypes library, including redesigned extended archetypes like `picture_compare`, `three_col_with_icons`, etc. when present in the template spec):
+Extended-compat validation (extended archetypes library, including redesigned extended archetypes like `picture_compare`, `three_col_with_icons`, etc. when present in the template spec). For redesigned `items[]`/`left`+`right` archetypes, ensure the template spec exposes the expected render-time slot naming convention (e.g. `col1_icon`, `item1_body`, `left_image`, ...):
 
 ```bash
 slide-smith validate-template --template my_template --templates-dir ./templates --profile extended
