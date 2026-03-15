@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import zipfile
+from collections import Counter
 from pathlib import Path
 
 
@@ -28,6 +30,13 @@ def test_cli_version_smoke() -> None:
     assert res.stdout.strip()  # may be 'unknown' when not installed
 
 
+def _assert_no_duplicate_zip_members(pptx_path: Path) -> None:
+    with zipfile.ZipFile(pptx_path) as z:
+        c = Counter(z.namelist())
+    dups = [(name, n) for name, n in c.items() if n > 1]
+    assert not dups, f"Duplicate zip members found: {dups[:20]}"
+
+
 def test_cli_create_print_none(tmp_path: Path) -> None:
     out = tmp_path / "out.pptx"
     res = run_cli(
@@ -47,3 +56,5 @@ def test_cli_create_print_none(tmp_path: Path) -> None:
     payload = json.loads(res.stdout)
     assert payload["output"].endswith("out.pptx")
     assert "deck" not in payload
+
+    _assert_no_duplicate_zip_members(out)
