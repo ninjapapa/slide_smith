@@ -17,6 +17,8 @@ def handle_validate_deck_spec(*, input_path: str, profile: str) -> tuple[int, st
 
     spec, normalize_warnings = normalize_deck_spec(spec)
 
+    # If we normalized deprecated archetype ids, surface warnings in the JSON output
+    # (validate-deck-spec is tooling oriented).
     errors = validate_deck_spec(spec, profile=profile)
     if errors:
         lines = [f"Deck spec validation failed (profile={profile}):"] + [f"- {e}" for e in errors]

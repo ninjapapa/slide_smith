@@ -32,6 +32,8 @@ SUPPORTED_ARCHETYPES = {
 ARCHETYPE_ALIASES: dict[str, str] = {
     # prefer semantic naming vs geometry-bound naming
     "image_left_text_right": "text_with_image",
+    # legacy v1 naming
+    "title_and_bullets_with_subtitle": "title_subtitle_and_bullets",
 }
 
 
@@ -111,7 +113,21 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
     # New archetypes (additive evolution). These are not yet part of the
     # renderer's full coverage, but we allow validation to proceed so templates
     # and agents can iterate.
-    allowed |= {"text_with_image"}
+    allowed |= {
+        "text_with_image",
+        "title_subtitle_and_bullets",
+        "title_subtitle",
+        "version_page",
+        "agenda_with_image",
+        "two_col_with_subtitle",
+        "three_col_with_subtitle",
+        "three_col_with_icons",
+        "five_col_with_icons",
+        "picture_compare",
+        "title_only_freeform",
+        # allow legacy aliases so validation doesn't fail before normalization
+        "title_and_bullets_with_subtitle",
+    }
 
     if profile == "core_v2":
         allowed |= {"message", "multi_col", "image_text", "list_visual", "metrics"}

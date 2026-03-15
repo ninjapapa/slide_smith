@@ -86,6 +86,13 @@ Optional common:
 - string path, or
 - `{ path: string, alt?: string }`
 
+## Legacy name migration
+
+Supported legacy → preferred:
+
+- `image_left_text_right` → `text_with_image`
+- `title_and_bullets_with_subtitle` → `title_subtitle_and_bullets`
+
 For multi-image layouts:
 - `left_image`, `right_image`, etc.
 
