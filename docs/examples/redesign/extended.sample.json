@@ -1,0 +1,103 @@
+{
+  "title": "Archetype Redesign (Extended) — Sample Deck",
+  "subtitle": "Demonstrates extended archetypes",
+  "slides": [
+    {
+      "archetype": "title",
+      "title": "Archetype Redesign (Extended)",
+      "subtitle": "Sample deck"
+    },
+    {
+      "archetype": "title_subtitle",
+      "title": "title_subtitle",
+      "subtitle": "Title + subtitle only"
+    },
+    {
+      "archetype": "version_page",
+      "title": "version_page",
+      "table_text": "| Version | Date | Notes |\n|---|---|---|\n| v1 | 2026-03-15 | Initial draft |\n| v2 | 2026-03-16 | Review updates |"
+    },
+    {
+      "archetype": "two_col_with_subtitle",
+      "title": "two_col_with_subtitle",
+      "subtitle": "Two columns + subtitle",
+      "col1_body": "Left column content",
+      "col2_body": "Right column content"
+    },
+    {
+      "archetype": "three_col_with_subtitle",
+      "title": "three_col_with_subtitle",
+      "subtitle": "Uses items[]",
+      "items": [
+        { "title": "Col 1", "body": "Body 1" },
+        { "title": "Col 2", "body": "Body 2" },
+        { "title": "Col 3", "body": "Body 3" }
+      ]
+    },
+    {
+      "archetype": "three_col_with_icons",
+      "title": "three_col_with_icons",
+      "items": [
+        {
+          "title": "Item 1",
+          "body": "Body 1",
+          "caption": "Caption 1",
+          "icon": { "path": "./assets/icon1.png", "alt": "Icon 1" }
+        },
+        {
+          "title": "Item 2",
+          "body": "Body 2",
+          "caption": "Caption 2",
+          "icon": { "path": "./assets/icon2.png", "alt": "Icon 2" }
+        },
+        {
+          "title": "Item 3",
+          "body": "Body 3",
+          "caption": "Caption 3",
+          "icon": { "path": "./assets/icon3.png", "alt": "Icon 3" }
+        }
+      ]
+    },
+    {
+      "archetype": "five_col_with_icons",
+      "title": "five_col_with_icons",
+      "items": [
+        { "body": "One", "icon": { "path": "./assets/icon1.png" } },
+        { "body": "Two", "icon": { "path": "./assets/icon2.png" } },
+        { "body": "Three", "icon": { "path": "./assets/icon3.png" } },
+        { "body": "Four", "icon": { "path": "./assets/icon4.png" } },
+        { "body": "Five", "icon": { "path": "./assets/icon5.png" } }
+      ]
+    },
+    {
+      "archetype": "agenda_with_image",
+      "title": "agenda_with_image",
+      "image": { "path": "./assets/sample.png" },
+      "items": [
+        { "marker": "1", "body": "Intro" },
+        { "marker": "2", "body": "Problem" },
+        { "marker": "3", "body": "Approach" },
+        { "marker": "4", "body": "Demo" },
+        { "marker": "5", "body": "Wrap-up" }
+      ]
+    },
+    {
+      "archetype": "picture_compare",
+      "title": "picture_compare",
+      "left": {
+        "image": { "path": "./assets/left.png", "alt": "Left" },
+        "title": "Before",
+        "body": "Left-side notes"
+      },
+      "right": {
+        "image": { "path": "./assets/right.png", "alt": "Right" },
+        "title": "After",
+        "body": "Right-side notes"
+      }
+    },
+    {
+      "archetype": "title_only_freeform",
+      "title": "title_only_freeform"
+    }
+  ]
+}
