@@ -33,6 +33,22 @@ STANDARD_ARCHETYPES: dict[str, dict[str, Any]] = {
             {"name": "bullets", "type": "bullet_list", "required": True},
         ]
     },
+    "title_subtitle_and_bullets": {
+        "required_slots": [
+            {"name": "title", "type": "text", "required": True},
+            {"name": "subtitle", "type": "text", "required": True},
+            {"name": "bullets", "type": "bullet_list", "required": True},
+        ]
+    },
+    "text_with_image": {
+        "required_slots": [
+            {"name": "title", "type": "text", "required": True},
+            {"name": "image", "type": "image", "required": True},
+            {"name": "body", "type": "text", "required": True},
+        ]
+    },
+
+    # legacy standard archetype id (kept for backwards compatibility)
     "image_left_text_right": {
         "required_slots": [
             {"name": "title", "type": "text", "required": True},
@@ -151,10 +167,24 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         score = 7 + 2 * min(c["image"], 1) + 1 * min(c["body"], 1) + 1 * min(c["bullets"], 1)
         return float(score), f"title={c['title']} image={c['image']} body={c['body']} bullets={c['bullets']}"
 
+    def score_title_subtitle_and_bullets(a: dict[str, Any]):
+        c = _slot_counts(a)
+        if c["title"] < 1:
+            return 0.0, "missing title slot"
+        if c["subtitle"] < 1:
+            return 0.0, "missing subtitle slot"
+        if c["bullets"] < 1 and c["body"] < 1:
+            return 0.0, "missing bullets/body slot"
+        score = 7 + 2 * min(c["bullets"], 1) + 1 * min(c["body"], 1) + 2 * min(c["subtitle"], 1) - 3 * c["image"]
+        return float(score), f"title={c['title']} subtitle={c['subtitle']} bullets={c['bullets']} body={c['body']} image={c['image']}"
+
     picks: dict[str, InferenceCandidate | None] = {
         "title": _pick_best(archetypes, score_title),
         "section": _pick_best(archetypes, score_section),
         "title_and_bullets": _pick_best(archetypes, score_title_and_bullets),
+        "title_subtitle_and_bullets": _pick_best(archetypes, score_title_subtitle_and_bullets),
+        # prefer new semantic name, but keep legacy id supported too.
+        "text_with_image": _pick_best(archetypes, score_image_left_text_right),
         "image_left_text_right": _pick_best(archetypes, score_image_left_text_right),
     }
 
@@ -188,6 +218,8 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
             # For bullets, bootstrap uses type "bullets".
             if idx is None and name == "bullets":
                 idx = _first_slot_idx(src, want_type="bullets")
+                if idx is None:
+                    idx = _first_slot_idx(src, want_name="body")
             # fallback: accept first text-like slot.
             if idx is None and name in {"subtitle", "body"}:
                 idx = _first_slot_idx(src, want_type="text")

@@ -78,12 +78,55 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
 
         return _score
 
-    # Heuristics are intentionally simple for v1.1.
+    # Heuristics are intentionally simple for v1.1 (and the redesign additions).
     picks = {
         "two_col": pick_best(score_n_cols(2)),
         "three_col": pick_best(score_n_cols(3)),
         "four_col": pick_best(score_n_cols(4)),
     }
+
+    def score_title_subtitle(a: dict[str, Any]):
+        if not _has_title(a):
+            return 0.0, "missing title"
+        # subtitle tends to be another text slot; bootstrap may name it subtitle.
+        subtitles = _count_slot(a, want_name_prefix="subtitle")
+        bodies = _count_slot(a, want_type="bullets") + _count_slot(a, want_name_prefix="body")
+        images = _count_slot(a, want_type="image")
+        # Prefer title+subtitle with few other fields.
+        score = 6.0 + 3.0 * min(subtitles, 1) - 1.0 * bodies - 2.0 * images
+        if subtitles < 1:
+            score -= 4.0
+        return score, f"subtitles={subtitles} bodies={bodies} images={images} idxs={_placeholder_idxs(a)}"
+
+    def score_icons_cols(n: int):
+        def _score(a: dict[str, Any]):
+            if not _has_title(a):
+                return 0.0, "missing title"
+            images = _count_slot(a, want_type="image")
+            bodies = _count_slot(a, want_type="bullets") + _count_slot(a, want_name_prefix="body")
+            # Prefer n images and n bodies.
+            score = 5.0 + 2.0 * min(images, n) + 1.5 * min(bodies, n)
+            if images < n:
+                score -= (n - images) * 4.0
+            return score, f"images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
+
+        return _score
+
+    def score_picture_compare(a: dict[str, Any]):
+        if not _has_title(a):
+            return 0.0, "missing title"
+        images = _count_slot(a, want_type="image")
+        bodies = _count_slot(a, want_type="bullets") + _count_slot(a, want_name_prefix="body")
+        score = 6.0 + 2.5 * min(images, 2) + 1.0 * min(bodies, 2)
+        if images < 2:
+            score -= 6.0
+        return score, f"images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
+
+    # Redesign extended archetypes (best-effort inference)
+    picks["title_subtitle"] = pick_best(score_title_subtitle)
+    picks["three_col_with_icons"] = pick_best(score_icons_cols(3))
+    picks["five_col_with_icons"] = pick_best(score_icons_cols(5))
+    picks["picture_compare"] = pick_best(score_picture_compare)
 
     def score_table(a: dict[str, Any]):
         if not _has_title(a):
@@ -182,6 +225,30 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
             add_slot("body")
         elif ext_id == "timeline_horizontal":
             add_slot("milestone1_body")
+
+        elif ext_id == "title_subtitle":
+            add_slot("subtitle")
+
+        elif ext_id == "three_col_with_icons":
+            # Convention: col{i}_icon + title/body/caption.
+            for i in range(1, 4):
+                slots.append({"name": f"col{i}_icon", "type": "image", "required": True})
+                add_slot(f"col{i}_title")
+                add_slot(f"col{i}_body")
+                slots.append({"name": f"col{i}_caption", "type": "text", "required": False})
+
+        elif ext_id == "five_col_with_icons":
+            for i in range(1, 6):
+                slots.append({"name": f"item{i}_icon", "type": "image", "required": True})
+                add_slot(f"item{i}_body")
+
+        elif ext_id == "picture_compare":
+            slots.append({"name": "left_image", "type": "image", "required": True})
+            slots.append({"name": "right_image", "type": "image", "required": True})
+            add_slot("left_title")
+            add_slot("left_body")
+            add_slot("right_title")
+            add_slot("right_body")
 
         generated.append(
             {
