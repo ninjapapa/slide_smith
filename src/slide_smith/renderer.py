@@ -813,7 +813,34 @@ def _render_extended(
             slide_h_emu=slide_h_emu,
             context=f"archetype={archetype_id} slot=image",
         )
+
         items = spec.get("items") or []
+
+        # Preferred: map into dedicated placeholders when the template exposes them.
+        # Convention:
+        # - item{n}_marker (optional)
+        # - item{n}_body (required)
+        # If the template doesn't have these slots, we fall back to bullets/body.
+        has_item_slots = _slot_spec(archetype_spec, "item1_body") is not None
+        if has_item_slots and isinstance(items, list):
+            for idx, it in enumerate(items, start=1):
+                if not isinstance(it, dict):
+                    continue
+                marker = it.get("marker")
+                body = it.get("body")
+
+                # If marker is missing, auto-number.
+                if not (isinstance(marker, str) and marker):
+                    marker = str(idx)
+
+                if isinstance(body, str) and body:
+                    # marker slot is optional; only set if it exists.
+                    if _slot_spec(archetype_spec, f"item{idx}_marker") is not None:
+                        set_text_slot(f"item{idx}_marker", str(marker), style_key="body")
+                    set_text_slot(f"item{idx}_body", body, style_key="body")
+            return
+
+        # Fallback: render as bullets/body.
         lines: list[str] = []
         if isinstance(items, list):
             for it in items:
