@@ -63,8 +63,12 @@ slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profi
 ### Inputs
 - Deck Spec schema: `docs/design/deck-spec.schema.json`
 - Example fixtures:
-  - `docs/design/examples/deck-spec.full.sample.json`
-  - `docs/design/examples/deck-spec.sample.json`
+  - Legacy v1 examples:
+    - `docs/design/examples/deck-spec.full.sample.json`
+    - `docs/design/examples/deck-spec.sample.json`
+  - Redesign (base vs extended) examples:
+    - `docs/examples/redesign/base.sample.json`
+    - `docs/examples/redesign/extended.sample.json`
 
 ## Local setup (recommended)
 
@@ -192,7 +196,7 @@ slide-smith bootstrap-from-slide \
   --slide 10 \
   --template-id my_template \
   --out-dir ./templates \
-  --archetype image_left_text_right \
+  --archetype text_with_image \
   --write
 
 # Force box-only (debug/compat):
@@ -201,7 +205,7 @@ slide-smith bootstrap-from-slide \
   --slide 10 \
   --template-id my_template \
   --out-dir ./templates \
-  --archetype image_left_text_right \
+  --archetype text_with_image \
   --boxes-only \
   --write
 ```
@@ -212,7 +216,7 @@ Notes:
 - If placeholders can’t be inferred reliably, it falls back to `box` geometry (`units: relative`).
 - You can force legacy behavior with `--boxes-only`.
 
-Map the bootstrapped layout inventory onto **standard archetypes** (adds `title`, `section`, `title_and_bullets`, `image_left_text_right`):
+Map the bootstrapped layout inventory onto **standard archetypes** (adds `title`, `section`, `title_and_bullets`, `title_subtitle_and_bullets`, `text_with_image` — plus legacy `image_left_text_right`):
 
 Non-interactive best-effort mapping (prints updated spec JSON):
 
@@ -260,7 +264,7 @@ Standard-compat validation (standard archetypes + required slots are mapped):
 slide-smith validate-template --template my_template --templates-dir ./templates --profile standard
 ```
 
-Extended-compat validation (extended archetypes library):
+Extended-compat validation (extended archetypes library, including redesigned extended archetypes like `picture_compare`, `three_col_with_icons`, etc. when present in the template spec):
 
 ```bash
 slide-smith validate-template --template my_template --templates-dir ./templates --profile extended
@@ -292,6 +296,12 @@ slide-smith create \
   --input docs/design/examples/deck-spec.full.sample.json \
   --template default \
   --output /tmp/out.pptx
+
+# Redesign examples (base vs extended):
+slide-smith create \
+  --input docs/examples/redesign/base.sample.json \
+  --template default \
+  --output /tmp/out.base.pptx
 
 # External templates root:
 slide-smith create \
