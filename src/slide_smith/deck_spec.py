@@ -13,6 +13,7 @@ SUPPORTED_ARCHETYPES = {
     "section",
     "title_and_bullets",
     "image_left_text_right",
+    "text_with_image",
 
     # v1.1 extended
     "two_col",
@@ -24,6 +25,56 @@ SUPPORTED_ARCHETYPES = {
     "table_plus_description",
     "timeline_horizontal",
 }
+
+
+# Backward-compatible archetype aliases. This enables additive evolution of
+# archetype names without breaking existing deck specs.
+ARCHETYPE_ALIASES: dict[str, str] = {
+    # prefer semantic naming vs geometry-bound naming
+    "image_left_text_right": "text_with_image",
+}
+
+
+def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Normalize a deck spec in a backwards-compatible way.
+
+    Returns: (normalized_spec, warnings)
+
+    This currently:
+    - maps legacy archetype ids to their modern equivalents
+
+    NOTE: This function is intentionally conservative: it avoids mutating other
+    fields so callers can reason about what changed.
+    """
+
+    if not isinstance(spec, dict):
+        return spec, []
+
+    slides = spec.get("slides")
+    if not isinstance(slides, list):
+        return spec, []
+
+    warnings: list[str] = []
+    out = dict(spec)
+    out_slides: list[Any] = []
+
+    for i, slide in enumerate(slides):
+        if not isinstance(slide, dict):
+            out_slides.append(slide)
+            continue
+
+        archetype = slide.get("archetype")
+        if isinstance(archetype, str) and archetype in ARCHETYPE_ALIASES:
+            new_id = ARCHETYPE_ALIASES[archetype]
+            warnings.append(f"$.slides[{i}].archetype: '{archetype}' is deprecated; use '{new_id}'")
+            slide2 = dict(slide)
+            slide2["archetype"] = new_id
+            out_slides.append(slide2)
+        else:
+            out_slides.append(slide)
+
+    out["slides"] = out_slides
+    return out, warnings
 
 
 def load_deck_spec(path: str) -> dict[str, Any]:
@@ -56,6 +107,12 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
         return [f"{_path('slides')}: must be a non-empty array"]
 
     allowed = set(SUPPORTED_ARCHETYPES)
+
+    # New archetypes (additive evolution). These are not yet part of the
+    # renderer's full coverage, but we allow validation to proceed so templates
+    # and agents can iterate.
+    allowed |= {"text_with_image"}
+
     if profile == "core_v2":
         allowed |= {"message", "multi_col", "image_text", "list_visual", "metrics"}
 
@@ -129,7 +186,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             if body is not None and not isinstance(body, str):
                 errors.append(f"{_path(sp, 'body')}: must be a string")
 
-        elif archetype == "image_left_text_right":
+        elif archetype in {"image_left_text_right", "text_with_image"}:
             req_str("body")
             image = slide.get("image")
             if isinstance(image, str):

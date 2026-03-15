@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from slide_smith.deck_spec import load_deck_spec, validate_deck_spec
+from slide_smith.deck_spec import load_deck_spec, normalize_deck_spec, validate_deck_spec
 from slide_smith.markdown_parser import parse_markdown
 from slide_smith.renderer import RenderingError, render_deck
 from slide_smith.template_loader import load_template_spec
@@ -35,12 +35,20 @@ def handle_create(
         except AssetError as exc:
             return 1, f"Asset collection failed: {exc}"
 
+    spec, normalize_warnings = normalize_deck_spec(spec)
+
     # Default to legacy validation (v1 core + v1.1 extended). New v2 families are
     # behind an explicit profile until they are fully stabilized.
     errors = validate_deck_spec(spec, profile="legacy")
     if errors:
         lines = ["Deck spec validation failed:"] + [f"- {e}" for e in errors]
         return 1, "\n".join(lines)
+
+    # Non-fatal warnings (e.g. deprecated archetype ids).
+    if normalize_warnings and print_mode != "none":
+        # We only surface these in human-readable mode to avoid breaking JSON output.
+        pre = "\n".join(["Warnings:"] + [f"- {w}" for w in normalize_warnings])
+        print(pre)
 
     # Schema validation is the source of truth when jsonschema is available.
     try:
