@@ -26,14 +26,20 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
         return errors
 
     required: dict[str, dict[str, bool]] = {
+        # Base (standard profile)
         "title": {"title": True},
         "section": {"title": True},
         "title_and_bullets": {"title": True, "bullets": True},
-        "image_left_text_right": {"title": True, "image": True, "body": True},
+        "title_subtitle_and_bullets": {"title": True, "subtitle": True, "bullets": True},
+        "text_with_image": {"title": True, "image": True, "body": True},
+
+        # Legacy base alias (allowed but not required)
+        "image_left_text_right": {"title": False, "image": False, "body": False},
     }
 
     if profile == "extended":
         required |= {
+            # Legacy extended
             "two_col": {"title": True, "col1_body": True, "col2_body": True},
             "three_col": {"title": True, "col1_body": True, "col2_body": True, "col3_body": True},
             "four_col": {"title": True, "col1_body": True, "col2_body": True, "col3_body": True, "col4_body": True},
@@ -42,6 +48,46 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             "table": {"title": True, "table_text": True},
             "table_plus_description": {"title": True, "table_text": True, "body": True},
             "timeline_horizontal": {"title": True, "milestone1_body": True},
+
+            # Redesign extended
+            "title_subtitle": {"title": True, "subtitle": True},
+            "version_page": {"title": True, "table_text": True},
+            "agenda_with_image": {"title": True, "image": True, "bullets": True},
+            "two_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True},
+            "three_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True, "col3_body": True},
+            "three_col_with_icons": {
+                "title": True,
+                "col1_title": True,
+                "col1_body": True,
+                "col1_icon": True,
+                "col2_title": True,
+                "col2_body": True,
+                "col2_icon": True,
+                "col3_title": True,
+                "col3_body": True,
+                "col3_icon": True,
+            },
+            "five_col_with_icons": {
+                "title": True,
+                "item1_icon": True,
+                "item1_body": True,
+                "item2_icon": True,
+                "item2_body": True,
+                "item3_icon": True,
+                "item3_body": True,
+                "item4_icon": True,
+                "item4_body": True,
+                "item5_icon": True,
+                "item5_body": True,
+            },
+            "picture_compare": {
+                "title": True,
+                "left_image": True,
+                "right_image": True,
+                "left_body": True,
+                "right_body": True,
+            },
+            "title_only_freeform": {"title": True},
         }
 
     typed_archetypes = [a for a in archetypes if isinstance(a, dict)]
@@ -66,8 +112,11 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
                 continue
             slot = slot_by_name[slot_name]
             idx = slot.get("placeholder_idx")
-            if not isinstance(idx, int):
-                errors.append(f"{prefix}: archetype '{aid}' slot '{slot_name}' missing int placeholder_idx")
+            box = slot.get("box")
+            if not isinstance(idx, int) and not isinstance(box, dict):
+                errors.append(
+                    f"{prefix}: archetype '{aid}' slot '{slot_name}' missing placeholder_idx (int) or box (object)"
+                )
 
     return errors
 
