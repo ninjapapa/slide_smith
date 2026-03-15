@@ -13,7 +13,25 @@ class SchemaValidationResult:
 
 
 def _schema_path() -> Path:
-    # repo-local path
+    """Locate the deck spec JSON schema.
+
+    Preference order:
+    1) Packaged schema within the slide_smith module (works for installed wheels)
+    2) Repo-local schema under docs/ (works in a source checkout)
+
+    This avoids a common failure mode where an older installed version validates
+    against an outdated schema (or a schema file is missing from the package).
+    """
+
+    # 1) packaged schema
+    try:  # pragma: no cover
+        from importlib import resources
+
+        return resources.files("slide_smith").joinpath("schemas/deck-spec.schema.json")  # type: ignore[return-value]
+    except Exception:
+        pass
+
+    # 2) repo-local path
     return Path(__file__).resolve().parents[2] / "docs" / "design" / "deck-spec.schema.json"
 
 
