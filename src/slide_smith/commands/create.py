@@ -57,6 +57,19 @@ def handle_create(
         schema_res = validate_against_schema(spec)
         if not schema_res.ok:
             lines = ["Deck spec schema validation failed:"] + [f"- {e}" for e in schema_res.errors]
+
+            # Heuristic: if lightweight validation passed but schema failed with
+            # oneOf mismatch, users are likely running an outdated schema (older
+            # install) that doesn't include the new archetype ids.
+            if any("is not valid under any of the given schemas" in e for e in schema_res.errors):
+                try:
+                    from slide_smith.schema_validation import _schema_path
+
+                    lines.append(f"- hint: schema path in use: {_schema_path()}")
+                    lines.append("- hint: if this schema is missing your archetype ids, upgrade slide-smith or run from repo HEAD")
+                except Exception:
+                    lines.append("- hint: upgrade slide-smith or run from repo HEAD (schema may be outdated)")
+
             return 1, "\n".join(lines)
     except Exception:
         pass
