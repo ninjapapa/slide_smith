@@ -8,22 +8,19 @@ from typing import Any
 # NOTE: This list should track what the renderer supports.
 # v1.0 core + v1.1 extended (renderer supports both).
 SUPPORTED_ARCHETYPES = {
-    # v1.0 core
+    # current stable surface
     "title",
     "section",
     "title_and_bullets",
-    "image_left_text_right",
     "text_with_image",
-
-    # v1.1 extended
+    "title_subtitle_and_bullets",
+    "version_page",
+    "agenda_with_image",
     "two_col",
-    "three_col",
-    "four_col",
-    "pillars_3",
-    "pillars_4",
-    "table",
-    "table_plus_description",
-    "timeline_horizontal",
+    "three_col_with_icons",
+    "picture_compare",
+    # legacy alias kept for migration
+    "image_left_text_right",
 }
 
 
@@ -129,10 +126,9 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
     This intentionally does not depend on jsonschema.
 
     Profiles:
-    - legacy: v1.0 core + v1.1 extended archetypes (current renderer support)
-    - core_v2: enables proposed v2 families (message/multi_col/image_text/list_visual/metrics)
+    - legacy: current stable renderer support plus migration aliases
 
-    The goal is to let new archetype families iterate without immediately freezing a full schema.
+    The goal is to keep validation aligned with the current supported product surface.
     """
 
     errors: list[str] = []
@@ -143,27 +139,10 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
 
     allowed = set(SUPPORTED_ARCHETYPES)
 
-    # New archetypes (additive evolution). These are not yet part of the
-    # renderer's full coverage, but we allow validation to proceed so templates
-    # and agents can iterate.
     allowed |= {
-        "text_with_image",
-        "title_subtitle_and_bullets",
-        "title_subtitle",
-        "version_page",
-        "agenda_with_image",
-        "two_col_with_subtitle",
-        "three_col_with_subtitle",
-        "three_col_with_icons",
-        "five_col_with_icons",
-        "picture_compare",
-        "title_only_freeform",
         # allow legacy aliases so validation doesn't fail before normalization
         "title_and_bullets_with_subtitle",
     }
-
-    if profile == "core_v2":
-        allowed |= {"message", "multi_col", "image_text", "list_visual", "metrics"}
 
     for idx, slide in enumerate(slides):
         sp = f"slides[{idx}]"
@@ -192,21 +171,13 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             "section",
             "title_and_bullets",
             "image_left_text_right",
-            # v1.1 extended
+            "text_with_image",
+            "title_subtitle_and_bullets",
+            "version_page",
+            "agenda_with_image",
             "two_col",
-            "three_col",
-            "four_col",
-            "pillars_3",
-            "pillars_4",
-            "table",
-            "table_plus_description",
-            "timeline_horizontal",
-            # v2 families
-            "message",
-            "multi_col",
-            "image_text",
-            "list_visual",
-            "metrics",
+            "three_col_with_icons",
+            "picture_compare",
         }:
             req_str("title")
 
@@ -251,67 +222,33 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             else:
                 errors.append(f"{_path(sp, 'image')}: must be a string or an object")
 
-        elif archetype in {"two_col", "three_col", "four_col"}:
-            n = {"two_col": 2, "three_col": 3, "four_col": 4}[archetype]
-            for i in range(1, n + 1):
+        elif archetype == "title_subtitle_and_bullets":
+            req_str("subtitle")
+            bullets = slide.get("bullets")
+            body = slide.get("body")
+            if bullets is None and body is None:
+                errors.append(f"{_path(sp)}: must provide either 'bullets' or 'body'")
+            if bullets is not None:
+                if not isinstance(bullets, list):
+                    errors.append(f"{_path(sp, 'bullets')}: must be an array of strings")
+                else:
+                    for j, b in enumerate(bullets):
+                        if not isinstance(b, str):
+                            errors.append(f"{_path(sp, f'bullets[{j}]')}: must be a string")
+            if body is not None and not isinstance(body, str):
+                errors.append(f"{_path(sp, 'body')}: must be a string")
+
+        elif archetype == "two_col":
+            for i in (1, 2):
                 f = f"col{i}_body"
                 if not isinstance(slide.get(f), str) or not slide.get(f):
                     errors.append(f"{_path(sp, f)}: required non-empty string")
 
-        elif archetype in {"pillars_3", "pillars_4"}:
-            n = 3 if archetype == "pillars_3" else 4
-            for i in range(1, n + 1):
-                f = f"pillar{i}_body"
-                if not isinstance(slide.get(f), str) or not slide.get(f):
-                    errors.append(f"{_path(sp, f)}: required non-empty string")
-
-        elif archetype == "table":
+        elif archetype == "version_page":
             if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
                 errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
 
-        elif archetype == "table_plus_description":
-            if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
-                errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
-            if not isinstance(slide.get("body"), str) or not slide.get("body"):
-                errors.append(f"{_path(sp, 'body')}: required non-empty string")
-
-        elif archetype == "timeline_horizontal":
-            # milestoneN_body are optional, but must be strings when present.
-            for i in range(1, 11):
-                f = f"milestone{i}_body"
-                if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
-                    errors.append(f"{_path(sp, f)}: must be a string")
-
-        # --- v2 profiles ---
-
-        elif archetype == "message":
-            body = slide.get("body")
-            quote = slide.get("quote")
-            if body is None and quote is None:
-                errors.append(f"{_path(sp)}: must provide either 'body' or 'quote'")
-            for f in ("body", "quote", "attribution"):
-                if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
-                    errors.append(f"{_path(sp, f)}: must be a string")
-
-        elif archetype == "multi_col":
-            items = slide.get("items")
-            if items is None:
-                errors.append(f"{_path(sp, 'items')}: required for multi_col")
-            elif not isinstance(items, list) or not items:
-                errors.append(f"{_path(sp, 'items')}: must be a non-empty array")
-            else:
-                for j, it in enumerate(items):
-                    if not isinstance(it, dict):
-                        errors.append(f"{_path(sp, f'items[{j}]')}: must be an object")
-                        continue
-                    if not isinstance(it.get("body"), str) or not it.get("body"):
-                        errors.append(f"{_path(sp, f'items[{j}].body')}: required non-empty string")
-                    for k in ("heading", "label", "number"):
-                        if k in it and it.get(k) is not None and not isinstance(it.get(k), str):
-                            errors.append(f"{_path(sp, f'items[{j}].{k}')}: must be a string")
-
-        elif archetype == "image_text":
-            req_str("body")
+        elif archetype == "agenda_with_image":
             image = slide.get("image")
             if isinstance(image, str):
                 if not image:
@@ -320,25 +257,11 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
                 ip = image.get("path")
                 if not isinstance(ip, str) or not ip:
                     errors.append(f"{_path(sp, 'image.path')}: required non-empty string")
-                alt = image.get("alt")
-                if alt is not None and not isinstance(alt, str):
-                    errors.append(f"{_path(sp, 'image.alt')}: must be a string")
             else:
                 errors.append(f"{_path(sp, 'image')}: must be a string or an object")
 
-            params = slide.get("params")
-            if params is not None and not isinstance(params, dict):
-                errors.append(f"{_path(sp, 'params')}: must be an object")
-            if isinstance(params, dict) and "image_side" in params:
-                v = params.get("image_side")
-                if v not in {"left", "right"}:
-                    errors.append(f"{_path(sp, 'params.image_side')}: must be 'left' or 'right'")
-
-        elif archetype == "list_visual":
             items = slide.get("items")
-            if items is None:
-                errors.append(f"{_path(sp, 'items')}: required for list_visual")
-            elif not isinstance(items, list) or not items:
+            if not isinstance(items, list) or not items:
                 errors.append(f"{_path(sp, 'items')}: must be a non-empty array")
             else:
                 for j, it in enumerate(items):
@@ -347,26 +270,43 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
                         continue
                     if not isinstance(it.get("body"), str) or not it.get("body"):
                         errors.append(f"{_path(sp, f'items[{j}].body')}: required non-empty string")
-                    for k in ("label", "number"):
-                        if k in it and it.get(k) is not None and not isinstance(it.get(k), str):
-                            errors.append(f"{_path(sp, f'items[{j}].{k}')}: must be a string")
+                    marker = it.get("marker")
+                    if marker is not None and not isinstance(marker, str):
+                        errors.append(f"{_path(sp, f'items[{j}].marker')}: must be a string")
 
-        elif archetype == "metrics":
-            ms = slide.get("metrics")
-            if ms is None:
-                errors.append(f"{_path(sp, 'metrics')}: required for metrics")
-            elif not isinstance(ms, list) or not ms:
-                errors.append(f"{_path(sp, 'metrics')}: must be a non-empty array")
+        elif archetype == "three_col_with_icons":
+            items = slide.get("items")
+            if not isinstance(items, list) or len(items) != 3:
+                errors.append(f"{_path(sp, 'items')}: must be an array of exactly 3 objects")
             else:
-                for j, m in enumerate(ms):
-                    if not isinstance(m, dict):
-                        errors.append(f"{_path(sp, f'metrics[{j}]')}: must be an object")
+                for j, it in enumerate(items):
+                    if not isinstance(it, dict):
+                        errors.append(f"{_path(sp, f'items[{j}]')}: must be an object")
                         continue
-                    if not isinstance(m.get("value"), str) or not m.get("value"):
-                        errors.append(f"{_path(sp, f'metrics[{j}].value')}: required non-empty string")
-                    if not isinstance(m.get("label"), str) or not m.get("label"):
-                        errors.append(f"{_path(sp, f'metrics[{j}].label')}: required non-empty string")
-                    if "detail" in m and m.get("detail") is not None and not isinstance(m.get("detail"), str):
-                        errors.append(f"{_path(sp, f'metrics[{j}].detail')}: must be a string")
+                    for field in ("title", "body", "icon"):
+                        if not isinstance(it.get(field), str) or not it.get(field):
+                            errors.append(f"{_path(sp, f'items[{j}].{field}')}: required non-empty string")
+                    if "caption" in it and it.get("caption") is not None and not isinstance(it.get("caption"), str):
+                        errors.append(f"{_path(sp, f'items[{j}].caption')}: must be a string")
+
+        elif archetype == "picture_compare":
+            for side_name in ("left", "right"):
+                side = slide.get(side_name)
+                if not isinstance(side, dict):
+                    errors.append(f"{_path(sp, side_name)}: required object")
+                    continue
+                image = side.get("image")
+                if isinstance(image, str):
+                    if not image:
+                        errors.append(f"{_path(sp, f'{side_name}.image')}: required non-empty string")
+                elif isinstance(image, dict):
+                    ip = image.get("path")
+                    if not isinstance(ip, str) or not ip:
+                        errors.append(f"{_path(sp, f'{side_name}.image.path')}: required non-empty string")
+                else:
+                    errors.append(f"{_path(sp, f'{side_name}.image')}: must be a string or an object")
+                for field in ("title", "body"):
+                    if field in side and side.get(field) is not None and not isinstance(side.get(field), str):
+                        errors.append(f"{_path(sp, f'{side_name}.{field}')}: must be a string")
 
     return errors

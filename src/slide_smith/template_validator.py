@@ -41,27 +41,14 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
 
     if profile == "extended":
         required |= {
-            # Legacy extended
             "two_col": {"title": True, "col1_body": True, "col2_body": True},
-            "three_col": {"title": True, "col1_body": True, "col2_body": True, "col3_body": True},
-            "four_col": {"title": True, "col1_body": True, "col2_body": True, "col3_body": True, "col4_body": True},
-            "pillars_3": {"title": True, "pillar1_body": True, "pillar2_body": True, "pillar3_body": True},
-            "pillars_4": {"title": True, "pillar1_body": True, "pillar2_body": True, "pillar3_body": True, "pillar4_body": True},
-            "table": {"title": True, "table_text": True},
-            "table_plus_description": {"title": True, "table_text": True, "body": True},
-            "timeline_horizontal": {"title": True, "milestone1_body": True},
-
-            # Redesign extended
-            "title_subtitle": {"title": True, "subtitle": True},
             "version_page": {"title": True, "table_text": True},
 
             # agenda_with_image supports two template approaches:
-            # - legacy: a single bullets/body box (slot=bullets)
-            # - preferred: dedicated item placeholders (slot=item1_body and optional item1_marker)
+            # - a single bullets/body box (slot=bullets)
+            # - dedicated item placeholders (slot=item1_body and optional item1_marker)
             "agenda_with_image": {"title": True, "image": True, "bullets": False, "item1_body": False},
 
-            "two_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True},
-            "three_col_with_subtitle": {"title": True, "subtitle": True, "col1_body": True, "col2_body": True, "col3_body": True},
             "three_col_with_icons": {
                 "title": True,
                 "col1_title": True,
@@ -74,20 +61,6 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
                 "col3_body": True,
                 "col3_icon": True,
             },
-            "five_col_with_icons": {
-                "title": True,
-                "item1_body": True,
-                "item2_body": True,
-                "item3_body": True,
-                "item4_body": True,
-                "item5_body": True,
-                # icons are optional depending on template
-                "item1_icon": False,
-                "item2_icon": False,
-                "item3_icon": False,
-                "item4_icon": False,
-                "item5_icon": False,
-            },
             "picture_compare": {
                 "title": True,
                 "left_image": True,
@@ -98,7 +71,6 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
                 "left_title": False,
                 "right_title": False,
             },
-            "title_only_freeform": {"title": True},
         }
 
     typed_archetypes = [a for a in archetypes if isinstance(a, dict)]

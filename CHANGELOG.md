@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- retired legacy renderer families and old experimental layout support from the active product surface
+- aligned renderer dispatch, validation, and template semantics to the stable layout set only
+
 ## v3.0.0 — 2026-03-16
 
 ### Highlights

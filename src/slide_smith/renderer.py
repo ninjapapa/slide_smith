@@ -17,7 +17,7 @@ from slide_smith.render_fallback import (
     _make_fallback_slide_spec,
     _record_render_warning,
 )
-from slide_smith.render_legacy import _render_extended, _render_v2_families
+from slide_smith.render_extended import _render_extended
 from slide_smith.render_support import RenderingError, _layout_for_archetype
 from slide_smith.styling import load_styles
 from slide_smith.template_loader import template_dir
@@ -147,22 +147,10 @@ def render_deck(
             )
         elif archetype in {
             "two_col",
-            "three_col",
-            "four_col",
-            "pillars_3",
-            "pillars_4",
-            "table",
-            "table_plus_description",
-            "timeline_horizontal",
-            "title_subtitle",
             "version_page",
             "agenda_with_image",
-            "two_col_with_subtitle",
-            "three_col_with_subtitle",
             "three_col_with_icons",
-            "five_col_with_icons",
             "picture_compare",
-            "title_only_freeform",
         }:
             _render_extended(
                 slide,
@@ -174,8 +162,6 @@ def render_deck(
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
             )
-        elif archetype in {"message", "multi_col", "image_text", "list_visual", "metrics"}:
-            _render_v2_families(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
 

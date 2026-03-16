@@ -2,10 +2,8 @@ from __future__ import annotations
 
 """Archetype registry.
 
-This module centralizes which archetypes are considered "standard" / "extended"
+This module centralizes which layout ids are considered standard / extended
 for validation, inference, and help-request generation.
-
-v1.1 introduces an extended library (columns/pillars/tables/timeline).
 """
 
 from dataclasses import dataclass
@@ -20,18 +18,16 @@ CORE_STANDARD_ARCHETYPES: list[str] = [
     "title",
     "section",
     "title_and_bullets",
-    "image_left_text_right",
+    "text_with_image",
+    "title_subtitle_and_bullets",
 ]
 
 EXTENDED_ARCHETYPES: list[str] = [
+    "version_page",
+    "agenda_with_image",
     "two_col",
-    "three_col",
-    "four_col",
-    "pillars_3",
-    "pillars_4",
-    "table",
-    "table_plus_description",
-    "timeline_horizontal",
+    "three_col_with_icons",
+    "picture_compare",
 ]
 
 
