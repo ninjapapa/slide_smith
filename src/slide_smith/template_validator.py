@@ -22,6 +22,8 @@ class TemplateValidationError(Exception):
 def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
     errors: list[str] = []
 
+    conventions_doc = "docs/design/archetype-redesign-v1.md (Render-time slot naming conventions table)"
+
     if profile not in {"standard", "extended"}:
         return errors
 
@@ -74,23 +76,27 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             },
             "five_col_with_icons": {
                 "title": True,
-                "item1_icon": True,
                 "item1_body": True,
-                "item2_icon": True,
                 "item2_body": True,
-                "item3_icon": True,
                 "item3_body": True,
-                "item4_icon": True,
                 "item4_body": True,
-                "item5_icon": True,
                 "item5_body": True,
+                # icons are optional depending on template
+                "item1_icon": False,
+                "item2_icon": False,
+                "item3_icon": False,
+                "item4_icon": False,
+                "item5_icon": False,
             },
             "picture_compare": {
                 "title": True,
                 "left_image": True,
                 "right_image": True,
-                "left_body": True,
-                "right_body": True,
+                # compare text is optional
+                "left_body": False,
+                "right_body": False,
+                "left_title": False,
+                "right_title": False,
             },
             "title_only_freeform": {"title": True},
         }
@@ -118,14 +124,17 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             if not (has_bullets or has_items):
                 errors.append(
                     f"{prefix}: archetype 'agenda_with_image' must define either slot 'bullets' (fallback) "
-                    f"or slot 'item1_body' (preferred item placeholders)"
+                    f"or slot 'item1_body' (preferred item placeholders). See {conventions_doc}"
                 )
 
         for slot_name, must in req_slots.items():
             if not must:
                 continue
             if slot_name not in slot_by_name:
-                errors.append(f"{prefix}: archetype '{aid}' missing required slot '{slot_name}'")
+                extra = ""
+                if aid in {"agenda_with_image", "three_col_with_icons", "five_col_with_icons", "picture_compare"}:
+                    extra = f" See {conventions_doc}"
+                errors.append(f"{prefix}: archetype '{aid}' missing required slot '{slot_name}'.{extra}")
                 continue
             slot = slot_by_name[slot_name]
             idx = slot.get("placeholder_idx")
