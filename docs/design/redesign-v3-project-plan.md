@@ -1,5 +1,16 @@
 # Slide Smith v3 Project Plan
 
+> Historical planning document.
+> 
+> This file captures the v3 redesign plan and implementation intent during the transition period.
+> It is **not** the primary source of truth for the current product surface.
+> 
+> For current usage, prefer:
+> - `README.md`
+> - `docs/README.md`
+> - `docs/layout-ids.md`
+> - `docs/design/deck-spec.schema.json`
+
 This plan turns `docs/design/redesign-v3-requirements.md` into an implementation roadmap.
 
 ## Objective

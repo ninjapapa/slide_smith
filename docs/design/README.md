@@ -15,4 +15,9 @@ They are **not** the primary user-facing docs.
 - schema/reference artifacts
 - archived notes from earlier product shapes
 
+Many files here are intentionally historical. When in doubt:
+- use `docs/layout-ids.md` for the current layout API
+- use `docs/examples/redesign/*.json` for current sample deck specs
+- use `docs/design/deck-spec.schema.json` for the active schema contract
+
 If a design doc conflicts with a user doc, follow the user doc.

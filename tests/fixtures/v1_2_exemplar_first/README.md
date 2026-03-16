@@ -1,7 +1,13 @@
 # v1.2 exemplar-first fixtures
 
-Fixtures for the exemplar-first pipeline (reference PPTX → StyleProfile, Markdown → SlidePlan, compile → DeckSpec).
+Historical fixture set for the old exemplar-first pipeline (reference PPTX → StyleProfile, Markdown → SlidePlan, compile → DeckSpec).
 
-These are intentionally tiny and mostly JSON-based until the v1.2 commands are implemented.
+This fixture folder does **not** describe the current supported Slide Smith product surface.
+It is kept only as archived design/test material unless and until it is explicitly removed.
 
-Layout IDs and placeholder schemas here are **illustrative**, not derived from a real PPTX yet.
+If you are looking for current examples, use:
+- `docs/examples/redesign/base.sample.json`
+- `docs/examples/redesign/extended.sample.json`
+- `docs/layout-ids.md`
+
+Layout IDs and placeholder schemas here are illustrative and tied to an older direction.

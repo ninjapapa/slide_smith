@@ -7,6 +7,7 @@
 - made markdown parsing emit current `layout_id` values instead of legacy archetype names
 - simplified deck-spec normalization toward a `layout_id`-native model while keeping the minimal internal renderer shim
 - reduced remaining legacy `archetype` wording in renderer/template validation paths
+- marked redesign-era planning docs and exemplar fixtures as historical to avoid confusion with the live product surface
 
 ## v3.0.0 — 2026-03-16
 

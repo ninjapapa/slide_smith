@@ -1,5 +1,15 @@
 # Slide-Smith Design Requirements
 
+> Historical requirements document.
+> 
+> This file records the intended v3 product shape during redesign.
+> It remains useful for rationale, but it is **not** the primary user-facing spec.
+> 
+> For the current supported surface, prefer:
+> - `README.md`
+> - `docs/layout-ids.md`
+> - `docs/design/deck-spec.schema.json`
+
 ## Executive Summary
 
 `slide-smith` should be simplified into a focused **PowerPoint deck renderer with limited structural slide operations**. It should accept a **small deck spec**, render slides using a constrained set of supported **layout IDs**, allow **insert/delete/update slide** operations, and always **fall back to `title_and_bullets`** when a requested layout cannot be rendered. Advanced inspection, exemplar workflows, and template-authoring/tooling should be removed from scope.
