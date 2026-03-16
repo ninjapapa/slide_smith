@@ -4,6 +4,8 @@
 
 - retired legacy renderer families and old experimental layout support from the active product surface
 - aligned renderer dispatch, validation, and template semantics to the stable layout set only
+- made markdown parsing emit current `layout_id` values instead of legacy archetype names
+- simplified deck-spec normalization toward a `layout_id`-native model while keeping the minimal internal renderer shim
 
 ## v3.0.0 — 2026-03-16
 

@@ -6,8 +6,7 @@ from typing import Any
 
 
 # NOTE: This list should track what the renderer supports.
-# v1.0 core + v1.1 extended (renderer supports both).
-SUPPORTED_ARCHETYPES = {
+SUPPORTED_LAYOUT_IDS = {
     # current stable surface
     "title",
     "section",
@@ -33,10 +32,6 @@ ARCHETYPE_ALIASES: dict[str, str] = {
     "title_and_bullets_with_subtitle": "title_subtitle_and_bullets",
 }
 
-# External v3-facing term. We keep internal archetype compatibility during migration.
-LAYOUT_ID_TO_ARCHETYPE: dict[str, str] = {}
-
-
 def _normalized_slide_kind(slide: dict[str, Any]) -> tuple[str | None, str | None]:
     """Return (internal_archetype, external_layout_id) for a slide.
 
@@ -47,8 +42,7 @@ def _normalized_slide_kind(slide: dict[str, Any]) -> tuple[str | None, str | Non
 
     layout_id = slide.get("layout_id")
     if isinstance(layout_id, str) and layout_id:
-        internal = LAYOUT_ID_TO_ARCHETYPE.get(layout_id, layout_id)
-        return internal, layout_id
+        return layout_id, layout_id
 
     archetype = slide.get("archetype")
     if isinstance(archetype, str) and archetype:
@@ -91,7 +85,7 @@ def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]
 
         if isinstance(slide.get("layout_id"), str):
             # Keep the preferred external term in normalized output for user-facing flows,
-            # but synthesize the internal `archetype` field for the current renderer/validator.
+            # but synthesize the internal `archetype` field for current renderer/editor code.
             slide2["archetype"] = archetype
         elif isinstance(layout_id, str):
             slide2.setdefault("layout_id", layout_id)
@@ -137,7 +131,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
     if not isinstance(slides, list) or not slides:
         return [f"{_path('slides')}: must be a non-empty array"]
 
-    allowed = set(SUPPORTED_ARCHETYPES)
+    allowed = set(SUPPORTED_LAYOUT_IDS)
 
     allowed |= {
         # allow legacy aliases so validation doesn't fail before normalization

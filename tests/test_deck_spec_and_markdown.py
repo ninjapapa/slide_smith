@@ -19,12 +19,12 @@ def test_validate_deck_spec_accepts_sample_json() -> None:
 
 
 
-def test_markdown_normalizes_to_expected_archetypes(tmp_path: Path) -> None:
+def test_markdown_emits_current_layout_ids(tmp_path: Path) -> None:
     md = tmp_path / "sample.md"
     md.write_text(
         "# Demo Deck\n\nSubtitle\n\n## Highlights\n- One\n- Two\n\n## Product\nSome body text\n\n[image: image.png]\n"
     )
     spec = parse_markdown(str(md))
     assert spec["title"] == "Demo Deck"
-    assert spec["slides"][0]["archetype"] == "title_and_bullets"
-    assert spec["slides"][1]["archetype"] == "image_left_text_right"
+    assert spec["slides"][0]["layout_id"] == "title_and_bullets"
+    assert spec["slides"][1]["layout_id"] == "text_with_image"

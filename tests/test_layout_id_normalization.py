@@ -4,7 +4,7 @@ from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.schema_validation import validate_against_schema
 
 
-def test_normalize_deck_spec_adds_internal_archetype_from_layout_id() -> None:
+def test_normalize_deck_spec_preserves_layout_id_and_adds_internal_archetype() -> None:
     spec = {
         "slides": [
             {"layout_id": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"]}

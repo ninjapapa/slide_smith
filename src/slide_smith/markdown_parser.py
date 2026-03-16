@@ -20,15 +20,14 @@ def parse_markdown(path: str) -> dict[str, Any]:
             return
         if bullets:
             current_slide["bullets"] = bullets[:]
-            current_slide.setdefault("archetype", "title_and_bullets")
         if body_lines:
             current_slide["body"] = "\n".join(body_lines).strip()
         if current_slide.get("image") and current_slide.get("body"):
-            current_slide.setdefault("archetype", "image_left_text_right")
+            current_slide.setdefault("layout_id", "text_with_image")
         elif current_slide.get("bullets"):
-            current_slide.setdefault("archetype", "title_and_bullets")
+            current_slide.setdefault("layout_id", "title_and_bullets")
         else:
-            current_slide.setdefault("archetype", "section")
+            current_slide.setdefault("layout_id", "section")
         deck["slides"].append(current_slide)
         current_slide = None
         body_lines = []
@@ -59,7 +58,7 @@ def parse_markdown(path: str) -> dict[str, Any]:
 
     if deck.get("title") and not deck["slides"]:
         deck["slides"].append({
-            "archetype": "title",
+            "layout_id": "title",
             "title": deck["title"],
             "subtitle": deck.get("subtitle", ""),
         })
