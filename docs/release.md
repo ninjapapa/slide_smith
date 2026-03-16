@@ -30,7 +30,7 @@ slide-smith --help
 - Ensure `src/slide_smith/__init__.py` version matches.
 - Ensure docs reflect the current release surface only.
 - Ensure current examples validate via `slide-smith validate` and render against supported templates.
-- Ensure the default template remains compatible with current base archetype names.
+- Ensure the default template remains compatible with current stable layout ids.
 
 ## Tagging and GitHub release
 
@@ -44,7 +44,7 @@ gh release create vX.Y.Z --repo ninjapapa/slide_smith --title "vX.Y.Z"
 ## Suggested release notes sections
 
 - Highlights
-- Added / changed archetypes
+- Added / changed layout ids
 - Validation / schema changes
 - Template workflow changes
 - Compatibility notes / deprecations

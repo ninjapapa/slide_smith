@@ -4,12 +4,18 @@
   "version": "0.1",
   "deck": {
     "aspect_ratio": "16:9",
+    "supported_layout_ids": [
+      "title",
+      "section",
+      "title_and_bullets",
+      "title_subtitle_and_bullets",
+      "text_with_image"
+    ],
     "supported_archetypes": [
       "title",
       "section",
       "title_and_bullets",
       "title_subtitle_and_bullets",
-      "image_left_text_right",
       "text_with_image"
     ]
   },
@@ -73,7 +79,7 @@
     {
       "id": "text_with_image",
       "layout": "Two Content",
-      "description": "Semantic alias of image_left_text_right for the default template.",
+      "description": "Preferred semantic image+text layout for the default template.",
       "slots": [
         { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
         { "name": "image", "type": "image", "required": true, "placeholder_idx": 1, "aspect_ratio": "flexible" },

@@ -6,4 +6,4 @@ Contents:
 - `template.json` — semantic template contract for agents
 - `template.pptx` — render artifact (to be added)
 
-For MVP, the JSON spec is enough to let the CLI expose supported archetypes and slots.
+For MVP, the JSON spec is enough to let the CLI expose supported layout ids and slots.

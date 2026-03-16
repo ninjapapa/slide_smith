@@ -12,7 +12,7 @@ All supported inputs normalize into a deck spec before schema validation and ren
 The deck spec is designed to be:
 - easy for agents to author
 - explicit enough to validate reliably
-- compatible with both legacy aliases and the current redesigned archetypes
+- centered on the current `layout_id` API
 - template-first, so templates control actual layout/slot mapping
 
 ## Top-level shape
@@ -23,7 +23,7 @@ The deck spec is designed to be:
   "subtitle": "Draft for leadership review",
   "slides": [
     {
-      "archetype": "title_and_bullets",
+      "layout_id": "title_and_bullets",
       "title": "Highlights",
       "bullets": ["Revenue up 20%", "Margin improved", "Pipeline remains strong"]
     }
@@ -40,7 +40,7 @@ The deck spec is designed to be:
 ## Shared slide fields
 
 Most slides use some subset of:
-- `archetype: string`
+- `layout_id: string`
 - `title: string`
 - `subtitle?: string`
 - `body?: string`
@@ -48,45 +48,30 @@ Most slides use some subset of:
 - `image?: string | { path: string, alt?: string }`
 - `notes?: string`
 
-Additional archetype-specific fields include things like:
+Additional layout-specific fields include things like:
 - `table_text`
 - `items[]`
-- `colN_*`
-- `itemN_*`
+- `col1_body`, `col2_body`
 - `left` / `right`
 
-## Current archetype families
+## Current layout families
 
-### Base
+### Core
 - `title`
 - `section`
 - `title_and_bullets`
 - `title_subtitle_and_bullets`
 - `text_with_image`
 
-### Legacy alias still accepted
-- `image_left_text_right` → normalized/treated as `text_with_image`
-
-### Extended
-- `title_subtitle`
+### Stable non-core
 - `version_page`
 - `agenda_with_image`
-- `two_col_with_subtitle`
-- `three_col_with_subtitle`
-- `three_col_with_icons`
-- `five_col_with_icons`
-- `picture_compare`
-- `title_only_freeform`
-
-### Legacy extended archetypes still supported
 - `two_col`
-- `three_col`
-- `four_col`
-- `pillars_3`
-- `pillars_4`
-- `table`
-- `table_plus_description`
-- `timeline_horizontal`
+- `three_col_with_icons`
+- `picture_compare`
+
+### Migration alias still accepted
+- `image_left_text_right` → normalized/treated as `text_with_image`
 
 ## Validation
 

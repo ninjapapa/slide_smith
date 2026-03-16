@@ -4,12 +4,12 @@
   "slides": [
     {
       "layout_id": "title",
-      "title": "Archetype Redesign (Base)",
+      "title": "Layout ID Redesign (Base)",
       "subtitle": "Sample deck"
     },
     {
       "layout_id": "section",
-      "title": "Base archetypes"
+      "title": "Base layouts"
     },
     {
       "layout_id": "title_and_bullets",
@@ -32,7 +32,7 @@
     {
       "layout_id": "text_with_image",
       "title": "text_with_image",
-      "body": "This archetype replaces geometry-bound image_left_text_right. Template decides exact placement.",
+      "body": "This layout replaces geometry-bound image_left_text_right. Template decides exact placement.",
       "image": {
         "path": "./assets/sample.png",
         "alt": "Sample image"

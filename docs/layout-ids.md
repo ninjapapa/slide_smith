@@ -6,7 +6,7 @@ Use this doc when you want to know:
 - which `layout_id` values are supported
 - what fields each layout expects
 - how repeated-item layouts are represented
-- which legacy names are still accepted during migration
+- which migration aliases are still accepted
 
 For the machine-readable contract, use:
 - `slide-smith help api --format json`
@@ -38,7 +38,7 @@ Fallback target when a requested layout cannot render:
 ### Use `layout_id`
 The user-facing term is `layout_id`.
 
-Legacy `archetype` input may still be accepted internally during migration, but callers should provide `layout_id`.
+New deck specs should use `layout_id`. A small set of legacy aliases may still normalize during migration, but they are not the primary API.
 
 ### Template decides visual layout
 The `layout_id` describes the content shape.
@@ -147,8 +147,8 @@ Example:
 { "layout_id": "text_with_image", "title": "Target workflow", "body": "The new flow reduces manual handoffs.", "image": "assets/workflow.png" }
 ```
 
-Legacy alias still accepted during migration:
-- `image_left_text_right`
+Migration alias still accepted:
+- `image_left_text_right` → `text_with_image`
 
 ---
 

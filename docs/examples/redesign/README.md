@@ -1,6 +1,6 @@
 # Redesign Examples
 
-These are the current sample deck specs for the redesigned/base+extended archetype set.
+These are the current sample deck specs for the stable `layout_id` set.
 
 ## Files
 
@@ -35,5 +35,5 @@ slide-smith create \
 ## Notes
 
 - `text_with_image` expects an image path or image object.
-- Extended item-based layouts require template slot names that follow the current conventions table in `docs/layout-ids.md`.
-- These examples replace the older `docs/design/examples/*` samples as the current reference set.
+- Item-based layouts require template slot names that follow the current conventions table in `docs/layout-ids.md`.
+- These examples replace older redesign-era samples as the current reference set.
