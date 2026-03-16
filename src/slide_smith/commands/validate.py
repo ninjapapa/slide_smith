@@ -94,8 +94,8 @@ def _has_value(slide: dict[str, Any], field: str) -> bool:
     return value is not None
 
 
-def _template_slot_names(template_archetypes: dict[str, dict[str, Any]], layout_id: str) -> set[str]:
-    spec = template_archetypes.get(layout_id) or {}
+def _template_slot_names(template_layouts: dict[str, dict[str, Any]], layout_id: str) -> set[str]:
+    spec = template_layouts.get(layout_id) or {}
     slots = spec.get("slots") or []
     out: set[str] = set()
     if isinstance(slots, list):
@@ -105,7 +105,7 @@ def _template_slot_names(template_archetypes: dict[str, dict[str, Any]], layout_
     return out
 
 
-def _predict_slide_status(*, slide: dict[str, Any], index: int, template_archetypes: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def _predict_slide_status(*, slide: dict[str, Any], index: int, template_layouts: dict[str, dict[str, Any]]) -> dict[str, Any]:
     layout_id = slide.get("layout_id")
     if not isinstance(layout_id, str) or not layout_id:
         return {
@@ -134,7 +134,7 @@ def _predict_slide_status(*, slide: dict[str, Any], index: int, template_archety
             "message": f"content does not satisfy layout contract; missing fields: {', '.join(missing_fields)}",
         }
 
-    if layout_id not in template_archetypes:
+    if layout_id not in template_layouts:
         return {
             "slide_index": index,
             "status": "fallback",
@@ -143,7 +143,7 @@ def _predict_slide_status(*, slide: dict[str, Any], index: int, template_archety
             "message": f"template does not define layout_id '{layout_id}'",
         }
 
-    slots = _template_slot_names(template_archetypes, layout_id)
+    slots = _template_slot_names(template_layouts, layout_id)
     if layout_id == "title" and "title" not in slots:
         return {
             "slide_index": index,
@@ -191,14 +191,14 @@ def handle_validate(*, input_path: str, template: str, templates_dir: str | None
     spec, normalize_warnings = normalize_deck_spec(spec)
     lightweight_errors = validate_deck_spec(spec, profile="current")
 
-    template_archetypes = {
+    template_layouts = {
         item["id"]: item
         for item in template_spec.get("archetypes", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
 
     slide_results = [
-        _predict_slide_status(slide=slide, index=i, template_archetypes=template_archetypes)
+        _predict_slide_status(slide=slide, index=i, template_layouts=template_layouts)
         for i, slide in enumerate(spec.get("slides", []))
         if isinstance(slide, dict)
     ]

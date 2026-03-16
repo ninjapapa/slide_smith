@@ -19,7 +19,7 @@ class TemplateValidationError(Exception):
     pass
 
 
-def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
+def _validate_semantic(layout_defs: list[object], profile: str) -> list[str]:
     errors: list[str] = []
 
     conventions_doc = "docs/layout-ids.md (Template slot conventions)"
@@ -71,8 +71,8 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             },
         }
 
-    typed_archetypes = [a for a in archetypes if isinstance(a, dict)]
-    by_id = {a.get("id"): a for a in typed_archetypes}
+    typed_layout_defs = [a for a in layout_defs if isinstance(a, dict)]
+    by_id = {a.get("id"): a for a in typed_layout_defs}
 
     prefix = f"{profile} profile"
     for aid, req_slots in required.items():
@@ -117,7 +117,7 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
     return errors
 
 
-def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_path: str) -> list[str]:
+def _validate_structural(layout_defs: list[object], prs: Presentation, *, pptx_path: str) -> list[str]:
     errors: list[str] = []
 
     layout_names = {layout.name for layout in prs.slide_layouts}
@@ -141,16 +141,16 @@ def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_pa
     except Exception:
         raw_by_part = {}
 
-    for a in archetypes:
+    for a in layout_defs:
         if not isinstance(a, dict):
-            errors.append("archetypes[] must be objects")
+            errors.append("layout definitions[] must be objects")
             continue
         aid = a.get("id")
         layout_name = a.get("layout")
         if not isinstance(aid, str) or not aid:
             errors.append("layout definition missing required 'id'")
             continue
-        # Box-only archetypes (slide-instance-derived) may not require a resolvable layout.
+        # Box-only layout definitions (slide-instance-derived) may not require a resolvable layout.
         slots = a.get("slots") or []
         box_only = False
         if isinstance(slots, list) and slots:
@@ -260,25 +260,23 @@ def validate_template(
     if profile not in {"structural", "standard", "extended"}:
         raise TemplateValidationError(f"Unknown validation profile: {profile}")
 
-    archetypes = spec.get("archetypes") or []
-    if not isinstance(archetypes, list) or not archetypes:
+    layout_defs = spec.get("archetypes") or []
+    if not isinstance(layout_defs, list) or not layout_defs:
         return TemplateValidationResult(False, ["template spec must include non-empty 'archetypes' list"])
 
     # Template-native layout definitions (optional). These are additional layout definitions
     # that may be referenced directly by callers (namespaced IDs recommended).
     native = spec.get("native") or {}
-    native_archetypes = []
+    native_layout_defs = []
     if isinstance(native, dict):
-        native_archetypes = native.get("archetypes") or []
+        native_layout_defs = native.get("archetypes") or []
 
-    if native_archetypes and not isinstance(native_archetypes, list):
+    if native_layout_defs and not isinstance(native_layout_defs, list):
         return TemplateValidationResult(False, ["template spec 'native.archetypes' must be a list when present"])
-
-    deck = spec.get("deck") or {}
 
     # Semantic checks can run without a pptx.
     if profile in {"standard", "extended"}:
-        errors.extend(_validate_semantic(archetypes, profile))
+        errors.extend(_validate_semantic(layout_defs, profile))
         if errors:
             return TemplateValidationResult(False, errors)
 
@@ -292,9 +290,9 @@ def validate_template(
 
     if has_pptx:
         prs = Presentation(str(pptx_path))
-        errors.extend(_validate_structural(archetypes, prs, pptx_path=str(pptx_path)))
-        if native_archetypes:
-            errors.extend(_validate_structural(native_archetypes, prs, pptx_path=str(pptx_path)))
+        errors.extend(_validate_structural(layout_defs, prs, pptx_path=str(pptx_path)))
+        if native_layout_defs:
+            errors.extend(_validate_structural(native_layout_defs, prs, pptx_path=str(pptx_path)))
 
     fatal = [e for e in errors if not str(e).startswith("warning:")]
     return TemplateValidationResult(ok=(len(fatal) == 0), errors=errors)
