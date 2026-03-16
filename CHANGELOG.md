@@ -10,6 +10,7 @@
 - marked redesign-era planning docs and exemplar fixtures as historical to avoid confusion with the live product surface
 - removed the archived exemplar-first fixture set that no longer participates in the live test/runtime surface
 - renamed remaining render debug/context strings from `archetype=` to `layout_id=` where safe
+- removed the last template-loader bridge for legacy `archetypes`/`native.archetypes` keys; template specs are now `layouts`/`native.layouts` only
 
 ## v3.0.0 — 2026-03-16
 
