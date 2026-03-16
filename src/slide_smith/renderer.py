@@ -143,7 +143,7 @@ def render_deck(
                 styles.get("subtitle"),
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
-                context=f"archetype={layout_id} slot=subtitle",
+                context=f"layout_id={layout_id} slot=subtitle",
             )
         elif layout_id in {
             "two_col",

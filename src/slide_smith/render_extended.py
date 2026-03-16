@@ -37,7 +37,7 @@ def _render_extended(
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=0,
-        context=f"archetype={archetype_id} slot=title",
+        context=f"layout_id={archetype_id} slot=title",
     )
 
     def set_text_slot(slot_name: str, value: str | None, style_key: str = "body"):
@@ -50,7 +50,7 @@ def _render_extended(
             styles.get(style_key),
             slide_w_emu=slide_w_emu,
             slide_h_emu=slide_h_emu,
-            context=f"archetype={archetype_id} slot={slot_name}",
+            context=f"layout_id={archetype_id} slot={slot_name}",
         )
 
     if archetype_id == "two_col":
@@ -75,7 +75,7 @@ def _render_extended(
                 _resolve_image_path(base_dir, left.get("image")),
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
-                context=f"archetype={archetype_id} slot=left_image",
+                context=f"layout_id={archetype_id} slot=left_image",
             )
             set_text_slot("left_title", left.get("title"), style_key="body")
             set_text_slot("left_body", left.get("body"), style_key="body")
@@ -89,7 +89,7 @@ def _render_extended(
                 _resolve_image_path(base_dir, right.get("image")),
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
-                context=f"archetype={archetype_id} slot=right_image",
+                context=f"layout_id={archetype_id} slot=right_image",
             )
             set_text_slot("right_title", right.get("title"), style_key="body")
             set_text_slot("right_body", right.get("body"), style_key="body")
@@ -104,7 +104,7 @@ def _render_extended(
             _resolve_image_path(base_dir, spec.get("image")),
             slide_w_emu=slide_w_emu,
             slide_h_emu=slide_h_emu,
-            context=f"archetype={archetype_id} slot=image",
+            context=f"layout_id={archetype_id} slot=image",
         )
 
         items = spec.get("items") or []
@@ -163,7 +163,7 @@ def _render_extended(
                 _resolve_image_path(base_dir, it.get("icon")),
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
-                context=f"archetype={archetype_id} slot=col{idx}_icon",
+                context=f"layout_id={archetype_id} slot=col{idx}_icon",
             )
         return
 

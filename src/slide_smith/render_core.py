@@ -30,7 +30,7 @@ def _render_title(slide, spec: dict[str, Any], styles, archetype_spec: dict[str,
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=0,
-        context=f"archetype={archetype_id} slot=title",
+        context=f"layout_id={archetype_id} slot=title",
     )
     _set_slot_text(
         slide,
@@ -42,7 +42,7 @@ def _render_title(slide, spec: dict[str, Any], styles, archetype_spec: dict[str,
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=1,
-        context=f"archetype={archetype_id} slot=subtitle",
+        context=f"layout_id={archetype_id} slot=subtitle",
     )
 
 
@@ -57,7 +57,7 @@ def _render_section(slide, spec: dict[str, Any], styles, archetype_spec: dict[st
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=0,
-        context=f"archetype={archetype_id} slot=title",
+        context=f"layout_id={archetype_id} slot=title",
     )
 
     subtitle = spec.get("subtitle") or spec.get("body", "")
@@ -72,7 +72,7 @@ def _render_section(slide, spec: dict[str, Any], styles, archetype_spec: dict[st
             idx,
             subtitle,
             styles.get("subtitle"),
-            context=f"archetype={archetype_id} slot=subtitle/body",
+            context=f"layout_id={archetype_id} slot=subtitle/body",
         )
         return
 
@@ -93,7 +93,7 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles, archetype_spe
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=0,
-        context=f"archetype={archetype_id} slot=title",
+        context=f"layout_id={archetype_id} slot=title",
     )
 
     body_idx = _slot_index(archetype_spec, "bullets")
@@ -109,7 +109,7 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles, archetype_spe
     if body_idx is None and body_box is None:
         _required_slot_target(archetype_id, archetype_spec, "bullets")
         raise RenderingError(
-            f"Cannot resolve placeholder/box for slot 'bullets/body' in archetype '{archetype_id}'"
+            f"Cannot resolve placeholder/box for slot 'bullets/body' in layout '{archetype_id}'"
         )
 
     if body_idx is not None:
@@ -117,7 +117,7 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles, archetype_spe
             body_placeholder = slide.placeholders[body_idx]
         except KeyError as exc:
             raise RenderingError(
-                f"Placeholder idx={body_idx} not found on slide (archetype={archetype_id} slot=bullets/body)"
+                f"Placeholder idx={body_idx} not found on slide (layout_id={archetype_id} slot=bullets/body)"
             ) from exc
         text_frame = body_placeholder.text_frame
         if not bullets:
@@ -160,7 +160,7 @@ def _render_image_left_text_right(
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=0,
-        context=f"archetype={archetype_id} slot=title",
+        context=f"layout_id={archetype_id} slot=title",
     )
 
     resolved_image = _resolve_image_path(base_dir, spec.get("image"))
@@ -174,7 +174,7 @@ def _render_image_left_text_right(
         slide_w_emu=slide_w_emu,
         slide_h_emu=slide_h_emu,
         default_idx=1,
-        context=f"archetype={archetype_id} slot=image",
+        context=f"layout_id={archetype_id} slot=image",
     )
 
     body_idx, body_box = _required_slot_target(archetype_id, archetype_spec, "body", default_idx=2)
@@ -185,7 +185,7 @@ def _render_image_left_text_right(
             body_placeholder = slide.placeholders[body_idx]
         except KeyError as exc:
             raise RenderingError(
-                f"Placeholder idx={body_idx} not found on slide (archetype={archetype_id} slot=body)"
+                f"Placeholder idx={body_idx} not found on slide (layout_id={archetype_id} slot=body)"
             ) from exc
         body_placeholder.text = body_text
         apply_text_style(body_placeholder.text_frame, styles.get("body"))

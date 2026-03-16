@@ -31,7 +31,7 @@ def test_render_deck_missing_placeholder_idx_falls_back_with_actionable_warning(
     assert warnings
     msg = str(warnings[0]["reason"])
     assert "idx=999" in msg
-    assert "archetype=title" in msg
+    assert "layout_id=title" in msg
 
     prs = Presentation(str(tmp_path / "out.pptx"))
     assert len(prs.slides) == 1

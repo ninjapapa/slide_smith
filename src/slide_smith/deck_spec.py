@@ -58,7 +58,7 @@ def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]
 
     This currently:
     - accepts `layout_id` as the preferred external slide kind field
-    - maps legacy archetype ids to their modern equivalents
+    - maps legacy layout aliases to their modern equivalents
 
     NOTE: This function is intentionally conservative: it avoids mutating other
     fields so callers can reason about what changed.
