@@ -46,6 +46,11 @@ def _placeholder_idxs(a: dict[str, Any]) -> list[int]:
     return sorted(set(out))
 
 
+def _layout_name(a: dict[str, Any]) -> str:
+    v = a.get("layout")
+    return v if isinstance(v, str) else ""
+
+
 def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
     archetypes = [a for a in (template_spec.get("archetypes") or []) if isinstance(a, dict)]
 
@@ -96,9 +101,16 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         score = 6.0 + 3.0 * min(subtitles, 1) - 1.0 * bodies - 2.0 * images
         if subtitles < 1:
             score -= 4.0
-        return score, f"subtitles={subtitles} bodies={bodies} images={images} idxs={_placeholder_idxs(a)}"
 
-    def score_icons_cols(n: int):
+        ln = _layout_name(a).lower()
+        if "title subtitle only" in ln:
+            score += 10
+        if "session" in ln:
+            score -= 6
+
+        return score, f"layout={_layout_name(a)} subtitles={subtitles} bodies={bodies} images={images} idxs={_placeholder_idxs(a)}"
+
+    def score_icons_cols(n: int, *, prefer_layout_contains: str | None = None):
         def _score(a: dict[str, Any]):
             if not _has_title(a):
                 return 0.0, "missing title"
@@ -108,7 +120,12 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
             score = 5.0 + 2.0 * min(images, n) + 1.5 * min(bodies, n)
             if images < n:
                 score -= (n - images) * 4.0
-            return score, f"images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
+
+            ln = _layout_name(a).lower()
+            if prefer_layout_contains and prefer_layout_contains.lower() in ln:
+                score += 12
+
+            return score, f"layout={_layout_name(a)} images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
 
         return _score
 
@@ -120,12 +137,17 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         score = 6.0 + 2.5 * min(images, 2) + 1.0 * min(bodies, 2)
         if images < 2:
             score -= 6.0
-        return score, f"images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
+
+        ln = _layout_name(a).lower()
+        if "picture compare" in ln:
+            score += 14
+
+        return score, f"layout={_layout_name(a)} images={images} bodies={bodies} idxs={_placeholder_idxs(a)}"
 
     # Redesign extended archetypes (best-effort inference)
     picks["title_subtitle"] = pick_best(score_title_subtitle)
-    picks["three_col_with_icons"] = pick_best(score_icons_cols(3))
-    picks["five_col_with_icons"] = pick_best(score_icons_cols(5))
+    picks["three_col_with_icons"] = pick_best(score_icons_cols(3, prefer_layout_contains="3 columns with icons"))
+    picks["five_col_with_icons"] = pick_best(score_icons_cols(5, prefer_layout_contains="5 columns"))
     picks["picture_compare"] = pick_best(score_picture_compare)
 
     def score_table(a: dict[str, Any]):
@@ -156,7 +178,7 @@ def infer_extended_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         bodies = _count_slot(a, want_type="bullets") + _count_slot(a, want_name_prefix="body")
         # Timeline often has multiple similar placeholders.
         score = 4.0 + 1.5 * min(bodies, 5)
-        return score, f"bodies={bodies} idxs={_placeholder_idxs(a)}"
+        return score, f"layout={_layout_name(a)} bodies={bodies} idxs={_placeholder_idxs(a)}"
 
     picks["timeline_horizontal"] = pick_best(score_timeline)
 
