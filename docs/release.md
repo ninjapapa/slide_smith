@@ -1,6 +1,6 @@
 # Release Checklist
 
-Current release line: `v2.x`
+Current release line: `v3.x`
 
 ## Local verification
 

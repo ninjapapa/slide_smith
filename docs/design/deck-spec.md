@@ -1,6 +1,6 @@
 # Deck Spec
 
-This is the current normalized deck-spec model for `slide-smith` v2.x.
+This is the current normalized deck-spec model for `slide-smith` v3.x.
 
 The JSON schema source of truth is:
 - `docs/design/deck-spec.schema.json`
