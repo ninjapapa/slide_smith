@@ -7,8 +7,8 @@ from pptx import Presentation
 
 from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.render_core import (
-    _render_image_left_text_right,
     _render_section,
+    _render_text_with_image,
     _render_title,
     _render_title_and_bullets,
 )
@@ -18,7 +18,7 @@ from slide_smith.render_fallback import (
     _record_render_warning,
 )
 from slide_smith.render_extended import _render_extended
-from slide_smith.render_support import RenderingError, _layout_for_archetype
+from slide_smith.render_support import RenderingError, _layout_for_spec
 from slide_smith.styling import load_styles
 from slide_smith.template_loader import template_dir
 
@@ -83,7 +83,7 @@ def render_deck(
     slide_h_emu = int(prs.slide_height)
 
     styles = load_styles(template_spec)
-    archetypes = {
+    layout_specs = {
         item["id"]: item
         for item in template_spec.get("archetypes", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
@@ -95,29 +95,29 @@ def render_deck(
     def render_one(slide_spec: dict[str, Any]) -> None:
         layout_id = slide_spec["layout_id"]
         template_layout_id = resolve_template_layout_id(layout_id)
-        if template_layout_id not in archetypes:
+        if template_layout_id not in layout_specs:
             raise RenderingError(
                 f"Layout '{layout_id}' not supported by template '{template_id}'"
             )
-        archetype_spec = archetypes[template_layout_id]
-        slide = prs.slides.add_slide(_layout_for_archetype(prs, archetype_spec))
+        layout_spec = layout_specs[template_layout_id]
+        slide = prs.slides.add_slide(_layout_for_spec(prs, layout_spec))
 
         if layout_id == "title":
-            _render_title(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_title(slide, slide_spec, styles, layout_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "section":
-            _render_section(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_section(slide, slide_spec, styles, layout_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "title_and_bullets":
-            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_title_and_bullets(slide, slide_spec, styles, layout_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "text_with_image":
-            _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_text_with_image(slide, slide_spec, source_dir, styles, layout_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "title_subtitle_and_bullets":
-            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_title_and_bullets(slide, slide_spec, styles, layout_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
             from slide_smith.render_support import _set_slot_text
 
             _set_slot_text(
                 slide,
                 layout_id,
-                archetype_spec,
+                layout_spec,
                 "subtitle",
                 slide_spec.get("subtitle"),
                 styles.get("subtitle"),
@@ -137,7 +137,7 @@ def render_deck(
                 slide_spec,
                 source_dir,
                 styles,
-                archetype_spec,
+                layout_spec,
                 layout_id,
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,

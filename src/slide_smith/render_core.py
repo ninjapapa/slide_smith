@@ -139,7 +139,7 @@ def _render_title_and_bullets(slide, spec: dict[str, Any], styles, archetype_spe
         _set_box_bullets(slide, box_emu, bullets, styles.get("bullets"))
 
 
-def _render_image_left_text_right(
+def _render_text_with_image(
     slide,
     spec: dict[str, Any],
     base_dir: Path,

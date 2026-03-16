@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Archetype registry.
+"""Layout registry.
 
 This module centralizes which layout ids are considered standard / extended
 for validation, inference, and help-request generation.
@@ -10,11 +10,11 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ArchetypeDef:
+class LayoutDef:
     id: str
 
 
-CORE_STANDARD_ARCHETYPES: list[str] = [
+CORE_STANDARD_LAYOUT_IDS: list[str] = [
     "title",
     "section",
     "title_and_bullets",
@@ -22,7 +22,7 @@ CORE_STANDARD_ARCHETYPES: list[str] = [
     "title_subtitle_and_bullets",
 ]
 
-EXTENDED_ARCHETYPES: list[str] = [
+EXTENDED_LAYOUT_IDS: list[str] = [
     "version_page",
     "agenda_with_image",
     "two_col",
@@ -31,5 +31,5 @@ EXTENDED_ARCHETYPES: list[str] = [
 ]
 
 
-def all_known_archetypes() -> list[str]:
-    return CORE_STANDARD_ARCHETYPES + EXTENDED_ARCHETYPES
+def all_known_layout_ids() -> list[str]:
+    return CORE_STANDARD_LAYOUT_IDS + EXTENDED_LAYOUT_IDS

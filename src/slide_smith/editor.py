@@ -9,8 +9,8 @@ from pptx import Presentation
 from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.pptx_edit import delete_slide
 from slide_smith.render_core import (
-    _render_image_left_text_right,
     _render_section,
+    _render_text_with_image,
     _render_title,
     _render_title_and_bullets,
 )
@@ -45,7 +45,7 @@ def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_pa
 
     template_spec = load_template_spec(template_id)
     styles = load_styles(template_spec)
-    archetypes = {item["id"]: item for item in template_spec.get("archetypes", [])}
+    layout_specs = {item["id"]: item for item in template_spec.get("archetypes", [])}
 
     raw_slide_spec = _load_json(input_path)
     if not isinstance(raw_slide_spec, dict):
@@ -61,21 +61,21 @@ def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_pa
     base_dir = Path(input_path).resolve().parent
 
     def render_slide_for(layout_id_value: str, spec: dict[str, Any]) -> None:
-        if layout_id_value not in archetypes:
+        if layout_id_value not in layout_specs:
             raise EditError(f"Layout '{layout_id_value}' is not supported by template '{template_id}'")
 
-        layout_name = archetypes[layout_id_value]["layout"]
+        layout_name = layout_specs[layout_id_value]["layout"]
         slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
-        archetype_spec = archetypes[layout_id_value]
+        layout_spec = layout_specs[layout_id_value]
 
         if layout_id_value == "title":
-            _render_title(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_title(slide, spec, styles, layout_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id_value == "section":
-            _render_section(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_section(slide, spec, styles, layout_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id_value in {"title_and_bullets", "title_subtitle_and_bullets"}:
-            _render_title_and_bullets(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_title_and_bullets(slide, spec, styles, layout_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id_value == "text_with_image":
-            _render_image_left_text_right(slide, spec, base_dir, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+            _render_text_with_image(slide, spec, base_dir, styles, layout_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
             raise EditError(f"Layout '{layout_id_value}' is not implemented")
 

@@ -19,7 +19,7 @@ def _layout_by_name(prs: Presentation, name: str):
     raise RenderingError(f"Slide layout '{name}' not found in template presentation")
 
 
-def _layout_for_archetype(prs: Presentation, archetype_spec: dict[str, Any]):
+def _layout_for_spec(prs: Presentation, layout_spec: dict[str, Any]):
     """Resolve a presentation layout for a template layout definition.
 
     Prefer `layout_part` when available (more stable for rich branded templates).
@@ -28,8 +28,8 @@ def _layout_for_archetype(prs: Presentation, archetype_spec: dict[str, Any]):
 
     from slide_smith.layout_resolver import LayoutResolveError, resolve_layout
 
-    layout_name = archetype_spec.get("layout")
-    layout_part = archetype_spec.get("layout_part")
+    layout_name = layout_spec.get("layout")
+    layout_part = layout_spec.get("layout_part")
 
     try:
         return resolve_layout(prs=prs, layout_name=layout_name, layout_part=layout_part).layout
