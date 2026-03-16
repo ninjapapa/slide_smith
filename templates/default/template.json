@@ -8,7 +8,9 @@
       "title",
       "section",
       "title_and_bullets",
-      "image_left_text_right"
+      "title_subtitle_and_bullets",
+      "image_left_text_right",
+      "text_with_image"
     ]
   },
   "styles": {
@@ -49,9 +51,29 @@
       ]
     },
     {
+      "id": "title_subtitle_and_bullets",
+      "layout": "Title and Content",
+      "description": "Title, subtitle, and bullet list content using the default template placeholders.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "subtitle", "type": "text", "required": true, "box": { "x": 0.8, "y": 1.7, "w": 8.0, "h": 0.5 }, "notes": "Synthetic subtitle area for default template compatibility." },
+        { "name": "bullets", "type": "bullet_list", "required": true, "placeholder_idx": 1, "max_items": 6, "notes": "Prefer concise bullets." }
+      ]
+    },
+    {
       "id": "image_left_text_right",
       "layout": "Two Content",
       "description": "Image on the left, explanatory text on the right.",
+      "slots": [
+        { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
+        { "name": "image", "type": "image", "required": true, "placeholder_idx": 1, "aspect_ratio": "flexible" },
+        { "name": "body", "type": "text", "required": true, "placeholder_idx": 2, "notes": "Keep body concise." }
+      ]
+    },
+    {
+      "id": "text_with_image",
+      "layout": "Two Content",
+      "description": "Semantic alias of image_left_text_right for the default template.",
       "slots": [
         { "name": "title", "type": "text", "required": true, "placeholder_idx": 0 },
         { "name": "image", "type": "image", "required": true, "placeholder_idx": 1, "aspect_ratio": "flexible" },
