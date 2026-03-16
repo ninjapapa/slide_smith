@@ -153,28 +153,28 @@
           "type": "string"
         },
         "col1_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "col2_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "col3_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "col4_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "pillar1_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "pillar2_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "pillar3_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "pillar4_body": {
-          "type": "string"
+          "$ref": "#/$defs/text_or_lines"
         },
         "milestone1_body": {
           "type": "string"
@@ -222,8 +222,7 @@
           "required": [
             "archetype",
             "title"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -241,8 +240,7 @@
           "required": [
             "archetype",
             "title"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -272,8 +270,7 @@
                 "body"
               ]
             }
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -304,8 +301,7 @@
                 "body"
               ]
             }
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -325,8 +321,7 @@
             "title",
             "body",
             "image"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -346,8 +341,7 @@
             "title",
             "body",
             "image"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -370,8 +364,7 @@
             "title",
             "col1_body",
             "col2_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -398,8 +391,7 @@
             "col1_body",
             "col2_body",
             "col3_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -430,8 +422,7 @@
             "col2_body",
             "col3_body",
             "col4_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -458,8 +449,7 @@
             "pillar1_body",
             "pillar2_body",
             "pillar3_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -490,8 +480,7 @@
             "pillar2_body",
             "pillar3_body",
             "pillar4_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -510,8 +499,7 @@
             "archetype",
             "title",
             "table_text"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -534,8 +522,7 @@
             "title",
             "table_text",
             "body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -584,8 +571,7 @@
             "archetype",
             "title",
             "milestone1_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -604,8 +590,7 @@
             "archetype",
             "title",
             "subtitle"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -618,14 +603,16 @@
           "properties": {
             "table_text": {
               "type": "string"
+            },
+            "archetype": {
+              "const": "version_page"
             }
           },
           "required": [
             "archetype",
             "title",
             "table_text"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -670,8 +657,7 @@
             "title",
             "image",
             "items"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -683,10 +669,13 @@
         {
           "properties": {
             "col1_body": {
-              "type": "string"
+              "$ref": "#/$defs/text_or_lines"
             },
             "col2_body": {
-              "type": "string"
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "archetype": {
+              "const": "two_col_with_subtitle"
             }
           },
           "required": [
@@ -695,8 +684,7 @@
             "subtitle",
             "col1_body",
             "col2_body"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -731,15 +719,45 @@
               "items": {
                 "$ref": "#/$defs/three_col_text_item"
               }
+            },
+            "col1_title": {
+              "type": "string"
+            },
+            "col2_title": {
+              "type": "string"
+            },
+            "col3_title": {
+              "type": "string"
+            },
+            "col1_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "col2_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "col3_body": {
+              "$ref": "#/$defs/text_or_lines"
             }
           },
           "required": [
             "archetype",
             "title",
-            "subtitle",
-            "items"
+            "subtitle"
           ],
-          "unevaluatedProperties": false
+          "anyOf": [
+            {
+              "required": [
+                "items"
+              ]
+            },
+            {
+              "required": [
+                "col1_body",
+                "col2_body",
+                "col3_body"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -782,14 +800,65 @@
               "items": {
                 "$ref": "#/$defs/icon_col_item"
               }
+            },
+            "col1_title": {
+              "type": "string"
+            },
+            "col1_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "col1_caption": {
+              "type": "string"
+            },
+            "col1_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "col2_title": {
+              "type": "string"
+            },
+            "col2_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "col2_caption": {
+              "type": "string"
+            },
+            "col2_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "col3_title": {
+              "type": "string"
+            },
+            "col3_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "col3_caption": {
+              "type": "string"
+            },
+            "col3_icon": {
+              "$ref": "#/$defs/image"
             }
           },
           "required": [
             "archetype",
-            "title",
-            "items"
+            "title"
           ],
-          "unevaluatedProperties": false
+          "anyOf": [
+            {
+              "required": [
+                "items"
+              ]
+            },
+            {
+              "required": [
+                "col1_title",
+                "col1_body",
+                "col2_title",
+                "col2_body",
+                "col3_title",
+                "col3_body"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -825,14 +894,58 @@
               "items": {
                 "$ref": "#/$defs/five_col_icon_item"
               }
+            },
+            "item1_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "item1_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "item2_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "item2_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "item3_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "item3_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "item4_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "item4_icon": {
+              "$ref": "#/$defs/image"
+            },
+            "item5_body": {
+              "$ref": "#/$defs/text_or_lines"
+            },
+            "item5_icon": {
+              "$ref": "#/$defs/image"
             }
           },
           "required": [
             "archetype",
-            "title",
-            "items"
+            "title"
           ],
-          "unevaluatedProperties": false
+          "anyOf": [
+            {
+              "required": [
+                "items"
+              ]
+            },
+            {
+              "required": [
+                "item1_body",
+                "item2_body",
+                "item3_body",
+                "item4_body",
+                "item5_body"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -876,8 +989,7 @@
             "title",
             "left",
             "right"
-          ],
-          "unevaluatedProperties": false
+          ]
         }
       ]
     },
@@ -895,8 +1007,20 @@
           "required": [
             "archetype",
             "title"
-          ],
-          "unevaluatedProperties": false
+          ]
+        }
+      ]
+    },
+    "text_or_lines": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       ]
     }
