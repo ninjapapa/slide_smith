@@ -1,63 +1,50 @@
-# Archetypes Guide
+# Layout IDs Guide
 
-This is the user-facing guide to the current Slide Smith archetype set.
+This is the user-facing guide to the current Slide Smith `layout_id` API.
 
 Use this doc when you want to know:
-- which archetype to choose
-- what fields each archetype expects
+- which `layout_id` values are supported
+- what fields each layout expects
 - how repeated-item layouts are represented
-- which legacy names are still accepted
+- which legacy names are still accepted during migration
 
-For the exact machine-readable contract, see:
+For the machine-readable contract, use:
+- `slide-smith help api --format json`
 - `docs/design/deck-spec.schema.json`
 
 ---
 
-# Quick start
+## Quick start
 
-Slide Smith has two practical groups of archetypes:
-
-## Base archetypes
-Use these first. They are the most stable and broadly reusable.
-
+Supported `layout_id` values:
 - `title`
 - `section`
 - `title_and_bullets`
 - `title_subtitle_and_bullets`
 - `text_with_image`
-
-## Extended archetypes
-Use these when your template supports richer branded layouts.
-
-- `title_subtitle`
 - `version_page`
 - `agenda_with_image`
-- `two_col_with_subtitle`
-- `three_col_with_subtitle`
+- `two_col`
 - `three_col_with_icons`
-- `five_col_with_icons`
 - `picture_compare`
-- `title_only_freeform`
+
+Fallback target when a requested layout cannot render:
+- `title_and_bullets`
 
 ---
 
-# General rules
+## General rules
 
-## Prefer semantic names
-Use names that describe the content pattern, not the geometry.
+### Use `layout_id`
+The user-facing term is `layout_id`.
 
-Preferred:
-- `text_with_image`
-- `picture_compare`
+Legacy `archetype` input may still be accepted internally during migration, but callers should provide `layout_id`.
 
-Legacy but still accepted:
-- `image_left_text_right`
-
-## Template decides layout
-The archetype describes the slide’s content shape.
+### Template decides visual layout
+The `layout_id` describes the content shape.
 The template decides the actual visual layout and placeholder mapping.
 
-## Images
+### Images
 Image fields accept either:
 - a string path
 - or an object like:
@@ -66,7 +53,7 @@ Image fields accept either:
 { "path": "assets/example.png", "alt": "description" }
 ```
 
-## Notes
+### Notes
 Any slide may include:
 
 ```json
@@ -75,437 +62,209 @@ Any slide may include:
 
 ---
 
-# Base archetypes
+## Layout IDs
 
-## `title`
-Best for cover/opening slides.
-
-### Required
+### `title`
+Required:
 - `title`
 
-### Optional
+Optional:
 - `subtitle`
+- `notes`
 
-### Example
-
+Example:
 ```json
-{
-  "archetype": "title",
-  "title": "Q2 Business Review",
-  "subtitle": "Draft for leadership review"
-}
+{ "layout_id": "title", "title": "Q2 Business Review", "subtitle": "Draft for leadership review" }
 ```
 
 ---
 
-## `section`
-Best for section divider slides.
-
-### Required
+### `section`
+Required:
 - `title`
 
-### Example
+Optional:
+- `notes`
 
+Example:
 ```json
-{
-  "archetype": "section",
-  "title": "Market Context"
-}
+{ "layout_id": "section", "title": "Market Context" }
 ```
 
 ---
 
-## `title_and_bullets`
-Best for a standard explanatory content slide.
-
-### Required
+### `title_and_bullets`
+Required:
 - `title`
-- one of:
-  - `bullets`
-  - `body`
 
-### Example with bullets
+Recommended:
+- `bullets`
 
-```json
-{
-  "archetype": "title_and_bullets",
-  "title": "Highlights",
-  "bullets": ["Revenue up 20%", "Margin improved", "Pipeline strong"]
-}
-```
-
-### Example with body
-
-```json
-{
-  "archetype": "title_and_bullets",
-  "title": "Summary",
-  "body": "A concise explanation of the slide content."
-}
-```
-
----
-
-## `title_subtitle_and_bullets`
-Like `title_and_bullets`, but with a required subtitle.
-
-### Required
-- `title`
-- `subtitle`
-- one of:
-  - `bullets`
-  - `body`
-
-### Example
-
-```json
-{
-  "archetype": "title_subtitle_and_bullets",
-  "title": "Plan",
-  "subtitle": "Next 90 days",
-  "bullets": ["Stabilize", "Measure", "Scale"]
-}
-```
-
----
-
-## `text_with_image`
-Best for a slide with explanatory text plus one image.
-
-### Required
-- `title`
+Also accepted:
 - `body`
+- `notes`
+
+Example:
+```json
+{ "layout_id": "title_and_bullets", "title": "Highlights", "bullets": ["Revenue up 20%", "Margin improved", "Pipeline strong"] }
+```
+
+---
+
+### `title_subtitle_and_bullets`
+Required:
+- `title`
+- `subtitle`
+
+Recommended:
+- `bullets`
+
+Also accepted:
+- `body`
+- `notes`
+
+Example:
+```json
+{ "layout_id": "title_subtitle_and_bullets", "title": "Plan", "subtitle": "Next 90 days", "bullets": ["Stabilize", "Measure", "Scale"] }
+```
+
+---
+
+### `text_with_image`
+Required:
+- `title`
 - `image`
 
-### Legacy alias
+Recommended:
+- `body`
+
+Also accepted:
+- `bullets`
+- `notes`
+
+Example:
+```json
+{ "layout_id": "text_with_image", "title": "Target workflow", "body": "The new flow reduces manual handoffs.", "image": "assets/workflow.png" }
+```
+
+Legacy alias still accepted during migration:
 - `image_left_text_right`
 
-### Example
-
-```json
-{
-  "archetype": "text_with_image",
-  "title": "Target workflow",
-  "body": "The new flow reduces manual handoffs and clarifies ownership.",
-  "image": "assets/workflow.png"
-}
-```
-
 ---
 
-# Extended archetypes
-
-## `title_subtitle`
-Best for a simple title + subtitle slide without body content.
-
-### Required
-- `title`
-- `subtitle`
-
-### Example
-
-```json
-{
-  "archetype": "title_subtitle",
-  "title": "Operating model",
-  "subtitle": "Overview"
-}
-```
-
----
-
-## `version_page`
-Best for release/version history pages.
-
-### Required
+### `version_page`
+Required:
 - `title`
 - `table_text`
 
-### Example
-
+Example:
 ```json
-{
-  "archetype": "version_page",
-  "title": "Version history",
-  "table_text": "| Version | Date | Notes |\n|---|---|---|\n| 2.0 | 2026-03-15 | Archetype redesign |"
-}
+{ "layout_id": "version_page", "title": "Version history", "table_text": "| Version | Date | Notes |\n|---|---|---|\n| 2.0 | 2026-03-15 | Simplified CLI |" }
 ```
 
 ---
 
-## `agenda_with_image`
-Best for agenda/steps slides with a supporting visual.
-
-### Required
+### `agenda_with_image`
+Required:
 - `title`
 - `image`
 - `items`
 
-### `items[]` shape
-Each item should look like:
-
+`items[]` shape:
 ```json
 { "marker": "1", "body": "Introduction" }
 ```
 
-`marker` is optional.
-
-### Example
-
+Example:
 ```json
-{
-  "archetype": "agenda_with_image",
-  "title": "Agenda",
-  "image": "assets/agenda.png",
-  "items": [
-    { "marker": "1", "body": "Context" },
-    { "marker": "2", "body": "Approach" },
-    { "marker": "3", "body": "Recommendation" }
-  ]
-}
+{ "layout_id": "agenda_with_image", "title": "Agenda", "image": "assets/agenda.png", "items": [{ "marker": "1", "body": "Context" }, { "marker": "2", "body": "Approach" }] }
 ```
 
 ---
 
-## `two_col_with_subtitle`
-Best for two parallel text columns with a subtitle.
-
-### Required
+### `two_col`
+Required:
 - `title`
-- `subtitle`
 - `col1_body`
 - `col2_body`
 
-### Example
-
+Example:
 ```json
-{
-  "archetype": "two_col_with_subtitle",
-  "title": "Compare options",
-  "subtitle": "Current vs target",
-  "col1_body": "Current state details",
-  "col2_body": "Target state details"
-}
+{ "layout_id": "two_col", "title": "Compare options", "col1_body": "Current state", "col2_body": "Target state" }
 ```
 
 ---
 
-## `three_col_with_subtitle`
-Best for three repeated text columns with a subtitle.
-
-### Required
-- `title`
-- `subtitle`
-- `items`
-
-### `items[]` shape
-
-```json
-{ "title": "Column title", "body": "Column body" }
-```
-
-Expected length: 3.
-
-### Example
-
-```json
-{
-  "archetype": "three_col_with_subtitle",
-  "title": "Workstreams",
-  "subtitle": "Three parallel tracks",
-  "items": [
-    { "title": "People", "body": "Roles, skills, adoption" },
-    { "title": "Process", "body": "Ways of working" },
-    { "title": "Technology", "body": "Platforms and tooling" }
-  ]
-}
-```
-
----
-
-## `three_col_with_icons`
-Best for three repeated columns where each item has an icon.
-
-### Required
+### `three_col_with_icons`
+Required:
 - `title`
 - `items`
 
-### `items[]` shape
-
+`items[]` shape:
 ```json
 { "title": "...", "body": "...", "icon": "assets/icon.png", "caption": "optional" }
 ```
 
 Expected length: 3.
 
-### Example
-
+Example:
 ```json
-{
-  "archetype": "three_col_with_icons",
-  "title": "Capabilities",
-  "items": [
-    { "title": "Analyze", "body": "Find patterns", "icon": "assets/a.png" },
-    { "title": "Automate", "body": "Reduce manual work", "icon": "assets/b.png" },
-    { "title": "Govern", "body": "Control and review", "icon": "assets/c.png" }
-  ]
-}
+{ "layout_id": "three_col_with_icons", "title": "Capabilities", "items": [{ "title": "Analyze", "body": "Find patterns", "icon": "assets/a.png" }, { "title": "Automate", "body": "Reduce manual work", "icon": "assets/b.png" }, { "title": "Govern", "body": "Control and review", "icon": "assets/c.png" }] }
 ```
 
 ---
 
-## `five_col_with_icons`
-Best for five repeated icon+text items.
-
-### Required
-- `title`
-- `items`
-
-### `items[]` shape
-
-```json
-{ "icon": "assets/icon.png", "body": "Item text" }
-```
-
-Expected length: 5.
-
-### Example
-
-```json
-{
-  "archetype": "five_col_with_icons",
-  "title": "Principles",
-  "items": [
-    { "icon": "assets/1.png", "body": "Simple" },
-    { "icon": "assets/2.png", "body": "Secure" },
-    { "icon": "assets/3.png", "body": "Fast" },
-    { "icon": "assets/4.png", "body": "Reusable" },
-    { "icon": "assets/5.png", "body": "Measured" }
-  ]
-}
-```
-
----
-
-## `picture_compare`
-Best for left/right visual comparison.
-
-### Required
+### `picture_compare`
+Required:
 - `title`
 - `left`
 - `right`
 
-### `left` / `right` shape
-
+`left` / `right` shape:
 ```json
 { "image": "assets/example.png", "title": "optional", "body": "optional" }
 ```
 
-### Example
-
+Example:
 ```json
-{
-  "archetype": "picture_compare",
-  "title": "Before and after",
-  "left": {
-    "image": "assets/before.png",
-    "title": "Before",
-    "body": "Manual handoffs"
-  },
-  "right": {
-    "image": "assets/after.png",
-    "title": "After",
-    "body": "Automated flow"
-  }
-}
+{ "layout_id": "picture_compare", "title": "Before and after", "left": { "image": "assets/before.png", "title": "Before" }, "right": { "image": "assets/after.png", "title": "After" } }
 ```
 
 ---
 
-## `title_only_freeform`
-Best for very low-structure slides where the template mainly needs a title and the rest is intentionally loose.
-
-### Required
-- `title`
-
-### Example
+## Deck shape
 
 ```json
 {
-  "archetype": "title_only_freeform",
-  "title": "Discussion"
-}
-```
-
----
-
-# Repeated-item conventions
-
-For newer repeated layouts, prefer structured arrays over flat numbered fields.
-
-Use:
-
-```json
-{
-  "items": [
-    { "title": "...", "body": "..." }
+  "title": "Q2 Business Review",
+  "subtitle": "Draft for leadership review",
+  "slides": [
+    {
+      "layout_id": "title_and_bullets",
+      "title": "Highlights",
+      "bullets": ["Revenue up 20%", "Margin improved", "Pipeline remains strong"]
+    }
   ]
 }
 ```
 
-instead of inventing new input shapes like:
-- `item1_body`
-- `item2_body`
-- `item3_body`
-
-The renderer may still target numbered template slots internally, but user input should stay structured.
-
 ---
 
-# Overflow behavior
-
-If you provide more items than a template layout can display:
-- current behavior is deterministic and template-limited
-- in practice, keep item counts aligned to the intended archetype
-
-Recommended counts:
-- `three_col_with_subtitle`: 3 items
-- `three_col_with_icons`: 3 items
-- `five_col_with_icons`: 5 items
-
----
-
-# Legacy compatibility
-
-Still accepted:
-- `image_left_text_right` → `text_with_image`
-- `title_and_bullets_with_subtitle` → `title_subtitle_and_bullets`
-
-Legacy extended archetypes are also still supported in the product, but they are not the preferred current vocabulary.
-
----
-
-# Template slot conventions
+## Template slot conventions
 
 Most users do not need to care about template slot names directly.
 
 If you are editing `template.json`, the current canonical render-time slot names are:
 - `item{n}_body`, `item{n}_marker` for `agenda_with_image`
 - `col{n}_icon`, `col{n}_title`, `col{n}_body`, `col{n}_caption` for `three_col_with_icons`
-- `item{n}_icon`, `item{n}_body` for `five_col_with_icons`
 - `left_image`, `left_title`, `left_body`, `right_image`, `right_title`, `right_body` for `picture_compare`
-
-These conventions should stay stable across template mapping and validation.
 
 ---
 
-# Recommended default choice
+## Recommended discovery path
 
-If you are unsure, start with the base set:
-- `title`
-- `section`
-- `title_and_bullets`
-- `title_subtitle_and_bullets`
-- `text_with_image`
+For callers and agents:
+- `slide-smith help api`
+- `slide-smith help api --format json`
 
-Then move to extended archetypes only when your chosen template clearly supports them.
+Use this doc for readable examples and the CLI help command for the current compact API contract.

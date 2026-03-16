@@ -10,31 +10,68 @@ from slide_smith.renderer import FALLBACK_LAYOUT_ID
 from slide_smith.template_loader import load_template_spec
 
 
-SUPPORTED_LAYOUT_IDS = {
-    "title",
-    "section",
-    "title_and_bullets",
-    "title_subtitle_and_bullets",
-    "text_with_image",
-    "version_page",
-    "agenda_with_image",
-    "two_col",
-    "three_col_with_icons",
-    "picture_compare",
+LAYOUT_API: dict[str, dict[str, Any]] = {
+    "title": {
+        "required_fields": ["title"],
+        "optional_fields": ["subtitle", "notes"],
+        "notes": "Cover/opening slide.",
+    },
+    "section": {
+        "required_fields": ["title"],
+        "optional_fields": ["notes"],
+        "notes": "Section divider slide.",
+    },
+    "title_and_bullets": {
+        "required_fields": ["title"],
+        "recommended_fields": ["bullets"],
+        "optional_fields": ["body", "notes"],
+        "notes": "Standard explanatory slide.",
+    },
+    "title_subtitle_and_bullets": {
+        "required_fields": ["title", "subtitle"],
+        "recommended_fields": ["bullets"],
+        "optional_fields": ["body", "notes"],
+        "notes": "Title + subtitle + content slide.",
+    },
+    "text_with_image": {
+        "required_fields": ["title", "image"],
+        "recommended_fields": ["body"],
+        "optional_fields": ["bullets", "notes"],
+        "notes": "Image can be a string path or an object with path/alt.",
+    },
+    "version_page": {
+        "required_fields": ["title", "table_text"],
+        "optional_fields": ["notes"],
+        "notes": "Version/history table slide.",
+    },
+    "agenda_with_image": {
+        "required_fields": ["title", "image", "items"],
+        "optional_fields": ["notes"],
+        "notes": "items[] entries should look like {marker?, body}.",
+    },
+    "two_col": {
+        "required_fields": ["title", "col1_body", "col2_body"],
+        "optional_fields": ["notes"],
+        "notes": "Two-column comparison slide.",
+    },
+    "three_col_with_icons": {
+        "required_fields": ["title", "items"],
+        "optional_fields": ["notes"],
+        "notes": "items[] should contain 3 entries with title/body/icon and optional caption.",
+    },
+    "picture_compare": {
+        "required_fields": ["title", "left", "right"],
+        "optional_fields": ["notes"],
+        "notes": "left/right entries should contain image and optional title/body.",
+    },
 }
+
+SUPPORTED_LAYOUT_IDS = set(LAYOUT_API)
 
 
 REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
-    "title": ("title",),
-    "section": ("title",),
-    "title_and_bullets": ("title",),
-    "title_subtitle_and_bullets": ("title", "subtitle"),
-    "text_with_image": ("title", "image"),
-    "version_page": ("title", "table_text"),
-    "agenda_with_image": ("title", "image", "items"),
-    "two_col": ("title", "col1_body", "col2_body"),
-    "three_col_with_icons": ("title", "items"),
-    "picture_compare": ("title", "left", "right"),
+    layout_id: tuple(spec.get("required_fields", []))
+    for layout_id, spec in LAYOUT_API.items()
 }
 
 

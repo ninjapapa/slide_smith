@@ -66,6 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional root directory containing template packages (defaults to repo-local templates/).",
     )
 
+    help_cmd = subparsers.add_parser("help", help="Print the supported layout_id API.")
+    help_cmd.add_argument("topic", nargs="?", default="api", choices=["api"], help="Help topic to print.")
+    help_cmd.add_argument("--format", choices=["text", "json"], default="text", help="Output format.")
+
     return parser
 
 
@@ -134,6 +138,13 @@ def main() -> int:
             templates_dir=getattr(args, "templates_dir", None),
         )
         print(out)
+        return code
+
+    if args.command == "help":
+        from slide_smith.commands.help import handle_help
+
+        code, out = handle_help(topic=args.topic, fmt=getattr(args, "format", "text"))
+        print(out, end="" if out.endswith("\n") else "\n")
         return code
 
     print(f"Command '{args.command}' is not supported.")
