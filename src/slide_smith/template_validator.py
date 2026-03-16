@@ -22,7 +22,7 @@ class TemplateValidationError(Exception):
 def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
     errors: list[str] = []
 
-    conventions_doc = "docs/design/archetype-redesign-v1.md (Render-time slot naming conventions table)"
+    conventions_doc = "docs/archetypes.md (Template slot conventions)"
 
     if profile not in {"standard", "extended"}:
         return errors

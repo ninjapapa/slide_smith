@@ -23,7 +23,7 @@ slide-smith validate-template --profile extended
 
 We now have:
 
-- redesigned archetypes (see `docs/design/archetype-redesign-v1.md`)
+- redesigned archetypes (see `docs/archetypes.md`)
 - renderer conventions for `items[]`-based archetypes (render-time slot names)
 
 …but we still need one “canonical” mapping for this specific branded template so users can copy a known-good setup.

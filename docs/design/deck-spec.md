@@ -1,19 +1,21 @@
-# Deck Spec Draft
+# Deck Spec
+
+This is the current normalized deck-spec model for `slide-smith` v2.x.
+
+The JSON schema source of truth is:
+- `docs/design/deck-spec.schema.json`
 
 ## Purpose
 
-The deck spec is the internal normalized data model for `slide_smith`.
+All supported inputs normalize into a deck spec before schema validation and rendering.
 
-All supported input formats — especially JSON and markdown — should normalize into this structure before template mapping and rendering.
-
-## Design goals
-
-- simple enough for agents to author directly
+The deck spec is designed to be:
+- easy for agents to author
 - explicit enough to validate reliably
-- narrow enough to render consistently in MVP
-- expressive enough for title, bullets, body text, and images
+- compatible with both legacy aliases and the current redesigned archetypes
+- template-first, so templates control actual layout/slot mapping
 
-## Proposed top-level shape
+## Top-level shape
 
 ```json
 {
@@ -23,11 +25,7 @@ All supported input formats — especially JSON and markdown — should normaliz
     {
       "archetype": "title_and_bullets",
       "title": "Highlights",
-      "bullets": [
-        "Revenue up 20%",
-        "Margin improved",
-        "Pipeline remains strong"
-      ]
+      "bullets": ["Revenue up 20%", "Margin improved", "Pipeline remains strong"]
     }
   ]
 }
@@ -35,67 +33,79 @@ All supported input formats — especially JSON and markdown — should normaliz
 
 ## Top-level fields
 
-### `title`
-- type: string
-- optional for MVP, but recommended
-- deck-level label for the presentation
+- `title?: string`
+- `subtitle?: string`
+- `slides: Slide[]`
 
-### `subtitle`
-- type: string
-- optional
+## Shared slide fields
 
-### `slides`
-- type: array
-- required
-- ordered list of slide specifications
+Most slides use some subset of:
+- `archetype: string`
+- `title: string`
+- `subtitle?: string`
+- `body?: string`
+- `bullets?: string[]`
+- `image?: string | { path: string, alt?: string }`
+- `notes?: string`
 
-## Slide fields
+Additional archetype-specific fields include things like:
+- `table_text`
+- `items[]`
+- `colN_*`
+- `itemN_*`
+- `left` / `right`
 
-Each slide should support a narrow, explicit shape.
+## Current archetype families
 
-### Required field
-- `archetype`: string
-
-### Optional fields
-- `title`: string
-- `subtitle`: string
-- `body`: string
-- `bullets`: string[]
-- `image`: string
-- `notes`: string
-
-## MVP-supported archetypes
-
-Initial archetypes should stay small, for example:
+### Base
 - `title`
 - `section`
 - `title_and_bullets`
-- `image_left_text_right`
+- `title_subtitle_and_bullets`
+- `text_with_image`
 
-## Normalization rules
+### Legacy alias still accepted
+- `image_left_text_right` → normalized/treated as `text_with_image`
 
-### JSON input
-JSON should already resemble the target structure and mainly need validation.
+### Extended
+- `title_subtitle`
+- `version_page`
+- `agenda_with_image`
+- `two_col_with_subtitle`
+- `three_col_with_subtitle`
+- `three_col_with_icons`
+- `five_col_with_icons`
+- `picture_compare`
+- `title_only_freeform`
 
-### Markdown input
-Markdown should normalize into the same deck spec.
+### Legacy extended archetypes still supported
+- `two_col`
+- `three_col`
+- `four_col`
+- `pillars_3`
+- `pillars_4`
+- `table`
+- `table_plus_description`
+- `timeline_horizontal`
 
-A simple convention could be:
-- `#` for deck title
-- `##` for new slide title
-- bullet lists become `bullets`
-- paragraphs become `body`
-- optional slide metadata can be added later
+## Validation
 
-## Examples and schema
+Use:
 
-Related files:
-- `docs/design/deck-spec.schema.json`
-- `docs/design/examples/deck-spec.sample.json`
-- `docs/design/examples/deck-spec.sample.md`
+```bash
+slide-smith validate-deck-spec --input <deck.json> --profile legacy
+```
 
-These capture the first-pass schema direction plus example JSON and markdown inputs that normalize into the same deck model.
+Schema validation is also applied during `slide-smith create` when `jsonschema` is available.
 
-## MVP guidance
+## Examples
 
-For MVP, prefer explicit, narrow slides rather than a rich universal model. The point is to make rendering reliable and template mapping straightforward.
+Current examples live under:
+- `docs/examples/redesign/base.sample.json`
+- `docs/examples/redesign/extended.sample.json`
+
+## Notes
+
+- Template layout resolution is controlled by `template.json`, not by the deck spec itself.
+- Repeated-item archetypes use canonical slot naming conventions documented in `docs/archetypes.md`.
+- The schema file should be treated as authoritative when there is any ambiguity.
