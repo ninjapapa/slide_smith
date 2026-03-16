@@ -1,18 +1,18 @@
 {
-  "title": "Archetype Redesign (Base) — Sample Deck",
-  "subtitle": "Demonstrates base archetypes",
+  "title": "Layout ID Redesign (Base) — Sample Deck",
+  "subtitle": "Demonstrates base layouts",
   "slides": [
     {
-      "archetype": "title",
+      "layout_id": "title",
       "title": "Archetype Redesign (Base)",
       "subtitle": "Sample deck"
     },
     {
-      "archetype": "section",
+      "layout_id": "section",
       "title": "Base archetypes"
     },
     {
-      "archetype": "title_and_bullets",
+      "layout_id": "title_and_bullets",
       "title": "title_and_bullets",
       "bullets": [
         "A stable primitive for agent generation",
@@ -21,7 +21,7 @@
       ]
     },
     {
-      "archetype": "title_subtitle_and_bullets",
+      "layout_id": "title_subtitle_and_bullets",
       "title": "title_subtitle_and_bullets",
       "subtitle": "Adds a subtitle slot",
       "bullets": [
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "archetype": "text_with_image",
+      "layout_id": "text_with_image",
       "title": "text_with_image",
       "body": "This archetype replaces geometry-bound image_left_text_right. Template decides exact placement.",
       "image": {

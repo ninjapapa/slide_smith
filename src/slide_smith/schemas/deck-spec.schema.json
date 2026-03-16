@@ -4,1030 +4,189 @@
   "title": "slide_smith deck spec",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "slides"
-  ],
+  "required": ["slides"],
   "properties": {
-    "title": {
-      "type": "string"
-    },
-    "subtitle": {
-      "type": "string"
-    },
+    "title": {"type": "string"},
+    "subtitle": {"type": "string"},
     "slides": {
       "type": "array",
       "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/slide"
-      }
+      "items": {"$ref": "#/$defs/slide"}
     }
   },
   "$defs": {
-    "slide": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/title_slide"
-        },
-        {
-          "$ref": "#/$defs/section_slide"
-        },
-        {
-          "$ref": "#/$defs/title_and_bullets_slide"
-        },
-        {
-          "$ref": "#/$defs/title_subtitle_and_bullets_slide"
-        },
-        {
-          "$ref": "#/$defs/image_left_text_right_slide"
-        },
-        {
-          "$ref": "#/$defs/text_with_image_slide"
-        },
-        {
-          "$ref": "#/$defs/two_col_slide"
-        },
-        {
-          "$ref": "#/$defs/three_col_slide"
-        },
-        {
-          "$ref": "#/$defs/four_col_slide"
-        },
-        {
-          "$ref": "#/$defs/pillars_3_slide"
-        },
-        {
-          "$ref": "#/$defs/pillars_4_slide"
-        },
-        {
-          "$ref": "#/$defs/table_slide"
-        },
-        {
-          "$ref": "#/$defs/table_plus_description_slide"
-        },
-        {
-          "$ref": "#/$defs/timeline_horizontal_slide"
-        },
-        {
-          "$ref": "#/$defs/title_subtitle_slide"
-        },
-        {
-          "$ref": "#/$defs/version_page_slide"
-        },
-        {
-          "$ref": "#/$defs/agenda_with_image_slide"
-        },
-        {
-          "$ref": "#/$defs/two_col_with_subtitle_slide"
-        },
-        {
-          "$ref": "#/$defs/three_col_with_subtitle_slide"
-        },
-        {
-          "$ref": "#/$defs/three_col_with_icons_slide"
-        },
-        {
-          "$ref": "#/$defs/five_col_with_icons_slide"
-        },
-        {
-          "$ref": "#/$defs/picture_compare_slide"
-        },
-        {
-          "$ref": "#/$defs/title_only_freeform_slide"
-        }
-      ]
-    },
     "image": {
       "oneOf": [
-        {
-          "type": "string"
-        },
+        {"type": "string", "minLength": 1},
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "path"
-          ],
+          "required": ["path"],
           "properties": {
-            "path": {
-              "type": "string"
-            },
-            "alt": {
-              "type": "string"
-            }
+            "path": {"type": "string", "minLength": 1},
+            "alt": {"type": "string"}
           }
-        }
-      ]
-    },
-    "base_slide": {
-      "type": "object",
-      "required": [
-        "archetype",
-        "title"
-      ],
-      "properties": {
-        "archetype": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "subtitle": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        },
-        "bullets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "image": {
-          "$ref": "#/$defs/image"
-        },
-        "notes": {
-          "type": "string"
-        },
-        "table_text": {
-          "type": "string"
-        },
-        "col1_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "col2_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "col3_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "col4_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "pillar1_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "pillar2_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "pillar3_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "pillar4_body": {
-          "$ref": "#/$defs/text_or_lines"
-        },
-        "milestone1_body": {
-          "type": "string"
-        },
-        "milestone2_body": {
-          "type": "string"
-        },
-        "milestone3_body": {
-          "type": "string"
-        },
-        "milestone4_body": {
-          "type": "string"
-        },
-        "milestone5_body": {
-          "type": "string"
-        },
-        "milestone6_body": {
-          "type": "string"
-        },
-        "milestone7_body": {
-          "type": "string"
-        },
-        "milestone8_body": {
-          "type": "string"
-        },
-        "milestone9_body": {
-          "type": "string"
-        },
-        "milestone10_body": {
-          "type": "string"
-        }
-      }
-    },
-    "title_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "title"
-            }
-          },
-          "required": [
-            "archetype",
-            "title"
-          ]
-        }
-      ]
-    },
-    "section_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "section"
-            }
-          },
-          "required": [
-            "archetype",
-            "title"
-          ]
-        }
-      ]
-    },
-    "title_and_bullets_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "title_and_bullets"
-            }
-          },
-          "required": [
-            "archetype",
-            "title"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "bullets"
-              ]
-            },
-            {
-              "required": [
-                "body"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "title_subtitle_and_bullets_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "title_subtitle_and_bullets"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "subtitle"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "bullets"
-              ]
-            },
-            {
-              "required": [
-                "body"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "image_left_text_right_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "image_left_text_right"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "body",
-            "image"
-          ]
-        }
-      ]
-    },
-    "text_with_image_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "text_with_image"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "body",
-            "image"
-          ]
-        }
-      ]
-    },
-    "two_col_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "two_col"
-            },
-            "col1_body": {
-              "type": "string"
-            },
-            "col2_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "col1_body",
-            "col2_body"
-          ]
-        }
-      ]
-    },
-    "three_col_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "col1_body": {
-              "type": "string"
-            },
-            "col2_body": {
-              "type": "string"
-            },
-            "col3_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "col1_body",
-            "col2_body",
-            "col3_body"
-          ]
-        }
-      ]
-    },
-    "four_col_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "col1_body": {
-              "type": "string"
-            },
-            "col2_body": {
-              "type": "string"
-            },
-            "col3_body": {
-              "type": "string"
-            },
-            "col4_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "col1_body",
-            "col2_body",
-            "col3_body",
-            "col4_body"
-          ]
-        }
-      ]
-    },
-    "pillars_3_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "pillar1_body": {
-              "type": "string"
-            },
-            "pillar2_body": {
-              "type": "string"
-            },
-            "pillar3_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "pillar1_body",
-            "pillar2_body",
-            "pillar3_body"
-          ]
-        }
-      ]
-    },
-    "pillars_4_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "pillar1_body": {
-              "type": "string"
-            },
-            "pillar2_body": {
-              "type": "string"
-            },
-            "pillar3_body": {
-              "type": "string"
-            },
-            "pillar4_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "pillar1_body",
-            "pillar2_body",
-            "pillar3_body",
-            "pillar4_body"
-          ]
-        }
-      ]
-    },
-    "table_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "table"
-            },
-            "table_text": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "table_text"
-          ]
-        }
-      ]
-    },
-    "table_plus_description_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "table_text": {
-              "type": "string"
-            },
-            "body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "table_text",
-            "body"
-          ]
-        }
-      ]
-    },
-    "timeline_horizontal_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "timeline_horizontal"
-            },
-            "milestone1_body": {
-              "type": "string"
-            },
-            "milestone2_body": {
-              "type": "string"
-            },
-            "milestone3_body": {
-              "type": "string"
-            },
-            "milestone4_body": {
-              "type": "string"
-            },
-            "milestone5_body": {
-              "type": "string"
-            },
-            "milestone6_body": {
-              "type": "string"
-            },
-            "milestone7_body": {
-              "type": "string"
-            },
-            "milestone8_body": {
-              "type": "string"
-            },
-            "milestone9_body": {
-              "type": "string"
-            },
-            "milestone10_body": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "milestone1_body"
-          ]
-        }
-      ]
-    },
-    "title_subtitle_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "title_subtitle"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "subtitle"
-          ]
-        }
-      ]
-    },
-    "version_page_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "table_text": {
-              "type": "string"
-            },
-            "archetype": {
-              "const": "version_page"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "table_text"
-          ]
         }
       ]
     },
     "agenda_item": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "body"
-      ],
+      "required": ["body"],
       "properties": {
-        "marker": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        }
+        "marker": {"type": "string"},
+        "body": {"type": "string", "minLength": 1}
       }
+    },
+    "three_col_icon_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body", "icon"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "body": {"type": "string", "minLength": 1},
+        "caption": {"type": "string"},
+        "icon": {"$ref": "#/$defs/image"}
+      }
+    },
+    "compare_side": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image"],
+      "properties": {
+        "image": {"$ref": "#/$defs/image"},
+        "title": {"type": "string"},
+        "body": {"type": "string"}
+      }
+    },
+    "base_slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout_id", "title"],
+      "properties": {
+        "layout_id": {"type": "string"},
+        "title": {"type": "string", "minLength": 1},
+        "subtitle": {"type": "string"},
+        "body": {"type": "string"},
+        "bullets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        },
+        "image": {"$ref": "#/$defs/image"},
+        "notes": {"type": "string"},
+        "table_text": {"type": "string", "minLength": 1},
+        "col1_body": {"type": "string", "minLength": 1},
+        "col2_body": {"type": "string", "minLength": 1},
+        "items": {"type": "array"},
+        "left": {"$ref": "#/$defs/compare_side"},
+        "right": {"$ref": "#/$defs/compare_side"}
+      }
+    },
+    "title_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {"properties": {"layout_id": {"const": "title"}}, "required": ["layout_id", "title"]}
+      ]
+    },
+    "section_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {"properties": {"layout_id": {"const": "section"}}, "required": ["layout_id", "title"]}
+      ]
+    },
+    "title_and_bullets_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {
+          "properties": {"layout_id": {"const": "title_and_bullets"}},
+          "required": ["layout_id", "title"],
+          "anyOf": [{"required": ["bullets"]}, {"required": ["body"]}]
+        }
+      ]
+    },
+    "title_subtitle_and_bullets_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {
+          "properties": {"layout_id": {"const": "title_subtitle_and_bullets"}},
+          "required": ["layout_id", "title", "subtitle"],
+          "anyOf": [{"required": ["bullets"]}, {"required": ["body"]}]
+        }
+      ]
+    },
+    "text_with_image_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {
+          "properties": {"layout_id": {"const": "text_with_image"}},
+          "required": ["layout_id", "title", "image"],
+          "anyOf": [{"required": ["body"]}, {"required": ["bullets"]}]
+        }
+      ]
+    },
+    "version_page_slide": {
+      "allOf": [
+        {"$ref": "#/$defs/base_slide"},
+        {"properties": {"layout_id": {"const": "version_page"}}, "required": ["layout_id", "title", "table_text"]}
+      ]
     },
     "agenda_with_image_slide": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
+        {"$ref": "#/$defs/base_slide"},
         {
           "properties": {
-            "archetype": {
-              "const": "agenda_with_image"
-            },
-            "image": {
-              "$ref": "#/$defs/image"
-            },
-            "items": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/agenda_item"
-              }
-            }
+            "layout_id": {"const": "agenda_with_image"},
+            "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/agenda_item"}}
           },
-          "required": [
-            "archetype",
-            "title",
-            "image",
-            "items"
-          ]
+          "required": ["layout_id", "title", "image", "items"]
         }
       ]
     },
-    "two_col_with_subtitle_slide": {
+    "two_col_slide": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "col1_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col2_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "archetype": {
-              "const": "two_col_with_subtitle"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "subtitle",
-            "col1_body",
-            "col2_body"
-          ]
-        }
+        {"$ref": "#/$defs/base_slide"},
+        {"properties": {"layout_id": {"const": "two_col"}}, "required": ["layout_id", "title", "col1_body", "col2_body"]}
       ]
-    },
-    "three_col_text_item": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "body"
-      ],
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        }
-      }
-    },
-    "three_col_with_subtitle_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "three_col_with_subtitle"
-            },
-            "items": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/three_col_text_item"
-              }
-            },
-            "col1_title": {
-              "type": "string"
-            },
-            "col2_title": {
-              "type": "string"
-            },
-            "col3_title": {
-              "type": "string"
-            },
-            "col1_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col2_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col3_body": {
-              "$ref": "#/$defs/text_or_lines"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "subtitle"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "items"
-              ]
-            },
-            {
-              "required": [
-                "col1_body",
-                "col2_body",
-                "col3_body"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "icon_col_item": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "title",
-        "body",
-        "icon"
-      ],
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        },
-        "caption": {
-          "type": "string"
-        },
-        "icon": {
-          "$ref": "#/$defs/image"
-        }
-      }
     },
     "three_col_with_icons_slide": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
+        {"$ref": "#/$defs/base_slide"},
         {
           "properties": {
-            "archetype": {
-              "const": "three_col_with_icons"
-            },
+            "layout_id": {"const": "three_col_with_icons"},
             "items": {
               "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/icon_col_item"
-              }
-            },
-            "col1_title": {
-              "type": "string"
-            },
-            "col1_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col1_caption": {
-              "type": "string"
-            },
-            "col1_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "col2_title": {
-              "type": "string"
-            },
-            "col2_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col2_caption": {
-              "type": "string"
-            },
-            "col2_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "col3_title": {
-              "type": "string"
-            },
-            "col3_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "col3_caption": {
-              "type": "string"
-            },
-            "col3_icon": {
-              "$ref": "#/$defs/image"
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {"$ref": "#/$defs/three_col_icon_item"}
             }
           },
-          "required": [
-            "archetype",
-            "title"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "items"
-              ]
-            },
-            {
-              "required": [
-                "col1_title",
-                "col1_body",
-                "col2_title",
-                "col2_body",
-                "col3_title",
-                "col3_body"
-              ]
-            }
-          ]
+          "required": ["layout_id", "title", "items"]
         }
       ]
-    },
-    "five_col_icon_item": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "icon",
-        "body"
-      ],
-      "properties": {
-        "body": {
-          "type": "string"
-        },
-        "icon": {
-          "$ref": "#/$defs/image"
-        }
-      }
-    },
-    "five_col_with_icons_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "five_col_with_icons"
-            },
-            "items": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/five_col_icon_item"
-              }
-            },
-            "item1_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "item1_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "item2_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "item2_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "item3_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "item3_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "item4_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "item4_icon": {
-              "$ref": "#/$defs/image"
-            },
-            "item5_body": {
-              "$ref": "#/$defs/text_or_lines"
-            },
-            "item5_icon": {
-              "$ref": "#/$defs/image"
-            }
-          },
-          "required": [
-            "archetype",
-            "title"
-          ],
-          "anyOf": [
-            {
-              "required": [
-                "items"
-              ]
-            },
-            {
-              "required": [
-                "item1_body",
-                "item2_body",
-                "item3_body",
-                "item4_body",
-                "item5_body"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "picture_compare_side": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "image"
-      ],
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/image"
-        },
-        "title": {
-          "type": "string"
-        },
-        "body": {
-          "type": "string"
-        }
-      }
     },
     "picture_compare_slide": {
       "allOf": [
+        {"$ref": "#/$defs/base_slide"},
         {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "picture_compare"
-            },
-            "left": {
-              "$ref": "#/$defs/picture_compare_side"
-            },
-            "right": {
-              "$ref": "#/$defs/picture_compare_side"
-            }
-          },
-          "required": [
-            "archetype",
-            "title",
-            "left",
-            "right"
-          ]
+          "properties": {"layout_id": {"const": "picture_compare"}},
+          "required": ["layout_id", "title", "left", "right"]
         }
       ]
     },
-    "title_only_freeform_slide": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/base_slide"
-        },
-        {
-          "properties": {
-            "archetype": {
-              "const": "title_only_freeform"
-            }
-          },
-          "required": [
-            "archetype",
-            "title"
-          ]
-        }
-      ]
-    },
-    "text_or_lines": {
+    "slide": {
       "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
+        {"$ref": "#/$defs/title_slide"},
+        {"$ref": "#/$defs/section_slide"},
+        {"$ref": "#/$defs/title_and_bullets_slide"},
+        {"$ref": "#/$defs/title_subtitle_and_bullets_slide"},
+        {"$ref": "#/$defs/text_with_image_slide"},
+        {"$ref": "#/$defs/version_page_slide"},
+        {"$ref": "#/$defs/agenda_with_image_slide"},
+        {"$ref": "#/$defs/two_col_slide"},
+        {"$ref": "#/$defs/three_col_with_icons_slide"},
+        {"$ref": "#/$defs/picture_compare_slide"}
       ]
     }
   }

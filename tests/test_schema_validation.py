@@ -17,8 +17,7 @@ def test_schema_validation_accepts_sample_fixture() -> None:
 
 
 def test_schema_validation_rejects_missing_required() -> None:
-    spec = {"slides": [{"archetype": "image_left_text_right", "title": "T"}]}
+    spec = {"slides": [{"layout_id": "text_with_image", "title": "T"}]}
     res = validate_against_schema(spec)
     assert not res.ok
-    # should mention missing required fields
-    assert any("image" in e or "body" in e for e in res.errors)
+    assert any("image" in e or "body" in e or "bullets" in e for e in res.errors)

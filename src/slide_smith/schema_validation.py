@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 
 @dataclass(frozen=True)
@@ -36,11 +35,11 @@ def _schema_path() -> Path:
 
 
 def _schema_runtime_spec(spec: dict[str, Any]) -> dict[str, Any]:
-    """Adapt user-facing deck specs to the current schema runtime shape.
+    """Project internal normalized specs onto the public runtime schema shape.
 
-    The published v3-facing docs prefer `layout_id`, while the current schema is still
-    keyed on `archetype`. Until the schema is fully migrated, validate a compatibility
-    shape here.
+    The runtime schema is now `layout_id`-first. Internal normalized objects may still
+    carry helper fields like `archetype`; strip those before schema validation so the
+    validator checks the public contract rather than internal implementation details.
     """
 
     if not isinstance(spec, dict):
@@ -57,10 +56,7 @@ def _schema_runtime_spec(spec: dict[str, Any]) -> dict[str, Any]:
             out_slides.append(slide)
             continue
         s2 = dict(slide)
-        if "archetype" not in s2 and isinstance(s2.get("layout_id"), str):
-            s2["archetype"] = s2["layout_id"]
-        # current schema doesn't yet permit layout_id as an additional property
-        s2.pop("layout_id", None)
+        s2.pop("archetype", None)
         out_slides.append(s2)
 
     out["slides"] = out_slides
@@ -80,7 +76,6 @@ def validate_against_schema(spec: dict[str, Any]) -> SchemaValidationResult:
     schema = json.loads(_schema_path().read_text())
     validator = Draft202012Validator(schema)
     runtime_spec = _schema_runtime_spec(spec)
-
     errs: list[str] = []
     for e in sorted(validator.iter_errors(runtime_spec), key=lambda x: list(x.path)):
         # e.path is a deque of keys/indices
