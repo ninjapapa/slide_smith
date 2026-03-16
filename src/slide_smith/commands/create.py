@@ -45,10 +45,8 @@ def handle_create(
         return 1, "\n".join(lines)
 
     # Non-fatal warnings (e.g. deprecated archetype ids).
-    if normalize_warnings and print_mode != "none":
-        # We only surface these in human-readable mode to avoid breaking JSON output.
-        pre = "\n".join(["Warnings:"] + [f"- {w}" for w in normalize_warnings])
-        print(pre)
+    # Keep stdout machine-readable JSON for both print modes.
+    # Deprecated/archetype-normalization warnings are captured in the normalized deck output instead.
 
     # Schema validation is the source of truth when jsonschema is available.
     try:

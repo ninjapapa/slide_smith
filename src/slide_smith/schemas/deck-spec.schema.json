@@ -352,6 +352,9 @@
         },
         {
           "properties": {
+            "archetype": {
+              "const": "two_col"
+            },
             "col1_body": {
               "type": "string"
             },
@@ -491,6 +494,9 @@
         },
         {
           "properties": {
+            "archetype": {
+              "const": "table"
+            },
             "table_text": {
               "type": "string"
             }
