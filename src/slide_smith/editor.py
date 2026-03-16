@@ -8,16 +8,18 @@ from pptx import Presentation
 
 from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.pptx_edit import delete_slide
-from slide_smith.renderer import (
-    FALLBACK_LAYOUT_ID,
-    _layout_by_name,
-    _make_fallback_slide_spec,
-    _record_render_warning,
+from slide_smith.render_core import (
     _render_image_left_text_right,
     _render_section,
     _render_title,
     _render_title_and_bullets,
 )
+from slide_smith.render_fallback import (
+    FALLBACK_LAYOUT_ID,
+    _make_fallback_slide_spec,
+    _record_render_warning,
+)
+from slide_smith.render_support import _layout_by_name
 from slide_smith.styling import load_styles
 from slide_smith.template_loader import load_template_spec
 
