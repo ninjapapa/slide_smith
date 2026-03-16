@@ -2,15 +2,22 @@
 
 ## Unreleased
 
-- retired legacy renderer families and old experimental layout support from the active product surface
-- aligned renderer dispatch, validation, and template semantics to the stable layout set only
-- made markdown parsing emit current `layout_id` values instead of legacy archetype names
-- simplified deck-spec normalization toward a `layout_id`-native model while keeping the minimal internal renderer shim
-- reduced remaining legacy `archetype` wording in renderer/template validation paths
-- marked redesign-era planning docs and exemplar fixtures as historical to avoid confusion with the live product surface
-- removed the archived exemplar-first fixture set that no longer participates in the live test/runtime surface
-- renamed remaining render debug/context strings from `archetype=` to `layout_id=` where safe
-- removed the last template-loader bridge for legacy `archetypes`/`native.archetypes` keys; template specs are now `layouts`/`native.layouts` only
+## v3.1.0 — 2026-03-16
+
+### Highlights
+- completed the renderer decomposition and retired legacy layout-family code paths
+- removed legacy deck/template compatibility shims so the active surface is now strictly `layout_id` / `layouts`
+- cleaned internal/runtime/template naming to match the current model
+- refreshed docs, examples, and template metadata around the stable layout set
+
+### Breaking cleanup
+- removed legacy deck input compatibility for `archetype`
+- removed legacy layout alias compatibility such as `image_left_text_right`
+- removed template compatibility for `archetypes` and `native.archetypes`; templates now use `layouts` and `native.layouts`
+
+### Notes
+- fallback layout remains `title_and_bullets`
+- historical redesign/exemplar artifacts were either retired or clearly marked historical
 
 ## v3.0.0 — 2026-03-16
 
