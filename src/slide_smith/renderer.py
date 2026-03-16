@@ -92,60 +92,60 @@ def render_deck(
     deck_meta = template_spec.get("deck") or {}
     native_pref = deck_meta.get("native_preferred") or {}
 
-    def resolve_template_archetype_id(slide_archetype_id: str) -> str:
+    def resolve_template_layout_id(slide_layout_id: str) -> str:
         if isinstance(native_pref, dict):
-            preferred = native_pref.get(slide_archetype_id)
+            preferred = native_pref.get(slide_layout_id)
             if isinstance(preferred, str) and preferred in archetypes:
                 return preferred
 
-        if slide_archetype_id in archetypes:
-            return slide_archetype_id
+        if slide_layout_id in archetypes:
+            return slide_layout_id
 
         for legacy_id, preferred_id in ARCHETYPE_ALIASES.items():
-            if slide_archetype_id == preferred_id and legacy_id in archetypes:
+            if slide_layout_id == preferred_id and legacy_id in archetypes:
                 return legacy_id
 
-        return slide_archetype_id
+        return slide_layout_id
 
     def render_one(slide_spec: dict[str, Any]) -> None:
-        archetype = slide_spec["archetype"]
-        template_archetype_id = resolve_template_archetype_id(archetype)
-        if template_archetype_id not in archetypes:
+        layout_id = slide_spec["archetype"]
+        template_layout_id = resolve_template_layout_id(layout_id)
+        if template_layout_id not in archetypes:
             raise RenderingError(
-                f"Archetype '{archetype}' not supported by template '{template_id}'"
+                f"Layout '{layout_id}' not supported by template '{template_id}'"
                 + (
-                    " (native_preferred mapping pointed to missing archetype)"
-                    if template_archetype_id != archetype
+                    " (native_preferred mapping pointed to missing layout)"
+                    if template_layout_id != layout_id
                     else ""
                 )
             )
-        archetype_spec = archetypes[template_archetype_id]
+        archetype_spec = archetypes[template_layout_id]
         slide = prs.slides.add_slide(_layout_for_archetype(prs, archetype_spec))
 
-        if archetype == "title":
-            _render_title(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif archetype == "section":
-            _render_section(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif archetype == "title_and_bullets":
-            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif archetype in {"image_left_text_right", "text_with_image"}:
-            _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif archetype == "title_subtitle_and_bullets":
-            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        if layout_id == "title":
+            _render_title(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id == "section":
+            _render_section(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id == "title_and_bullets":
+            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id in {"image_left_text_right", "text_with_image"}:
+            _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id == "title_subtitle_and_bullets":
+            _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
             from slide_smith.render_support import _set_slot_text
 
             _set_slot_text(
                 slide,
-                archetype,
+                layout_id,
                 archetype_spec,
                 "subtitle",
                 slide_spec.get("subtitle"),
                 styles.get("subtitle"),
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
-                context=f"archetype={archetype} slot=subtitle",
+                context=f"archetype={layout_id} slot=subtitle",
             )
-        elif archetype in {
+        elif layout_id in {
             "two_col",
             "version_page",
             "agenda_with_image",
@@ -158,12 +158,12 @@ def render_deck(
                 source_dir,
                 styles,
                 archetype_spec,
-                archetype,
+                layout_id,
                 slide_w_emu=slide_w_emu,
                 slide_h_emu=slide_h_emu,
             )
         else:
-            raise RenderingError(f"Archetype '{archetype}' is not implemented")
+            raise RenderingError(f"Layout '{layout_id}' is not implemented")
 
         _set_notes(slide, slide_spec.get("notes"))
 

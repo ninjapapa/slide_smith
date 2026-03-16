@@ -58,13 +58,13 @@ def handle_create(
 
             # Heuristic: if lightweight validation passed but schema failed with
             # oneOf mismatch, users are likely running an outdated schema (older
-            # install) that doesn't include the new archetype ids.
+            # install) that doesn't include the new layout ids.
             if any("is not valid under any of the given schemas" in e for e in schema_res.errors):
                 try:
                     from slide_smith.schema_validation import _schema_path
 
                     lines.append(f"- hint: schema path in use: {_schema_path()}")
-                    lines.append("- hint: if this schema is missing your archetype ids, upgrade slide-smith or run from repo HEAD")
+                    lines.append("- hint: if this schema is missing your layout ids, upgrade slide-smith or run from repo HEAD")
                 except Exception:
                     lines.append("- hint: upgrade slide-smith or run from repo HEAD (schema may be outdated)")
 

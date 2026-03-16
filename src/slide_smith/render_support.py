@@ -20,7 +20,7 @@ def _layout_by_name(prs: Presentation, name: str):
 
 
 def _layout_for_archetype(prs: Presentation, archetype_spec: dict[str, Any]):
-    """Resolve a layout for an archetype.
+    """Resolve a presentation layout for a template layout definition.
 
     Prefer `layout_part` when available (more stable for rich branded templates).
     Fallback to `layout` name.
@@ -129,7 +129,7 @@ def _required_slot_target(
     required = bool(slot.get("required")) if slot is not None else False
     if required and idx is None and box is None:
         raise RenderingError(
-            f"Template archetype '{archetype_id}' missing required slot mapping '{slot_name}' (placeholder_idx or box)"
+            f"Template layout '{archetype_id}' missing required slot mapping '{slot_name}' (placeholder_idx or box)"
         )
 
     return idx, box

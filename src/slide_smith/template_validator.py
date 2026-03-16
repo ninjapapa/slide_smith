@@ -79,12 +79,12 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
     prefix = f"{profile} profile"
     for aid, req_slots in required.items():
         if aid not in by_id:
-            errors.append(f"{prefix}: missing required archetype '{aid}'")
+            errors.append(f"{prefix}: missing required layout id '{aid}'")
             continue
         a = by_id[aid]
         slots = a.get("slots") or []
         if not isinstance(slots, list):
-            errors.append(f"{prefix}: archetype '{aid}' slots must be a list")
+            errors.append(f"{prefix}: layout id '{aid}' slots must be a list")
             continue
         slot_by_name = {s.get("name"): s for s in slots if isinstance(s, dict)}
 
@@ -95,7 +95,7 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
             has_items = "item1_body" in slot_by_name
             if not (has_bullets or has_items):
                 errors.append(
-                    f"{prefix}: archetype 'agenda_with_image' must define either slot 'bullets' (fallback) "
+                    f"{prefix}: layout id 'agenda_with_image' must define either slot 'bullets' (fallback) "
                     f"or slot 'item1_body' (preferred item placeholders). See {conventions_doc}"
                 )
 
@@ -106,14 +106,14 @@ def _validate_semantic(archetypes: list[object], profile: str) -> list[str]:
                 extra = ""
                 if aid in {"agenda_with_image", "three_col_with_icons", "five_col_with_icons", "picture_compare"}:
                     extra = f" See {conventions_doc}"
-                errors.append(f"{prefix}: archetype '{aid}' missing required slot '{slot_name}'.{extra}")
+                errors.append(f"{prefix}: layout id '{aid}' missing required slot '{slot_name}'.{extra}")
                 continue
             slot = slot_by_name[slot_name]
             idx = slot.get("placeholder_idx")
             box = slot.get("box")
             if not isinstance(idx, int) and not isinstance(box, dict):
                 errors.append(
-                    f"{prefix}: archetype '{aid}' slot '{slot_name}' missing placeholder_idx (int) or box (object)"
+                    f"{prefix}: layout id '{aid}' slot '{slot_name}' missing placeholder_idx (int) or box (object)"
                 )
 
     return errors
@@ -150,7 +150,7 @@ def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_pa
         aid = a.get("id")
         layout_name = a.get("layout")
         if not isinstance(aid, str) or not aid:
-            errors.append("archetype missing required 'id'")
+            errors.append("layout definition missing required 'id'")
             continue
         # Box-only archetypes (slide-instance-derived) may not require a resolvable layout.
         slots = a.get("slots") or []
@@ -162,9 +162,9 @@ def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_pa
 
         if not isinstance(layout_name, str) or not layout_name:
             if box_only:
-                errors.append(f"warning: archetype '{aid}' missing layout (box-only archetype; skipping layout checks)")
+                errors.append(f"warning: layout id '{aid}' missing layout (box-only definition; skipping layout checks)")
                 continue
-            errors.append(f"archetype '{aid}' missing required 'layout'")
+            errors.append(f"layout id '{aid}' missing required 'layout'")
             continue
 
         layout_part = a.get("layout_part")
@@ -184,53 +184,53 @@ def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_pa
 
                 for slot in a.get("slots") or []:
                     if not isinstance(slot, dict):
-                        errors.append(f"archetype '{aid}': slot entries must be objects")
+                        errors.append(f"layout id '{aid}': slot entries must be objects")
                         continue
                     if "placeholder_idx" not in slot:
                         continue
                     idx = slot.get("placeholder_idx")
                     if not isinstance(idx, int):
-                        errors.append(f"archetype '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
+                        errors.append(f"layout id '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
                         continue
                     if idx not in raw_idxs:
                         errors.append(
-                            f"archetype '{aid}': layout_part '{layout_part}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
+                            f"layout id '{aid}': layout_part '{layout_part}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
                         )
 
                 # If it's box-only, treat missing layout name as warning but still ok.
                 if box_only:
                     errors.append(
-                        f"warning: archetype '{aid}': slide layout name not found: '{layout_name}' (matched by layout_part)"
+                        f"warning: layout id '{aid}': slide layout name not found: '{layout_name}' (matched by layout_part)"
                     )
                 continue
 
             if box_only:
                 errors.append(
-                    f"warning: archetype '{aid}': slide layout not found: '{layout_name}' (box-only archetype; skipping layout checks)"
+                    f"warning: layout id '{aid}': slide layout not found: '{layout_name}' (box-only definition; skipping layout checks)"
                 )
                 continue
-            errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
+            errors.append(f"layout id '{aid}': slide layout not found: '{layout_name}'")
             continue
 
         layout = layout_by_name(layout_name)
         if layout is None:
             if box_only:
                 errors.append(
-                    f"warning: archetype '{aid}': slide layout not found: '{layout_name}' (box-only archetype; skipping layout checks)"
+                    f"warning: layout id '{aid}': slide layout not found: '{layout_name}' (box-only definition; skipping layout checks)"
                 )
                 continue
-            errors.append(f"archetype '{aid}': slide layout not found: '{layout_name}'")
+            errors.append(f"layout id '{aid}': slide layout not found: '{layout_name}'")
             continue
 
         for slot in a.get("slots") or []:
             if not isinstance(slot, dict):
-                errors.append(f"archetype '{aid}': slot entries must be objects")
+                errors.append(f"layout id '{aid}': slot entries must be objects")
                 continue
             if "placeholder_idx" not in slot:
                 continue
             idx = slot.get("placeholder_idx")
             if not isinstance(idx, int):
-                errors.append(f"archetype '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
+                errors.append(f"layout id '{aid}': slot '{slot.get('name','?')}' placeholder_idx must be int")
                 continue
             found = False
             for ph in layout.placeholders:
@@ -242,7 +242,7 @@ def _validate_structural(archetypes: list[object], prs: Presentation, *, pptx_pa
                     continue
             if not found:
                 errors.append(
-                    f"archetype '{aid}': layout '{layout_name}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
+                    f"layout id '{aid}': layout '{layout_name}' missing placeholder idx={idx} for slot '{slot.get('name','?')}'"
                 )
 
     return errors
@@ -266,9 +266,9 @@ def validate_template(
     if not isinstance(archetypes, list) or not archetypes:
         return TemplateValidationResult(False, ["template spec must include non-empty 'archetypes' list"])
 
-    # Template-native archetypes (optional). These are additional archetype definitions that
+    # Template-native layout definitions (optional). These are additional layout definitions that
     # may be referenced directly by callers (namespaced IDs recommended), or used via
-    # deck.native_preferred to select a richer layout while keeping a core slide archetype.
+    # deck.native_preferred to select a richer layout while keeping a core layout id.
     native = spec.get("native") or {}
     native_archetypes = []
     if isinstance(native, dict):
@@ -300,9 +300,9 @@ def validate_template(
                 errors.append("deck.native_preferred: keys/values must be strings")
                 continue
             if core_id not in core_ids:
-                errors.append(f"deck.native_preferred: unknown core archetype id '{core_id}'")
+                errors.append(f"deck.native_preferred: unknown core layout id '{core_id}'")
             if preferred_id not in (core_ids | native_ids):
-                errors.append(f"deck.native_preferred: preferred archetype id '{preferred_id}' not found in archetypes/native.archetypes")
+                errors.append(f"deck.native_preferred: preferred layout id '{preferred_id}' not found in archetypes/native.archetypes")
 
         if errors and profile in {"standard", "extended"}:
             return TemplateValidationResult(False, errors)
