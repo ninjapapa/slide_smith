@@ -106,7 +106,7 @@ def _template_slot_names(template_archetypes: dict[str, dict[str, Any]], layout_
 
 
 def _predict_slide_status(*, slide: dict[str, Any], index: int, template_archetypes: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    layout_id = slide.get("layout_id") or slide.get("archetype")
+    layout_id = slide.get("layout_id")
     if not isinstance(layout_id, str) or not layout_id:
         return {
             "slide_index": index,
@@ -189,7 +189,7 @@ def handle_validate(*, input_path: str, template: str, templates_dir: str | None
         return 1, f"Template validation failed: {exc}"
 
     spec, normalize_warnings = normalize_deck_spec(spec)
-    lightweight_errors = validate_deck_spec(spec, profile="legacy")
+    lightweight_errors = validate_deck_spec(spec, profile="current")
 
     template_archetypes = {
         item["id"]: item

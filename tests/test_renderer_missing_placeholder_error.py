@@ -12,7 +12,7 @@ def test_render_deck_missing_placeholder_idx_falls_back_with_actionable_warning(
     deck_spec = {
         "title": "Demo",
         "slides": [
-            {"archetype": "title", "layout_id": "title", "title": "Demo", "subtitle": "Sub"},
+            {"layout_id": "title", "title": "Demo", "subtitle": "Sub"},
         ],
     }
 

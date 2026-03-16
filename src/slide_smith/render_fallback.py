@@ -60,7 +60,6 @@ def _make_fallback_slide_spec(slide_spec: dict[str, Any], *, requested_layout_id
 
     bullets = _fallback_text_lines(slide_spec)
     out = dict(slide_spec)
-    out["archetype"] = FALLBACK_LAYOUT_ID
     out["layout_id"] = FALLBACK_LAYOUT_ID
     out["title"] = title
     out["bullets"] = bullets

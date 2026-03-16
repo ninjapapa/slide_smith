@@ -6,7 +6,7 @@ def test_validate_deck_spec_reports_paths() -> None:
 
     spec = {
         "slides": [
-            {"archetype": "image_left_text_right", "title": "", "body": 123},
+            {"layout_id": "text_with_image", "title": "", "body": 123},
         ]
     }
     errors = validate_deck_spec(spec)

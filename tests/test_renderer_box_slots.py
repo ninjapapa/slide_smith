@@ -14,7 +14,7 @@ PNG_1X1 = base64.b64decode(
 )
 
 
-def test_render_box_based_image_left_text_right(tmp_path: Path):
+def test_render_box_based_text_with_image(tmp_path: Path):
     # Build a minimal template package on the fly.
     template_id = "t"
     templates_dir = tmp_path / "templates"
@@ -32,10 +32,10 @@ def test_render_box_based_image_left_text_right(tmp_path: Path):
         "template_id": template_id,
         "name": "tmp",
         "version": "0.0",
-        "deck": {"aspect_ratio": "16:9", "supported_archetypes": ["image_left_text_right"]},
+        "deck": {"aspect_ratio": "16:9", "supported_layout_ids": ["text_with_image"]},
         "archetypes": [
             {
-                "id": "image_left_text_right",
+                "id": "text_with_image",
                 "layout": layout_name,
                 "slots": [
                     {"name": "title", "type": "text", "required": True, "box": {"units": "relative", "x": 0.05, "y": 0.05, "w": 0.9, "h": 0.12}},
@@ -55,7 +55,7 @@ def test_render_box_based_image_left_text_right(tmp_path: Path):
     deck_spec = {
         "slides": [
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "Hello",
                 "body": "World",
                 "image": {"path": str(img_path)},

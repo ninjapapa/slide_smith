@@ -11,7 +11,7 @@ def test_render_deck_errors_when_requested_layout_and_fallback_are_both_unavaila
     deck_spec = {
         "title": "Demo",
         "slides": [
-            {"archetype": "two_col", "title": "Two", "col1_body": "L", "col2_body": "R"},
+            {"layout_id": "two_col", "title": "Two", "col1_body": "L", "col2_body": "R"},
         ],
     }
 

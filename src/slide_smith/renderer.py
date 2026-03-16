@@ -5,7 +5,7 @@ from typing import Any
 
 from pptx import Presentation
 
-from slide_smith.deck_spec import ARCHETYPE_ALIASES, normalize_deck_spec
+from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.render_core import (
     _render_image_left_text_right,
     _render_section,
@@ -89,35 +89,15 @@ def render_deck(
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
 
-    deck_meta = template_spec.get("deck") or {}
-    native_pref = deck_meta.get("native_preferred") or {}
-
     def resolve_template_layout_id(slide_layout_id: str) -> str:
-        if isinstance(native_pref, dict):
-            preferred = native_pref.get(slide_layout_id)
-            if isinstance(preferred, str) and preferred in archetypes:
-                return preferred
-
-        if slide_layout_id in archetypes:
-            return slide_layout_id
-
-        for legacy_id, preferred_id in ARCHETYPE_ALIASES.items():
-            if slide_layout_id == preferred_id and legacy_id in archetypes:
-                return legacy_id
-
         return slide_layout_id
 
     def render_one(slide_spec: dict[str, Any]) -> None:
-        layout_id = slide_spec["archetype"]
+        layout_id = slide_spec["layout_id"]
         template_layout_id = resolve_template_layout_id(layout_id)
         if template_layout_id not in archetypes:
             raise RenderingError(
                 f"Layout '{layout_id}' not supported by template '{template_id}'"
-                + (
-                    " (native_preferred mapping pointed to missing layout)"
-                    if template_layout_id != layout_id
-                    else ""
-                )
             )
         archetype_spec = archetypes[template_layout_id]
         slide = prs.slides.add_slide(_layout_for_archetype(prs, archetype_spec))
@@ -128,7 +108,7 @@ def render_deck(
             _render_section(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "title_and_bullets":
             _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif layout_id in {"image_left_text_right", "text_with_image"}:
+        elif layout_id == "text_with_image":
             _render_image_left_text_right(slide, slide_spec, source_dir, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id == "title_subtitle_and_bullets":
             _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, layout_id, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
@@ -180,7 +160,7 @@ def render_deck(
             except Exception:
                 pass
 
-            requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or "unknown")
+            requested_layout_id = str(slide_spec.get("layout_id") or "unknown")
             if requested_layout_id == FALLBACK_LAYOUT_ID:
                 raise
             _record_render_warning(deck_spec, slide_index=i, requested_layout_id=requested_layout_id, reason=str(exc))

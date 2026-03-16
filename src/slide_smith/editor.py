@@ -56,8 +56,8 @@ def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_pa
     slide_spec, _warnings = normalize_deck_spec({"slides": [raw_slide_spec]})
     slide_spec = dict((slide_spec.get("slides") or [raw_slide_spec])[0])
 
-    requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or layout_id)
-    effective_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or requested_layout_id)
+    requested_layout_id = str(slide_spec.get("layout_id") or layout_id)
+    effective_layout_id = requested_layout_id
     base_dir = Path(input_path).resolve().parent
 
     def render_slide_for(layout_id_value: str, spec: dict[str, Any]) -> None:
@@ -74,7 +74,7 @@ def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_pa
             _render_section(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         elif layout_id_value in {"title_and_bullets", "title_subtitle_and_bullets"}:
             _render_title_and_bullets(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif layout_id_value in {"image_left_text_right", "text_with_image"}:
+        elif layout_id_value == "text_with_image":
             _render_image_left_text_right(slide, spec, base_dir, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
             raise EditError(f"Layout '{layout_id_value}' is not implemented")

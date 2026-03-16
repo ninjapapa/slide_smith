@@ -26,7 +26,7 @@ def test_collect_assets_copies_and_rewrites(tmp_path: Path) -> None:
     deck = {
         "title": "T",
         "slides": [
-            {"archetype": "image_left_text_right", "title": "X", "image": "imgs/demo.png", "body": "b"}
+            {"layout_id": "text_with_image", "title": "X", "image": "imgs/demo.png", "body": "b"}
         ],
     }
 
@@ -38,6 +38,6 @@ def test_collect_assets_copies_and_rewrites(tmp_path: Path) -> None:
 
 
 def test_collect_assets_missing_raises(tmp_path: Path) -> None:
-    deck = {"slides": [{"archetype": "image_left_text_right", "image": "nope.png"}]}
+    deck = {"slides": [{"layout_id": "text_with_image", "image": "nope.png"}]}
     with pytest.raises(AssetError):
         collect_assets(deck, base_dir=tmp_path, assets_dir=tmp_path / "assets")

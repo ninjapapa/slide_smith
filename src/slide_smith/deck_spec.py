@@ -7,7 +7,6 @@ from typing import Any
 
 # NOTE: This list should track what the renderer supports.
 SUPPORTED_LAYOUT_IDS = {
-    # current stable surface
     "title",
     "section",
     "title_and_bullets",
@@ -18,50 +17,23 @@ SUPPORTED_LAYOUT_IDS = {
     "two_col",
     "three_col_with_icons",
     "picture_compare",
-    # legacy alias kept for migration
-    "image_left_text_right",
 }
 
 
-# Backward-compatible archetype aliases. This enables additive evolution of
-# archetype names without breaking existing deck specs.
-ARCHETYPE_ALIASES: dict[str, str] = {
-    # prefer semantic naming vs geometry-bound naming
-    "image_left_text_right": "text_with_image",
-    # legacy v1 naming
-    "title_and_bullets_with_subtitle": "title_subtitle_and_bullets",
-}
-
-def _normalized_slide_kind(slide: dict[str, Any]) -> tuple[str | None, str | None]:
-    """Return (internal_archetype, external_layout_id) for a slide.
-
-    During the v3 transition we accept either:
-    - layout_id (preferred external term)
-    - archetype (legacy/existing term)
-    """
-
+def _slide_layout_id(slide: dict[str, Any]) -> str | None:
     layout_id = slide.get("layout_id")
     if isinstance(layout_id, str) and layout_id:
-        return layout_id, layout_id
-
-    archetype = slide.get("archetype")
-    if isinstance(archetype, str) and archetype:
-        return archetype, archetype
-
-    return None, None
+        return layout_id
+    return None
 
 
 def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """Normalize a deck spec in a backwards-compatible way.
+    """Normalize a deck spec.
 
     Returns: (normalized_spec, warnings)
 
-    This currently:
-    - accepts `layout_id` as the preferred external slide kind field
-    - maps legacy layout aliases to their modern equivalents
-
-    NOTE: This function is intentionally conservative: it avoids mutating other
-    fields so callers can reason about what changed.
+    The current product surface is `layout_id`-native. This function is now
+    intentionally minimal and does not preserve legacy input compatibility.
     """
 
     if not isinstance(spec, dict):
@@ -71,36 +43,17 @@ def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]
     if not isinstance(slides, list):
         return spec, []
 
-    warnings: list[str] = []
     out = dict(spec)
     out_slides: list[Any] = []
 
-    for i, slide in enumerate(slides):
+    for slide in slides:
         if not isinstance(slide, dict):
             out_slides.append(slide)
             continue
-
-        archetype, layout_id = _normalized_slide_kind(slide)
-        slide2 = dict(slide)
-
-        if isinstance(slide.get("layout_id"), str):
-            # Keep the preferred external term in normalized output for user-facing flows,
-            # but synthesize the internal `archetype` field for current renderer/editor code.
-            slide2["archetype"] = archetype
-        elif isinstance(layout_id, str):
-            slide2.setdefault("layout_id", layout_id)
-
-        if isinstance(archetype, str) and archetype in ARCHETYPE_ALIASES:
-            new_id = ARCHETYPE_ALIASES[archetype]
-            field = "layout_id" if isinstance(slide.get("layout_id"), str) else "archetype"
-            warnings.append(f"$.slides[{i}].{field}: '{archetype}' is deprecated; use '{new_id}'")
-            slide2["archetype"] = new_id
-            slide2["layout_id"] = new_id
-
-        out_slides.append(slide2)
+        out_slides.append(dict(slide))
 
     out["slides"] = out_slides
-    return out, warnings
+    return out, []
 
 
 def load_deck_spec(path: str) -> dict[str, Any]:
@@ -114,14 +67,10 @@ def _path(*parts: str) -> str:
 
 
 
-def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list[str]:
+def validate_deck_spec(spec: dict[str, Any], *, profile: str = "current") -> list[str]:
     """Lightweight validation with human-friendly error paths.
 
     This intentionally does not depend on jsonschema.
-
-    Profiles:
-    - legacy: current stable renderer support plus migration aliases
-
     The goal is to keep validation aligned with the current supported product surface.
     """
 
@@ -133,22 +82,17 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
 
     allowed = set(SUPPORTED_LAYOUT_IDS)
 
-    allowed |= {
-        # allow legacy aliases so validation doesn't fail before normalization
-        "title_and_bullets_with_subtitle",
-    }
-
     for idx, slide in enumerate(slides):
         sp = f"slides[{idx}]"
         if not isinstance(slide, dict):
             errors.append(f"{_path(sp)}: must be an object")
             continue
 
-        archetype, _layout_id = _normalized_slide_kind(slide)
-        if not isinstance(archetype, str):
-            errors.append(f"{_path(sp, 'layout_id')}: must be a string")
+        layout_id = _slide_layout_id(slide)
+        if not isinstance(layout_id, str):
+            errors.append(f"{_path(sp, 'layout_id')}: required non-empty string")
             continue
-        if archetype not in allowed:
+        if layout_id not in allowed:
             errors.append(f"{_path(sp, 'layout_id')}: must be one of: {', '.join(sorted(allowed))}")
             continue
 
@@ -160,11 +104,10 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             if not isinstance(slide.get(field), str) or not slide.get(field):
                 errors.append(f"{_path(sp, field)}: required non-empty string")
 
-        if archetype in {
+        if layout_id in {
             "title",
             "section",
             "title_and_bullets",
-            "image_left_text_right",
             "text_with_image",
             "title_subtitle_and_bullets",
             "version_page",
@@ -175,17 +118,17 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
         }:
             req_str("title")
 
-        if archetype == "title":
+        if layout_id == "title":
             if "subtitle" in slide and slide.get("subtitle") is not None and not isinstance(slide.get("subtitle"), str):
                 errors.append(f"{_path(sp, 'subtitle')}: must be a string")
 
-        elif archetype == "section":
+        elif layout_id == "section":
             # Accept subtitle/body as optional strings.
             for f in ("subtitle", "body"):
                 if f in slide and slide.get(f) is not None and not isinstance(slide.get(f), str):
                     errors.append(f"{_path(sp, f)}: must be a string")
 
-        elif archetype == "title_and_bullets":
+        elif layout_id == "title_and_bullets":
             bullets = slide.get("bullets")
             body = slide.get("body")
             if bullets is None and body is None:
@@ -200,7 +143,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             if body is not None and not isinstance(body, str):
                 errors.append(f"{_path(sp, 'body')}: must be a string")
 
-        elif archetype in {"image_left_text_right", "text_with_image"}:
+        elif layout_id == "text_with_image":
             req_str("body")
             image = slide.get("image")
             if isinstance(image, str):
@@ -216,7 +159,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             else:
                 errors.append(f"{_path(sp, 'image')}: must be a string or an object")
 
-        elif archetype == "title_subtitle_and_bullets":
+        elif layout_id == "title_subtitle_and_bullets":
             req_str("subtitle")
             bullets = slide.get("bullets")
             body = slide.get("body")
@@ -232,17 +175,17 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             if body is not None and not isinstance(body, str):
                 errors.append(f"{_path(sp, 'body')}: must be a string")
 
-        elif archetype == "two_col":
+        elif layout_id == "two_col":
             for i in (1, 2):
                 f = f"col{i}_body"
                 if not isinstance(slide.get(f), str) or not slide.get(f):
                     errors.append(f"{_path(sp, f)}: required non-empty string")
 
-        elif archetype == "version_page":
+        elif layout_id == "version_page":
             if not isinstance(slide.get("table_text"), str) or not slide.get("table_text"):
                 errors.append(f"{_path(sp, 'table_text')}: required non-empty string")
 
-        elif archetype == "agenda_with_image":
+        elif layout_id == "agenda_with_image":
             image = slide.get("image")
             if isinstance(image, str):
                 if not image:
@@ -268,7 +211,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
                     if marker is not None and not isinstance(marker, str):
                         errors.append(f"{_path(sp, f'items[{j}].marker')}: must be a string")
 
-        elif archetype == "three_col_with_icons":
+        elif layout_id == "three_col_with_icons":
             items = slide.get("items")
             if not isinstance(items, list) or len(items) != 3:
                 errors.append(f"{_path(sp, 'items')}: must be an array of exactly 3 objects")
@@ -283,7 +226,7 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
                     if "caption" in it and it.get("caption") is not None and not isinstance(it.get("caption"), str):
                         errors.append(f"{_path(sp, f'items[{j}].caption')}: must be a string")
 
-        elif archetype == "picture_compare":
+        elif layout_id == "picture_compare":
             for side_name in ("left", "right"):
                 side = slide.get(side_name)
                 if not isinstance(side, dict):

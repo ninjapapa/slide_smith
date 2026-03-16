@@ -23,10 +23,10 @@ def test_render_deck_writes_pptx(tmp_path: Path) -> None:
     deck_spec = {
         "title": "Demo",
         "slides": [
-            {"archetype": "title", "title": "Demo", "subtitle": "Sub", "notes": "intro notes"},
-            {"archetype": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"], "notes": "bullet notes"},
+            {"layout_id": "title", "title": "Demo", "subtitle": "Sub", "notes": "intro notes"},
+            {"layout_id": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"], "notes": "bullet notes"},
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "Product",
                 "body": "Body text",
                 "image": "demo.png",

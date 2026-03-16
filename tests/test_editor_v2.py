@@ -22,9 +22,9 @@ def _make_deck(tmp_path: Path) -> Path:
 
     deck = {
         "slides": [
-            {"archetype": "title", "title": "T", "subtitle": "S"},
+            {"layout_id": "title", "title": "T", "subtitle": "S"},
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "I",
                 "body": "B",
                 "image": {"path": "demo.png", "alt": "a"},

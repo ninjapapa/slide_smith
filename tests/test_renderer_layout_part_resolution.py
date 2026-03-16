@@ -56,7 +56,7 @@ def test_renderer_can_resolve_layout_by_part_when_name_is_wrong(tmp_path: Path) 
         ],
     }
 
-    deck_spec = {"slides": [{"archetype": "title", "title": "Hello"}]}
+    deck_spec = {"slides": [{"layout_id": "title", "title": "Hello"}]}
 
     # Place template package on disk
     templates_root = tmp_path / "templates"

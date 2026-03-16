@@ -7,7 +7,7 @@ def test_validate_deck_spec_accepts_image_object() -> None:
     spec = {
         "slides": [
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "T",
                 "body": "B",
                 "image": {"path": "a.png", "alt": "alt"},
@@ -23,7 +23,7 @@ def test_validate_deck_spec_rejects_bad_image_object() -> None:
     spec = {
         "slides": [
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "T",
                 "body": "B",
                 "image": {"alt": 123},

@@ -29,7 +29,7 @@ def test_create_with_assets_dir_copies_images(tmp_path: Path) -> None:
             {
                 "slides": [
                     {
-                        "archetype": "image_left_text_right",
+                        "layout_id": "text_with_image",
                         "title": "T",
                         "body": "B",
                         "image": {"path": "assets/demo.png", "alt": "x"},

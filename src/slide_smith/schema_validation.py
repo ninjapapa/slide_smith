@@ -37,9 +37,9 @@ def _schema_path() -> Path:
 def _schema_runtime_spec(spec: dict[str, Any]) -> dict[str, Any]:
     """Project internal normalized specs onto the public runtime schema shape.
 
-    The runtime schema is now `layout_id`-first. Internal normalized objects may still
-    carry helper fields like `archetype`; strip those before schema validation so the
-    validator checks the public contract rather than internal implementation details.
+    The runtime schema is `layout_id`-first.
+    Strip internal-only helper fields before schema validation so the validator checks
+    the public contract rather than implementation details.
     """
 
     if not isinstance(spec, dict):

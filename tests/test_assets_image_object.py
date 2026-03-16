@@ -18,7 +18,7 @@ def test_collect_assets_image_object_preserves_alt(tmp_path: Path) -> None:
         "title": "T",
         "slides": [
             {
-                "archetype": "image_left_text_right",
+                "layout_id": "text_with_image",
                 "title": "X",
                 "image": {"path": "imgs/demo.png", "alt": "alt text"},
                 "body": "b",
