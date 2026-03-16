@@ -123,25 +123,33 @@ When an archetype receives more items than a layout supports:
 
 Even when deck specs use structured fields (`items[]`, `left/right`), the renderer ultimately targets **template slots**.
 
-Conventions (proposed):
+### Conventions table (authoritative)
 
-- `agenda_with_image`
-  - `image`
-  - `item{n}_marker` (optional)
-  - `item{n}_body` (required)
-  - If these slots are absent, renderer falls back to `bullets`/`body`.
+| Archetype | Slot(s) | Required? | Notes |
+|---|---|---:|---|
+| `agenda_with_image` | `title` | yes | base slot |
+|  | `image` | yes | |
+|  | `bullets` | no | fallback mode (single placeholder/box) |
+|  | `item{n}_body` | preferred | preferred mode; enables per-item placeholders |
+|  | `item{n}_marker` | no | optional; if missing renderer auto-numbers |
+| `three_col_with_icons` | `title` | yes | |
+|  | `col1_icon`, `col1_title`, `col1_body` | yes | caption optional |
+|  | `col2_icon`, `col2_title`, `col2_body` | yes | caption optional |
+|  | `col3_icon`, `col3_title`, `col3_body` | yes | caption optional |
+|  | `col{n}_caption` | no | |
+| `five_col_with_icons` | `title` | yes | |
+|  | `item1_body`…`item5_body` | yes | icons optional depending on template |
+|  | `item1_icon`…`item5_icon` | no | |
+| `picture_compare` | `title` | yes | |
+|  | `left_image`, `right_image` | yes | |
+|  | `left_title`, `left_body` | no | optional text |
+|  | `right_title`, `right_body` | no | optional text |
 
-- `three_col_with_icons`
-  - `col1_icon`, `col1_title`, `col1_body`, `col1_caption?`
-  - `col2_icon`, `col2_title`, `col2_body`, `col2_caption?`
-  - `col3_icon`, `col3_title`, `col3_body`, `col3_caption?`
+### Notes
 
-- `five_col_with_icons`
-  - `item1_icon`, `item1_body` … `item5_icon`, `item5_body`
-
-- `picture_compare`
-  - `left_image`, `left_title?`, `left_body?`
-  - `right_image`, `right_title?`, `right_body?`
+- For `agenda_with_image`, if the template does not define `item1_body` and does define `bullets`, the renderer will fall back to rendering `items[]` as bullet lines into `bullets`/`body`.
+- The mapper should generate these slot names consistently for template-native layouts.
+- The validator should reference this table when reporting missing slots.
 
 ---
 
