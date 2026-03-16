@@ -84,6 +84,19 @@ def handle_create(
     except RenderingError as exc:
         return 1, f"Rendering failed: {exc}"
 
+    out: dict[str, object] = {"output": rendered_path}
+    warnings: list[object] = []
+    if normalize_warnings:
+        warnings.extend(normalize_warnings)
+    render_warnings = spec.get("render_warnings")
+    if isinstance(render_warnings, list) and render_warnings:
+        warnings.extend(render_warnings)
+    if warnings:
+        out["warnings"] = warnings
+
     if print_mode == "none":
-        return 0, json.dumps({"output": rendered_path}, indent=2)
-    return 0, json.dumps({"template": template, "output": rendered_path, "deck": spec}, indent=2)
+        return 0, json.dumps(out, indent=2)
+
+    out["template"] = template
+    out["deck"] = spec
+    return 0, json.dumps(out, indent=2)

@@ -35,6 +35,38 @@ def _schema_path() -> Path:
     return Path(__file__).resolve().parents[2] / "docs" / "design" / "deck-spec.schema.json"
 
 
+def _schema_runtime_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    """Adapt user-facing deck specs to the current schema runtime shape.
+
+    The published v3-facing docs prefer `layout_id`, while the current schema is still
+    keyed on `archetype`. Until the schema is fully migrated, validate a compatibility
+    shape here.
+    """
+
+    if not isinstance(spec, dict):
+        return spec
+
+    out = dict(spec)
+    slides = out.get("slides")
+    if not isinstance(slides, list):
+        return out
+
+    out_slides: list[Any] = []
+    for slide in slides:
+        if not isinstance(slide, dict):
+            out_slides.append(slide)
+            continue
+        s2 = dict(slide)
+        if "archetype" not in s2 and isinstance(s2.get("layout_id"), str):
+            s2["archetype"] = s2["layout_id"]
+        # current schema doesn't yet permit layout_id as an additional property
+        s2.pop("layout_id", None)
+        out_slides.append(s2)
+
+    out["slides"] = out_slides
+    return out
+
+
 def validate_against_schema(spec: dict[str, Any]) -> SchemaValidationResult:
     """Validate deck spec against the published JSON schema.
 
@@ -47,9 +79,10 @@ def validate_against_schema(spec: dict[str, Any]) -> SchemaValidationResult:
 
     schema = json.loads(_schema_path().read_text())
     validator = Draft202012Validator(schema)
+    runtime_spec = _schema_runtime_spec(spec)
 
     errs: list[str] = []
-    for e in sorted(validator.iter_errors(spec), key=lambda x: list(x.path)):
+    for e in sorted(validator.iter_errors(runtime_spec), key=lambda x: list(x.path)):
         # e.path is a deque of keys/indices
         path = "$"
         for part in e.path:

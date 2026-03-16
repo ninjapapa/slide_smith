@@ -10,8 +10,8 @@ These are the current sample deck specs for the redesigned/base+extended archety
 ## Validate
 
 ```bash
-slide-smith validate-deck-spec --input docs/examples/redesign/base.sample.json --profile legacy
-slide-smith validate-deck-spec --input docs/examples/redesign/extended.sample.json --profile legacy
+slide-smith validate --input docs/examples/redesign/base.sample.json --template default
+slide-smith validate --input docs/examples/redesign/extended.sample.json --template default
 ```
 
 ## Render
@@ -35,5 +35,5 @@ slide-smith create \
 ## Notes
 
 - `text_with_image` expects an image path or image object.
-- Extended item-based archetypes require template slot names that follow the current conventions table in `docs/archetypes.md`.
+- Extended item-based layouts require template slot names that follow the current conventions table in `docs/layout-ids.md`.
 - These examples replace the older `docs/design/examples/*` samples as the current reference set.

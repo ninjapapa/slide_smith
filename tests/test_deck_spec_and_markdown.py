@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_validate_deck_spec_accepts_sample_json() -> None:
-    sample = ROOT / "docs" / "design" / "examples" / "deck-spec.sample.json"
+    sample = ROOT / "docs" / "examples" / "redesign" / "base.sample.json"
     import json
 
     spec = json.loads(sample.read_text())

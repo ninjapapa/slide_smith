@@ -5,11 +5,10 @@ import json
 from pathlib import Path
 
 
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="slide-smith",
-        description="Agent-first PowerPoint creation tool.",
+        description="Deterministic PowerPoint creation and editing tool.",
     )
     parser.add_argument(
         "--version",
@@ -40,274 +39,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Control stdout output: 'normalized' prints normalized deck JSON; 'none' prints only output path JSON.",
     )
 
-    inspect_template = subparsers.add_parser(
-        "inspect-template", help="Inspect a template package."
-    )
-    inspect_template.add_argument("--template", required=True, help="Template id to inspect.")
-    inspect_template.add_argument(
-        "--templates-dir",
-        default=None,
-        help="Optional root directory containing template packages (defaults to repo-local templates/).",
-    )
-
-    add_slide = subparsers.add_parser("add-slide", help="Add a slide to an existing deck.")
-    add_slide.add_argument("--deck", required=True, help="Path to target deck.")
-    add_slide.add_argument("--after", type=int, required=True, help="Insert after slide index.")
-    add_slide.add_argument("--type", required=True, help="Archetype to add.")
-    add_slide.add_argument("--input", required=True, help="Path to slide input JSON.")
+    insert_slide = subparsers.add_parser("insert-slide", help="Insert a slide into an existing deck.")
+    insert_slide.add_argument("--deck", required=True, help="Path to target deck.")
+    insert_slide.add_argument("--after", type=int, required=True, help="Insert after slide index.")
+    insert_slide.add_argument("--layout-id", required=True, help="Requested layout_id for the new slide.")
+    insert_slide.add_argument("--input", required=True, help="Path to slide input JSON.")
 
     update_slide = subparsers.add_parser("update-slide", help="Update a slide in an existing deck.")
     update_slide.add_argument("--deck", required=True, help="Path to target deck.")
     update_slide.add_argument("--index", type=int, required=True, help="Slide index to update.")
     update_slide.add_argument("--input", required=True, help="Path to patch JSON.")
 
-    list_slides = subparsers.add_parser("list-slides", help="List slides in an existing deck.")
-    list_slides.add_argument("--deck", required=True, help="Path to target deck.")
-
     delete_slide = subparsers.add_parser("delete-slide", help="Delete a slide in an existing deck.")
     delete_slide.add_argument("--deck", required=True, help="Path to target deck.")
     delete_slide.add_argument("--index", type=int, required=True, help="Slide index to delete.")
 
-    validate_template_cmd = subparsers.add_parser(
-        "validate-template", help="Validate that a template package matches its PPTX (layouts/placeholders)."
+    validate = subparsers.add_parser(
+        "validate",
+        help="Validate whether a template can render a deck spec, slide by slide.",
     )
-
-    validate_deck = subparsers.add_parser(
-        "validate-deck-spec",
-        help="Validate a deck spec (.json or .md). Supports profiles for legacy vs v2 families.",
-    )
-    validate_deck.add_argument("--input", required=True, help="Path to deck spec (.json or .md)")
-    validate_deck.add_argument(
-        "--profile",
-        default="legacy",
-        choices=["legacy", "core_v2"],
-        help="Validation profile: legacy (default) or core_v2 (enables v2 families)",
-    )
-    validate_template_cmd.add_argument("--template", required=True, help="Template id to validate.")
-    validate_template_cmd.add_argument(
+    validate.add_argument("--input", required=True, help="Path to deck spec (.json or .md)")
+    validate.add_argument("--template", required=True, help="Template id to validate against.")
+    validate.add_argument(
         "--templates-dir",
         default=None,
         help="Optional root directory containing template packages (defaults to repo-local templates/).",
-    )
-    validate_template_cmd.add_argument(
-        "--profile",
-        choices=["structural", "standard", "extended"],
-        default="structural",
-        help="Validation profile: 'structural' checks layouts/placeholders; 'standard' checks core archetypes; 'extended' checks extended archetype library compatibility.",
-    )
-
-    map_template = subparsers.add_parser(
-        "map-template",
-        help="Add best-effort standard archetype mappings to a bootstrapped template.json (reviewable).",
-    )
-    map_template.add_argument("--template", required=True, help="Template id to map.")
-    map_template.add_argument(
-        "--templates-dir",
-        default=None,
-        help="Optional root directory containing template packages (defaults to repo-local templates/).",
-    )
-    map_template.add_argument(
-        "--write",
-        action="store_true",
-        help="Write changes back to template.json (otherwise prints the updated spec JSON).",
-    )
-    map_template.add_argument(
-        "--interactive",
-        action="store_true",
-        help="Interactively confirm/override inferred mappings (layout + placeholder_idx per slot).",
-    )
-    map_template.add_argument(
-        "--print",
-        dest="map_print_mode",
-        choices=["spec", "patch", "help-request"],
-        default="spec",
-        help="Output mode when not using --write: 'spec' prints full updated template.json; 'patch' prints only standard archetype additions; 'help-request' prints a structured request for caller-agent hints.",
-    )
-    map_template.add_argument(
-        "--hints",
-        default=None,
-        help="Optional JSON file containing caller-agent mapping hints (v1.1).",
-    )
-
-    bootstrap = subparsers.add_parser(
-        "bootstrap-template",
-        help="Bootstrap a template package (template.pptx + starter template.json) from an example PPTX.",
-    )
-    bootstrap.add_argument("--pptx", required=True, help="Path to example .pptx to bootstrap from.")
-    bootstrap.add_argument("--template-id", required=True, help="Template id for the new template package.")
-    bootstrap.add_argument("--out-dir", required=True, help="Directory to write the new template package into.")
-    bootstrap.add_argument(
-        "--include-layout",
-        action="append",
-        default=[],
-        help="Include only layouts with this exact name (repeatable). If omitted, all layouts are included.",
-    )
-    bootstrap.add_argument(
-        "--exclude-layout",
-        action="append",
-        default=[],
-        help="Exclude layouts with this exact name (repeatable).",
-    )
-    bootstrap.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite the output template folder if it already exists.",
-    )
-    bootstrap.add_argument(
-        "--print",
-        dest="print_mode",
-        choices=["report", "json", "none"],
-        default="report",
-        help="Output mode: report (human), json (machine), or none.",
-    )
-
-    bootstrap_from_slide = subparsers.add_parser(
-        "bootstrap-from-slide",
-        help="Bootstrap a template package + archetype from a specific slide instance (placeholder-first, box fallback).",
-    )
-    bootstrap_from_slide.add_argument("--pptx", required=True, help="Path to example .pptx.")
-    bootstrap_from_slide.add_argument("--slide", type=int, required=True, help="1-indexed slide number to bootstrap from.")
-    bootstrap_from_slide.add_argument("--template-id", required=True, help="Template id for the new template package.")
-    bootstrap_from_slide.add_argument("--out-dir", required=True, help="Directory to write the new template package into.")
-    bootstrap_from_slide.add_argument("--archetype", required=True, help="Archetype id to bootstrap (e.g. image_left_text_right).")
-    bootstrap_from_slide.add_argument(
-        "--boxes-only",
-        action="store_true",
-        help="Force box-based slot mappings even if placeholders are available (debug/compat).",
-    )
-    bootstrap_from_slide.add_argument("--write", action="store_true", help="Write template package to disk (otherwise prints template.json).")
-
-    export_previews = subparsers.add_parser(
-        "export-previews",
-        help="Export layout preview artifacts for caller-agent assistance (manifest now; images best-effort).",
-    )
-    export_previews.add_argument("--template", required=True, help="Template id to export previews for.")
-    export_previews.add_argument(
-        "--templates-dir",
-        default=None,
-        help="Optional root directory containing template packages (defaults to repo-local templates/).",
-    )
-    export_previews.add_argument("--out-dir", required=True, help="Output directory for previews + manifest.")
-    export_previews.add_argument(
-        "--mode",
-        choices=["layouts"],
-        default="layouts",
-        help="Export mode (v1.1 supports layouts).",
-    )
-
-    analyze = subparsers.add_parser(
-        "analyze",
-        help="Analyze a reference PPTX and emit a StyleProfile JSON artifact (v1.2 exemplar-first).",
-    )
-    analyze.add_argument("--reference", required=True, help="Path to reference .pptx/.potx")
-    analyze.add_argument("--out", required=True, help="Output path for style.profile.json")
-    analyze.add_argument(
-        "--mode",
-        choices=["pptx", "raw"],
-        default="pptx",
-        help="Layout extraction mode: pptx (python-pptx) or raw (OpenXML slideLayout parts).",
-    )
-
-    plan = subparsers.add_parser(
-        "plan",
-        help="Convert Markdown into a SlidePlan JSON artifact (v1.2 exemplar-first; deterministic).",
-    )
-    plan.add_argument("--input", required=True, help="Path to markdown input")
-    plan.add_argument("--out", required=True, help="Output path for slide.plan.json")
-
-    compile_exemplar = subparsers.add_parser(
-        "compile-exemplar",
-        help="Compile SlidePlan + StyleProfile into an exemplar-first DeckSpec JSON (v1.2).",
-    )
-    compile_exemplar.add_argument("--plan", required=True, help="Path to slide.plan.json")
-    compile_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
-    compile_exemplar.add_argument("--out", required=True, help="Output path for deck.spec.json")
-
-    render_exemplar = subparsers.add_parser(
-        "render-exemplar",
-        help="Render an exemplar-first DeckSpec using the reference PPTX's layouts (v1.2).",
-    )
-    render_exemplar.add_argument("--reference", required=True, help="Path to reference .pptx")
-    render_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
-    render_exemplar.add_argument("--deck-spec", required=True, help="Path to deck.spec.json")
-    render_exemplar.add_argument("--out", required=True, help="Output .pptx path")
-    render_exemplar.add_argument(
-        "--assets-base-dir",
-        default=None,
-        help="Base directory to resolve relative asset paths (images) from deck spec.",
-    )
-
-    validate_exemplar = subparsers.add_parser(
-        "validate-exemplar",
-        help="Validate an output PPTX against a reference deck StyleProfile (v1.2).",
-    )
-    validate_exemplar.add_argument("--reference", required=True, help="Path to reference .pptx")
-    validate_exemplar.add_argument("--pptx", required=True, help="Path to output .pptx")
-    validate_exemplar.add_argument("--style-profile", required=True, help="Path to style.profile.json")
-    validate_exemplar.add_argument(
-        "--out",
-        default=None,
-        help="Optional output path for validation report JSON (default: print report).",
-    )
-
-    inspect_pptx = subparsers.add_parser(
-        "inspect-pptx",
-        help="Inspect an arbitrary PPTX and print layout + placeholder inventory (agent-friendly).",
-    )
-    inspect_pptx.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
-    inspect_pptx.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="json",
-        help="Output format (default: json).",
-    )
-    inspect_pptx.add_argument(
-        "--mode",
-        choices=["pptx", "raw"],
-        default="pptx",
-        help="Layout inventory mode: pptx (python-pptx) or raw (OpenXML slideLayout parts).",
-    )
-
-    convert_potx = subparsers.add_parser(
-        "convert-potx",
-        help="Convert a POTX template to a PPTX (rewrites content types) for tools that reject .potx.",
-    )
-    convert_potx.add_argument("--potx", required=True, help="Path to input .potx")
-    convert_potx.add_argument("--out", required=True, help="Output .pptx path")
-    convert_potx.add_argument("--overwrite", action="store_true", help="Overwrite output if it exists")
-
-    inspect_slide = subparsers.add_parser(
-        "inspect-slide",
-        help="Inspect a specific slide instance (shapes + geometry), not just layouts.",
-    )
-    inspect_slide.add_argument("--pptx", required=True, help="Path to a .pptx file to inspect.")
-    inspect_slide.add_argument(
-        "--slide",
-        type=int,
-        required=True,
-        help="1-indexed slide number to inspect.",
-    )
-    inspect_slide.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="json",
-        help="Output format (default: json).",
-    )
-
-    dummy = subparsers.add_parser(
-        "make-dummy-deck-spec",
-        help="Generate a dummy deck spec JSON that exercises a template's archetypes.",
-    )
-    dummy.add_argument("--template", required=True, help="Template id to generate dummy deck spec for.")
-    dummy.add_argument(
-        "--templates-dir",
-        default=None,
-        help="Optional root directory containing template packages (defaults to repo-local templates/).",
-    )
-    dummy.add_argument(
-        "--output",
-        default="-",
-        help="Output path for JSON deck spec (default: '-' for stdout).",
     )
 
     return parser
@@ -334,13 +90,6 @@ def main() -> int:
         parser.print_help()
         return 0
 
-    if args.command == "inspect-template":
-        from slide_smith.commands.inspect_template import handle_inspect_template
-
-        code, out = handle_inspect_template(template=args.template, templates_dir=getattr(args, "templates_dir", None))
-        print(out)
-        return code
-
     if args.command == "create":
         from slide_smith.commands.create import handle_create
 
@@ -355,10 +104,10 @@ def main() -> int:
         print(out)
         return code
 
-    if args.command == "add-slide":
+    if args.command == "insert-slide":
         from slide_smith.commands.edit_ops import handle_add_slide
 
-        code, out = handle_add_slide(deck=args.deck, after=args.after, archetype=args.type, input_path=args.input)
+        code, out = handle_add_slide(deck=args.deck, after=args.after, archetype=args.layout_id, input_path=args.input)
         print(out)
         return code
 
@@ -369,13 +118,6 @@ def main() -> int:
         print(out)
         return code
 
-    if args.command == "list-slides":
-        from slide_smith.commands.edit_ops import handle_list_slides
-
-        code, out = handle_list_slides(deck=args.deck)
-        print(out)
-        return code
-
     if args.command == "delete-slide":
         from slide_smith.commands.edit_ops import handle_delete_slide
 
@@ -383,199 +125,19 @@ def main() -> int:
         print(out)
         return code
 
-    if args.command == "validate-template":
-        from slide_smith.commands.validate_template import handle_validate_template
+    if args.command == "validate":
+        from slide_smith.commands.validate import handle_validate
 
-        code, out = handle_validate_template(
+        code, out = handle_validate(
+            input_path=args.input,
             template=args.template,
             templates_dir=getattr(args, "templates_dir", None),
-            profile=getattr(args, "profile", "structural"),
         )
         print(out)
         return code
 
-    if args.command == "validate-deck-spec":
-        from slide_smith.commands.validate_deck_spec import handle_validate_deck_spec
-
-        code, out = handle_validate_deck_spec(input_path=args.input, profile=getattr(args, "profile", "legacy"))
-        print(out)
-        return code
-
-    if args.command == "map-template":
-        from slide_smith.commands.map_template import handle_map_template
-
-        code, out = handle_map_template(
-            template=args.template,
-            templates_dir=getattr(args, "templates_dir", None),
-            write=getattr(args, "write", False),
-            interactive=getattr(args, "interactive", False),
-            print_mode=getattr(args, "map_print_mode", "spec"),
-            hints_path=getattr(args, "hints", None),
-        )
-        print(out)
-        return code
-
-    if args.command == "bootstrap-template":
-        from slide_smith.template_bootstrapper import BootstrapError, bootstrap_template
-
-        try:
-            res = bootstrap_template(
-                pptx_path=args.pptx,
-                template_id=args.template_id,
-                out_dir=args.out_dir,
-                include_layouts=getattr(args, "include_layout", None) or [],
-                exclude_layouts=getattr(args, "exclude_layout", None) or [],
-                overwrite=getattr(args, "overwrite", False),
-            )
-        except BootstrapError as exc:
-            print(f"Bootstrap failed: {exc}")
-            return 1
-
-        mode = getattr(args, "print_mode", "report")
-        if mode == "none":
-            return 0
-        if mode == "json":
-            print(
-                json.dumps(
-                    {
-                        "template_dir": res.template_dir,
-                        "template_pptx": res.template_pptx,
-                        "template_json": res.template_json,
-                        "included_layouts": res.included_layouts,
-                        "excluded_layouts": res.excluded_layouts,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-            return 0
-
-        # report
-        print(f"template_dir: {res.template_dir}")
-        print(f"- template.pptx: {res.template_pptx}")
-        print(f"- template.json: {res.template_json}")
-        if res.included_layouts:
-            print("included_layouts:")
-            for n in res.included_layouts:
-                print(f"- {n}")
-        if res.excluded_layouts:
-            print("excluded_layouts:")
-            for n in res.excluded_layouts:
-                print(f"- {n}")
-        return 0
-
-    if args.command == "bootstrap-from-slide":
-        from slide_smith.commands.bootstrap_from_slide import handle_bootstrap_from_slide
-
-        code, out = handle_bootstrap_from_slide(
-            pptx=args.pptx,
-            slide_number=args.slide,
-            template_id=args.template_id,
-            out_dir=args.out_dir,
-            archetype=args.archetype,
-            boxes_only=getattr(args, "boxes_only", False),
-            write=getattr(args, "write", False),
-        )
-        print(out)
-        return code
-
-    if args.command == "export-previews":
-        from slide_smith.commands.export_previews import handle_export_previews
-
-        code, out = handle_export_previews(
-            template=args.template,
-            templates_dir=getattr(args, "templates_dir", None),
-            out_dir=args.out_dir,
-            mode=getattr(args, "mode", "layouts"),
-        )
-        print(out)
-        return code
-
-    if args.command == "analyze":
-        from slide_smith.commands.analyze import handle_analyze
-
-        code, out = handle_analyze(reference=args.reference, out=args.out, mode=getattr(args, "mode", "pptx"))
-        print(out)
-        return code
-
-    if args.command == "plan":
-        from slide_smith.commands.plan import handle_plan
-
-        code, out = handle_plan(input_path=args.input, out=args.out)
-        print(out)
-        return code
-
-    if args.command == "compile-exemplar":
-        from slide_smith.commands.compile_exemplar import handle_compile_exemplar
-
-        code, out = handle_compile_exemplar(plan=args.plan, style_profile=args.style_profile, out=args.out)
-        print(out)
-        return code
-
-    if args.command == "render-exemplar":
-        from slide_smith.commands.render_exemplar import handle_render_exemplar
-
-        code, out = handle_render_exemplar(
-            reference=args.reference,
-            style_profile=args.style_profile,
-            deck_spec=args.deck_spec,
-            out=args.out,
-            assets_base_dir=getattr(args, "assets_base_dir", None),
-        )
-        print(out)
-        return code
-
-    if args.command == "validate-exemplar":
-        from slide_smith.commands.validate_exemplar import handle_validate_exemplar
-
-        code, out = handle_validate_exemplar(
-            reference=args.reference,
-            pptx=args.pptx,
-            style_profile=args.style_profile,
-            out=getattr(args, "out", None),
-        )
-        print(out)
-        return code
-
-    if args.command == "inspect-pptx":
-        from slide_smith.commands.inspect_pptx import handle_inspect_pptx
-
-        code, out = handle_inspect_pptx(
-            pptx=args.pptx,
-            fmt=getattr(args, "format", "json"),
-            mode=getattr(args, "mode", "pptx"),
-        )
-        print(out)
-        return code
-
-    if args.command == "convert-potx":
-        from slide_smith.commands.convert_potx import handle_convert_potx
-
-        code, out = handle_convert_potx(potx=args.potx, out=args.out, overwrite=getattr(args, "overwrite", False))
-        print(out)
-        return code
-
-    if args.command == "inspect-slide":
-        from slide_smith.commands.inspect_slide import handle_inspect_slide
-
-        code, out = handle_inspect_slide(pptx=args.pptx, slide_number=args.slide, fmt=getattr(args, "format", "json"))
-        print(out)
-        return code
-
-    if args.command == "make-dummy-deck-spec":
-        from slide_smith.commands.dummy_deck import handle_make_dummy_deck_spec
-
-        code, payload = handle_make_dummy_deck_spec(template=args.template, templates_dir=getattr(args, "templates_dir", None))
-
-        out_path = getattr(args, "output", "-")
-        if out_path == "-":
-            print(payload, end="")
-        else:
-            Path(out_path).expanduser().resolve().write_text(payload)
-        return code
-
-    print(f"Command '{args.command}' is scaffolded but not implemented yet.")
-    return 0
+    print(f"Command '{args.command}' is not supported.")
+    return 1
 
 
 if __name__ == "__main__":

@@ -93,7 +93,7 @@ Additional archetype-specific fields include things like:
 Use:
 
 ```bash
-slide-smith validate-deck-spec --input <deck.json> --profile legacy
+slide-smith validate --input <deck.json> --template default
 ```
 
 Schema validation is also applied during `slide-smith create` when `jsonschema` is available.
@@ -107,5 +107,5 @@ Current examples live under:
 ## Notes
 
 - Template layout resolution is controlled by `template.json`, not by the deck spec itself.
-- Repeated-item archetypes use canonical slot naming conventions documented in `docs/archetypes.md`.
+- Repeated-item layouts use canonical slot naming conventions documented in `docs/layout-ids.md`.
 - The schema file should be treated as authoritative when there is any ambiguity.

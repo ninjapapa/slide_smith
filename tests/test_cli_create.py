@@ -9,7 +9,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE_JSON = ROOT / "docs" / "design" / "examples" / "deck-spec.sample.json"
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
@@ -38,11 +37,23 @@ def _assert_no_duplicate_zip_members(pptx_path: Path) -> None:
 
 
 def test_cli_create_print_none(tmp_path: Path) -> None:
+    spec_path = tmp_path / "deck.json"
+    spec_path.write_text(
+        json.dumps(
+            {
+                "slides": [
+                    {"layout_id": "title", "title": "Demo", "subtitle": "Sub"},
+                    {"layout_id": "title_and_bullets", "title": "Highlights", "bullets": ["One", "Two"]},
+                ]
+            }
+        )
+    )
+
     out = tmp_path / "out.pptx"
     res = run_cli(
         "create",
         "--input",
-        str(EXAMPLE_JSON),
+        str(spec_path),
         "--template",
         "default",
         "--output",

@@ -1,16 +1,20 @@
 # Slide Smith Docs
 
-This docs folder reflects the current `v2.x` product/documentation surface only.
+This docs folder reflects the current simplified product/documentation surface only.
 
 ## Keepers
 
-### Core docs
-- `design/deck-spec.md` — current deck spec overview
-- `design/deck-spec.schema.json` — current JSON schema
-- `archetypes.md` — user-facing guide to the current archetype set and slot conventions
-- `design/canonical-agentic-coe-2026-simple-template.md` — current canonical branded-template workflow
-- `examples/redesign/README.md` — current sample deck specs for redesigned archetypes
+### User-facing docs
+- `layout-ids.md` — supported `layout_id` values, fields, and examples
+- `README.md` — current docs index and guidance
 - `release.md` — current release checklist
+
+### Reference docs
+- `design/deck-spec.md` — deck spec overview
+- `design/deck-spec.schema.json` — JSON schema
+- `examples/redesign/README.md` — sample deck specs
+- `design/README.md` — note about historical design docs
+- `design/canonical-agentic-coe-2026-simple-template.md` — historical template note
 
 ### Current examples
 - `examples/redesign/base.sample.json`

@@ -5,12 +5,16 @@ from typing import Any
 
 from pptx import Presentation
 
+from slide_smith.deck_spec import ARCHETYPE_ALIASES, normalize_deck_spec
 from slide_smith.styling import apply_text_style, load_styles
 from slide_smith.template_loader import template_dir
 
 
 class RenderingError(Exception):
     """Raised when a deck cannot be rendered."""
+
+
+FALLBACK_LAYOUT_ID = "title_and_bullets"
 
 
 def _presentation_for_template(
@@ -54,6 +58,83 @@ def _layout_by_name(prs: Presentation, name: str):
         if layout.name == name:
             return layout
     raise RenderingError(f"Slide layout '{name}' not found in template presentation")
+
+
+def _fallback_text_lines(slide_spec: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+
+    def add(value: object) -> None:
+        if isinstance(value, str) and value.strip():
+            lines.append(value.strip())
+
+    subtitle = slide_spec.get("subtitle")
+    add(subtitle)
+
+    body = slide_spec.get("body")
+    add(body)
+
+    for i in range(1, 6):
+        add(slide_spec.get(f"col{i}_title"))
+        add(slide_spec.get(f"col{i}_body"))
+        add(slide_spec.get(f"pillar{i}_body"))
+        add(slide_spec.get(f"item{i}_body"))
+
+    bullets = slide_spec.get("bullets")
+    if isinstance(bullets, list):
+        for item in bullets:
+            add(item)
+
+    for key in ("left", "right"):
+        side = slide_spec.get(key)
+        if isinstance(side, dict):
+            add(side.get("title"))
+            add(side.get("body"))
+
+    items = slide_spec.get("items")
+    if isinstance(items, list):
+        for item in items:
+            if isinstance(item, dict):
+                for key in ("marker", "title", "heading", "body", "caption", "label"):
+                    add(item.get(key))
+
+    for key in ("left_image", "right_image"):
+        if key in slide_spec:
+            add(f"[{key}: provided]")
+
+    if not lines:
+        lines.append("Content could not be rendered in the requested layout.")
+
+    return lines
+
+
+def _make_fallback_slide_spec(slide_spec: dict[str, Any], *, requested_layout_id: str, reason: str) -> dict[str, Any]:
+    title = slide_spec.get("title")
+    if not isinstance(title, str) or not title.strip():
+        title = f"Fallback for {requested_layout_id}"
+
+    bullets = _fallback_text_lines(slide_spec)
+    out = dict(slide_spec)
+    out["archetype"] = FALLBACK_LAYOUT_ID
+    out["layout_id"] = FALLBACK_LAYOUT_ID
+    out["title"] = title
+    out["bullets"] = bullets
+    out.pop("image", None)
+    return out
+
+
+def _record_render_warning(deck_spec: dict[str, Any], *, slide_index: int, requested_layout_id: str, reason: str) -> None:
+    warnings = deck_spec.setdefault("render_warnings", [])
+    if not isinstance(warnings, list):
+        return
+    warnings.append(
+        {
+            "slide_index": slide_index,
+            "requested_layout_id": requested_layout_id,
+            "fallback_layout_id": FALLBACK_LAYOUT_ID,
+            "reason": reason,
+            "status": "fallback",
+        }
+    )
 
 
 def _layout_for_archetype(prs: Presentation, archetype_spec: dict[str, Any]):
@@ -925,6 +1006,8 @@ def render_deck(
     base_dir: str | None = None,
     templates_dir: str | None = None,
 ) -> str:
+    original_deck_spec = deck_spec
+    deck_spec, _ = normalize_deck_spec(deck_spec)
     # Default behavior: do NOT preserve existing template slides.
     # This avoids rich templates polluting the output with sample pages.
     preserve = bool(deck_spec.get("preserve_template_slides"))
@@ -952,9 +1035,19 @@ def render_deck(
             preferred = native_pref.get(slide_archetype_id)
             if isinstance(preferred, str) and preferred in archetypes:
                 return preferred
+
+        if slide_archetype_id in archetypes:
+            return slide_archetype_id
+
+        # Compatibility: if the normalized/preferred id is missing, allow templates
+        # that still define the legacy alias id.
+        for legacy_id, preferred_id in ARCHETYPE_ALIASES.items():
+            if slide_archetype_id == preferred_id and legacy_id in archetypes:
+                return legacy_id
+
         return slide_archetype_id
 
-    for slide_spec in deck_spec.get("slides", []):
+    def render_one(slide_spec: dict[str, Any]) -> None:
         archetype = slide_spec["archetype"]
         template_archetype_id = resolve_template_archetype_id(archetype)
         if template_archetype_id not in archetypes:
@@ -1022,6 +1115,34 @@ def render_deck(
             raise RenderingError(f"Archetype '{archetype}' is not implemented")
 
         _set_notes(slide, slide_spec.get("notes"))
+
+    for i, slide_spec in enumerate(deck_spec.get("slides", [])):
+        before_count = len(prs.slides)
+        try:
+            render_one(slide_spec)
+        except RenderingError as exc:
+            # Remove any partially-added slide before fallback so output slide count stays stable.
+            try:
+                from slide_smith.pptx_edit import delete_slide
+
+                while len(prs.slides) > before_count:
+                    delete_slide(prs, len(prs.slides) - 1)
+            except Exception:
+                pass
+
+            requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or "unknown")
+            if requested_layout_id == FALLBACK_LAYOUT_ID:
+                raise
+            _record_render_warning(deck_spec, slide_index=i, requested_layout_id=requested_layout_id, reason=str(exc))
+            fallback_spec = _make_fallback_slide_spec(slide_spec, requested_layout_id=requested_layout_id, reason=str(exc))
+            render_one(fallback_spec)
+
+    if isinstance(original_deck_spec, dict):
+        if isinstance(deck_spec.get("render_warnings"), list):
+            original_deck_spec["render_warnings"] = deck_spec.get("render_warnings")
+        # Preserve normalized slides for callers that pass layout_id-only input.
+        if isinstance(deck_spec.get("slides"), list):
+            original_deck_spec["slides"] = deck_spec.get("slides")
 
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)

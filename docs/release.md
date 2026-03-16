@@ -29,7 +29,7 @@ slide-smith --help
 - Ensure `pyproject.toml` version is updated.
 - Ensure `src/slide_smith/__init__.py` version matches.
 - Ensure docs reflect the current release surface only.
-- Ensure current examples validate and render against supported templates.
+- Ensure current examples validate via `slide-smith validate` and render against supported templates.
 - Ensure the default template remains compatible with current base archetype names.
 
 ## Tagging and GitHub release

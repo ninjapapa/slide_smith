@@ -31,8 +31,12 @@ def test_load_default_template() -> None:
 
 
 
-def test_inspect_template_output() -> None:
-    result = run_cli("inspect-template", "--template", "default")
+def test_cli_help_surfaces_simplified_primary_commands() -> None:
+    result = run_cli("--help")
     assert result.returncode == 0
-    assert "template: default" in result.stdout
-    assert "title_and_bullets" in result.stdout
+    assert "create" in result.stdout
+    assert "validate" in result.stdout
+    assert "insert-slide" in result.stdout
+    assert "update-slide" in result.stdout
+    assert "delete-slide" in result.stdout
+    assert "list-slides" not in result.stdout

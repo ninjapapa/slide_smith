@@ -15,8 +15,8 @@ def handle_add_slide(*, deck: str, after: int, archetype: str, input_path: str) 
     try:
         path = add_slide_to_deck(deck, after, archetype, input_path)
     except EditError as exc:
-        return 1, f"Add-slide failed: {exc}"
-    return 0, json.dumps({"deck": path, "status": "slide added"}, indent=2)
+        return 1, f"Insert-slide failed: {exc}"
+    return 0, json.dumps({"deck": path, "status": "slide inserted"}, indent=2)
 
 
 def handle_update_slide(*, deck: str, index: int, input_path: str) -> tuple[int, str]:

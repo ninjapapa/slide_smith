@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_schema_validation_accepts_sample_fixture() -> None:
-    sample = ROOT / "docs" / "design" / "examples" / "deck-spec.full.sample.json"
+    sample = ROOT / "docs" / "examples" / "redesign" / "base.sample.json"
     spec = json.loads(sample.read_text())
     res = validate_against_schema(spec)
     assert res.ok

@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ninjapapa/slide_smith/actions/workflows/ci.yml/badge.svg)](https://github.com/ninjapapa/slide_smith/actions/workflows/ci.yml)
 
-slide_smith is an **agent-first** Python tool for creating and iteratively editing PowerPoint decks.
+slide_smith is a deterministic Python tool for creating and iteratively editing PowerPoint decks.
 
 **Agent-first mantra**
 - *Designed by human*
@@ -14,9 +14,8 @@ slide_smith is an **agent-first** Python tool for creating and iteratively editi
 > NOTE TO AI AGENTS: Do not edit the “Agent-first mantra” section above.
 
 - Core engine: `python-pptx`
-- Core pipeline (v1.0–v1.1): **JSON Deck Spec → PPTX** (template-first)
-- New pipeline (v1.2): **Markdown + reference.pptx → PPTX** (exemplar-first; deterministic)
-- Template model: `template.pptx` (render truth) + `template.json` (semantic truth)
+- Primary pipeline: **JSON Deck Spec → PPTX**
+- Template model: `template.pptx` (render truth) + `template.json` (mapping truth)
 
 ## Usage (human + agent)
 
@@ -24,32 +23,26 @@ Most “how to use it” instructions live in the canonical skill doc:
 
 - `skills/slide-smith/SKILL.md`
 
-### v1.2 exemplar-first quickstart (reference deck)
+### Current CLI
 
 ```bash
-# 1) reference.pptx -> style.profile.json
-slide-smith analyze --reference ref.pptx --out style.profile.json
+# create a deck
+slide-smith create --input deck.json --template default --output out.pptx
 
-# 2) markdown -> slide.plan.json
-slide-smith plan --input deck.md --out slide.plan.json
+# validate renderability slide-by-slide
+slide-smith validate --input deck.json --template default
 
-# 3) (plan + profile) -> deck.spec.json
-slide-smith compile-exemplar --plan slide.plan.json --style-profile style.profile.json --out deck.spec.json
-
-# 4) (spec + reference) -> out.pptx
-slide-smith render-exemplar --reference ref.pptx --style-profile style.profile.json --deck-spec deck.spec.json --out out.pptx \
-  --assets-base-dir .
-
-# 5) validate out.pptx vs reference/profile
-slide-smith validate-exemplar --reference ref.pptx --pptx out.pptx --style-profile style.profile.json
+# structural edits
+slide-smith insert-slide --deck out.pptx --after 2 --layout-id title_and_bullets --input slide.json
+slide-smith update-slide --deck out.pptx --index 1 --input patch.json
+slide-smith delete-slide --deck out.pptx --index 3
 ```
 
-### Migration note (template-first → exemplar-first)
+### Notes
 
-- If you already have a **template package** (`template.json` + `template.pptx`), keep using `create`.
-- If you have an **example PPTX to mimic**, use the v1.2 exemplar-first pipeline above.
-
-That doc is written to be usable by both humans and calling agents (command examples, recommended workflow, fixtures).
+- The main user-facing model is `layout_id`.
+- When a requested layout cannot be rendered, Slide Smith falls back to `title_and_bullets` and reports a warning.
+- The public CLI surface is intentionally small and focused on create, validate, and structural deck edits.
 
 ## Repo layout
 

@@ -6,9 +6,13 @@ from typing import Any
 
 from pptx import Presentation
 
+from slide_smith.deck_spec import normalize_deck_spec
 from slide_smith.pptx_edit import delete_slide
 from slide_smith.renderer import (
+    FALLBACK_LAYOUT_ID,
     _layout_by_name,
+    _make_fallback_slide_spec,
+    _record_render_warning,
     _render_image_left_text_right,
     _render_section,
     _render_title,
@@ -34,33 +38,66 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
     slide_h_emu = int(prs.slide_height)
     if after_index != len(prs.slides) - 1:
         raise EditError(
-            "Only append-style add-slide is supported right now; use --after with the current last slide index"
+            "Only append-style insert-slide is supported right now; use --after with the current last slide index"
         )
 
     template_spec = load_template_spec(template_id)
     styles = load_styles(template_spec)
     archetypes = {item["id"]: item for item in template_spec.get("archetypes", [])}
-    if archetype not in archetypes:
-        raise EditError(f"Archetype '{archetype}' is not supported by template '{template_id}'")
 
-    slide_spec = _load_json(input_path)
-    slide_spec.setdefault("archetype", archetype)
-    layout_name = archetypes[archetype]["layout"]
-    slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
+    raw_slide_spec = _load_json(input_path)
+    if not isinstance(raw_slide_spec, dict):
+        raise EditError("Slide input must be a JSON object")
+
+    if archetype:
+        raw_slide_spec.setdefault("layout_id", archetype)
+    slide_spec, _warnings = normalize_deck_spec({"slides": [raw_slide_spec]})
+    slide_spec = dict((slide_spec.get("slides") or [raw_slide_spec])[0])
+
+    requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or archetype)
+    effective_archetype = str(slide_spec.get("archetype") or requested_layout_id)
     base_dir = Path(input_path).resolve().parent
 
-    archetype_spec = archetypes[archetype]
+    def render_slide_for(kind: str, spec: dict[str, Any]) -> None:
+        if kind not in archetypes:
+            raise EditError(f"Layout '{kind}' is not supported by template '{template_id}'")
 
-    if archetype == "title":
-        _render_title(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-    elif archetype == "section":
-        _render_section(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-    elif archetype == "title_and_bullets":
-        _render_title_and_bullets(slide, slide_spec, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-    elif archetype == "image_left_text_right":
-        _render_image_left_text_right(slide, slide_spec, base_dir, styles, archetype_spec, archetype, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-    else:
-        raise EditError(f"Archetype '{archetype}' is not implemented")
+        layout_name = archetypes[kind]["layout"]
+        slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
+        archetype_spec = archetypes[kind]
+
+        if kind == "title":
+            _render_title(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif kind == "section":
+            _render_section(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif kind in {"title_and_bullets", "title_subtitle_and_bullets"}:
+            _render_title_and_bullets(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif kind in {"image_left_text_right", "text_with_image"}:
+            _render_image_left_text_right(slide, spec, base_dir, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        else:
+            raise EditError(f"Layout '{kind}' is not implemented")
+
+    before_count = len(prs.slides)
+    try:
+        render_slide_for(effective_archetype, slide_spec)
+    except EditError as exc:
+        try:
+            while len(prs.slides) > before_count:
+                delete_slide(prs, len(prs.slides) - 1)
+        except Exception:
+            pass
+
+        if requested_layout_id == FALLBACK_LAYOUT_ID:
+            raise
+
+        _record_render_warning(
+            raw_slide_spec,
+            slide_index=after_index + 1,
+            requested_layout_id=requested_layout_id,
+            reason=str(exc),
+        )
+        fallback_spec = _make_fallback_slide_spec(slide_spec, requested_layout_id=requested_layout_id, reason=str(exc))
+        render_slide_for(FALLBACK_LAYOUT_ID, fallback_spec)
 
     prs.save(deck_path)
     return deck_path

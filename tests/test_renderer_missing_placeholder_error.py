@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
+from pptx import Presentation
 
-from slide_smith.renderer import RenderingError, render_deck
+from slide_smith.renderer import render_deck
 from slide_smith.template_loader import load_template_spec
 
 
-def test_render_deck_missing_placeholder_idx_is_actionable(tmp_path: Path) -> None:
+def test_render_deck_missing_placeholder_idx_falls_back_with_actionable_warning(tmp_path: Path) -> None:
     deck_spec = {
         "title": "Demo",
         "slides": [
-            {"archetype": "title", "title": "Demo", "subtitle": "Sub"},
+            {"archetype": "title", "layout_id": "title", "title": "Demo", "subtitle": "Sub"},
         ],
     }
 
@@ -25,9 +25,14 @@ def test_render_deck_missing_placeholder_idx_is_actionable(tmp_path: Path) -> No
                 if s.get("name") == "title":
                     s["placeholder_idx"] = 999
 
-    with pytest.raises(RenderingError) as excinfo:
-        render_deck(deck_spec, template_spec, "default", str(tmp_path / "out.pptx"), base_dir=str(tmp_path))
+    render_deck(deck_spec, template_spec, "default", str(tmp_path / "out.pptx"), base_dir=str(tmp_path))
 
-    msg = str(excinfo.value)
+    warnings = deck_spec.get("render_warnings") or []
+    assert warnings
+    msg = str(warnings[0]["reason"])
     assert "idx=999" in msg
     assert "archetype=title" in msg
+
+    prs = Presentation(str(tmp_path / "out.pptx"))
+    assert len(prs.slides) == 1
+    assert prs.slides[0].shapes.title.text == "Demo"

@@ -36,6 +36,29 @@ ARCHETYPE_ALIASES: dict[str, str] = {
     "title_and_bullets_with_subtitle": "title_subtitle_and_bullets",
 }
 
+# External v3-facing term. We keep internal archetype compatibility during migration.
+LAYOUT_ID_TO_ARCHETYPE: dict[str, str] = {}
+
+
+def _normalized_slide_kind(slide: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Return (internal_archetype, external_layout_id) for a slide.
+
+    During the v3 transition we accept either:
+    - layout_id (preferred external term)
+    - archetype (legacy/existing term)
+    """
+
+    layout_id = slide.get("layout_id")
+    if isinstance(layout_id, str) and layout_id:
+        internal = LAYOUT_ID_TO_ARCHETYPE.get(layout_id, layout_id)
+        return internal, layout_id
+
+    archetype = slide.get("archetype")
+    if isinstance(archetype, str) and archetype:
+        return archetype, archetype
+
+    return None, None
+
 
 def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     """Normalize a deck spec in a backwards-compatible way.
@@ -43,6 +66,7 @@ def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]
     Returns: (normalized_spec, warnings)
 
     This currently:
+    - accepts `layout_id` as the preferred external slide kind field
     - maps legacy archetype ids to their modern equivalents
 
     NOTE: This function is intentionally conservative: it avoids mutating other
@@ -65,15 +89,24 @@ def normalize_deck_spec(spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]
             out_slides.append(slide)
             continue
 
-        archetype = slide.get("archetype")
+        archetype, layout_id = _normalized_slide_kind(slide)
+        slide2 = dict(slide)
+
+        if isinstance(slide.get("layout_id"), str):
+            # Keep the preferred external term in normalized output for user-facing flows,
+            # but synthesize the internal `archetype` field for the current renderer/validator.
+            slide2["archetype"] = archetype
+        elif isinstance(layout_id, str):
+            slide2.setdefault("layout_id", layout_id)
+
         if isinstance(archetype, str) and archetype in ARCHETYPE_ALIASES:
             new_id = ARCHETYPE_ALIASES[archetype]
-            warnings.append(f"$.slides[{i}].archetype: '{archetype}' is deprecated; use '{new_id}'")
-            slide2 = dict(slide)
+            field = "layout_id" if isinstance(slide.get("layout_id"), str) else "archetype"
+            warnings.append(f"$.slides[{i}].{field}: '{archetype}' is deprecated; use '{new_id}'")
             slide2["archetype"] = new_id
-            out_slides.append(slide2)
-        else:
-            out_slides.append(slide)
+            slide2["layout_id"] = new_id
+
+        out_slides.append(slide2)
 
     out["slides"] = out_slides
     return out, warnings
@@ -138,12 +171,12 @@ def validate_deck_spec(spec: dict[str, Any], *, profile: str = "legacy") -> list
             errors.append(f"{_path(sp)}: must be an object")
             continue
 
-        archetype = slide.get("archetype")
+        archetype, _layout_id = _normalized_slide_kind(slide)
         if not isinstance(archetype, str):
-            errors.append(f"{_path(sp, 'archetype')}: must be a string")
+            errors.append(f"{_path(sp, 'layout_id')}: must be a string")
             continue
         if archetype not in allowed:
-            errors.append(f"{_path(sp, 'archetype')}: must be one of: {', '.join(sorted(allowed))}")
+            errors.append(f"{_path(sp, 'layout_id')}: must be one of: {', '.join(sorted(allowed))}")
             continue
 
         # Common fields
