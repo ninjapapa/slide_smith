@@ -193,7 +193,7 @@ def handle_validate(*, input_path: str, template: str, templates_dir: str | None
 
     template_layouts = {
         item["id"]: item
-        for item in template_spec.get("archetypes", [])
+        for item in template_spec.get("layouts", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
 

@@ -45,7 +45,7 @@ def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_pa
 
     template_spec = load_template_spec(template_id)
     styles = load_styles(template_spec)
-    layout_specs = {item["id"]: item for item in template_spec.get("archetypes", [])}
+    layout_specs = {item["id"]: item for item in template_spec.get("layouts", [])}
 
     raw_slide_spec = _load_json(input_path)
     if not isinstance(raw_slide_spec, dict):

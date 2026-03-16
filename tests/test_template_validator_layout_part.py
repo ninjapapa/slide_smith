@@ -34,7 +34,7 @@ def test_validate_template_allows_layout_part_match_when_layout_name_wrong(tmp_p
     spec = {
         "version": "1.0",
         "meta": {"template": "t2"},
-        "archetypes": [
+        "layouts": [
             {
                 "id": "a1",
                 "layout": "THIS NAME DOES NOT EXIST",

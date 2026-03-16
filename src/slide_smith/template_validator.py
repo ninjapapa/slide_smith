@@ -260,19 +260,19 @@ def validate_template(
     if profile not in {"structural", "standard", "extended"}:
         raise TemplateValidationError(f"Unknown validation profile: {profile}")
 
-    layout_defs = spec.get("archetypes") or []
+    layout_defs = spec.get("layouts") or []
     if not isinstance(layout_defs, list) or not layout_defs:
-        return TemplateValidationResult(False, ["template spec must include non-empty 'archetypes' list"])
+        return TemplateValidationResult(False, ["template spec must include non-empty 'layouts' list"])
 
     # Template-native layout definitions (optional). These are additional layout definitions
     # that may be referenced directly by callers (namespaced IDs recommended).
     native = spec.get("native") or {}
     native_layout_defs = []
     if isinstance(native, dict):
-        native_layout_defs = native.get("archetypes") or []
+        native_layout_defs = native.get("layouts") or []
 
     if native_layout_defs and not isinstance(native_layout_defs, list):
-        return TemplateValidationResult(False, ["template spec 'native.archetypes' must be a list when present"])
+        return TemplateValidationResult(False, ["template spec 'native.layouts' must be a list when present"])
 
     # Semantic checks can run without a pptx.
     if profile in {"standard", "extended"}:

@@ -18,7 +18,7 @@ def test_render_deck_errors_when_requested_layout_and_fallback_are_both_unavaila
     # Template spec intentionally does not include two_col OR title_and_bullets fallback.
     template_spec = {
         "template_id": "t",
-        "archetypes": [
+        "layouts": [
             {"id": "title", "layout": "Title Slide", "slots": [{"name": "title", "type": "text", "placeholder_idx": 0}]}
         ],
         "styles": {},

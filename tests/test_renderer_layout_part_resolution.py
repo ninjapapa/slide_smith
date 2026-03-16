@@ -44,7 +44,7 @@ def test_renderer_can_resolve_layout_by_part_when_name_is_wrong(tmp_path: Path) 
         "version": "1.0",
         "styles": {},
         "deck": {},
-        "archetypes": [
+        "layouts": [
             {
                 "id": "title",
                 "layout": "THIS NAME DOES NOT EXIST",

@@ -25,4 +25,11 @@ def load_template_spec(template_id: str, templates_dir: str | None = None) -> di
     path = template_dir(template_id, templates_dir) / "template.json"
     if not path.exists():
         raise FileNotFoundError(f"Template '{template_id}' not found at {path}")
-    return json.loads(path.read_text())
+    spec = json.loads(path.read_text())
+    if isinstance(spec, dict):
+        if "layouts" not in spec and isinstance(spec.get("archetypes"), list):
+            spec["layouts"] = spec.get("archetypes")
+        native = spec.get("native")
+        if isinstance(native, dict) and "layouts" not in native and isinstance(native.get("archetypes"), list):
+            native["layouts"] = native.get("archetypes")
+    return spec

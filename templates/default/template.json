@@ -19,9 +19,9 @@
     "bullets": {"font": "Calibri", "size_pt": 18, "color_hex": "222222", "line_spacing_pt": 22}
   },
   "native": {
-    "archetypes": []
+    "layouts": []
   },
-  "archetypes": [
+  "layouts": [
     {
       "id": "title",
       "layout": "Title Slide",

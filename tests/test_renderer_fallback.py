@@ -17,7 +17,7 @@ def test_render_deck_falls_back_when_template_does_not_support_requested_layout(
 
     template_spec = {
         "template_id": "t",
-        "archetypes": [
+        "layouts": [
             {
                 "id": "title_and_bullets",
                 "layout": "Title and Content",

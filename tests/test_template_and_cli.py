@@ -27,7 +27,7 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
 def test_load_default_template() -> None:
     spec = load_template_spec("default")
     assert spec["template_id"] == "default"
-    assert len(spec["archetypes"]) >= 3
+    assert len(spec["layouts"]) >= 3
 
 
 

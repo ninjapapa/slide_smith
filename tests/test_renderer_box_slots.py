@@ -33,7 +33,7 @@ def test_render_box_based_text_with_image(tmp_path: Path):
         "name": "tmp",
         "version": "0.0",
         "deck": {"aspect_ratio": "16:9", "supported_layout_ids": ["text_with_image"]},
-        "archetypes": [
+        "layouts": [
             {
                 "id": "text_with_image",
                 "layout": layout_name,

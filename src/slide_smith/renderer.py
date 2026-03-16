@@ -85,7 +85,7 @@ def render_deck(
     styles = load_styles(template_spec)
     layout_specs = {
         item["id"]: item
-        for item in template_spec.get("archetypes", [])
+        for item in template_spec.get("layouts", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
 

@@ -19,7 +19,7 @@ def test_render_deck_missing_placeholder_idx_falls_back_with_actionable_warning(
     template_spec = load_template_spec("default")
 
     # Break the template mapping to point at a non-existent placeholder index.
-    for a in template_spec.get("archetypes", []):
+    for a in template_spec.get("layouts", []):
         if a.get("id") == "title":
             for s in a.get("slots", []):
                 if s.get("name") == "title":

@@ -23,7 +23,7 @@ def test_structural_validation_allows_box_only_archetype_when_layout_missing(tmp
     spec = {
         "version": "1.0",
         "meta": {"template": "t1"},
-        "archetypes": [
+        "layouts": [
             {
                 "id": "box_only",
                 "layout": "THIS LAYOUT DOES NOT EXIST",
