@@ -119,6 +119,11 @@ def _pick_best(archetypes: Iterable[dict[str, Any]], scorer) -> InferenceCandida
     return best
 
 
+def _layout_name(a: dict[str, Any]) -> str:
+    v = a.get("layout")
+    return v if isinstance(v, str) else ""
+
+
 def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
     """Return an updated template spec with best-effort standard archetypes added.
 
@@ -137,7 +142,15 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         if c["title"] < 1:
             return 0.0, "missing title slot"
         score = 5 + 2 * min(c["subtitle"], 1) - 2 * c["image"] - 1 * c["bullets"]
-        return float(score), f"title={c['title']} subtitle={c['subtitle']} image={c['image']} bullets={c['bullets']}"
+
+        ln = _layout_name(a).lower()
+        # Heuristics for branded templates: prefer explicit cover layouts.
+        if "cover" in ln:
+            score += 8
+        if "session" in ln:
+            score -= 6
+
+        return float(score), f"layout={_layout_name(a)} title={c['title']} subtitle={c['subtitle']} image={c['image']} bullets={c['bullets']}"
 
     def score_section(a: dict[str, Any]):
         c = _slot_counts(a)
@@ -145,7 +158,15 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
             return 0.0, "missing title slot"
         # section often looks like title slide but can be simpler.
         score = 4 + 1 * min(c["subtitle"], 1) + 1 * min(c["body"], 1) - 2 * c["image"]
-        return float(score), f"title={c['title']} subtitle={c['subtitle']} body={c['body']} image={c['image']}"
+
+        ln = _layout_name(a).lower()
+        # Prefer explicit section-divider layouts.
+        if "session" in ln:
+            score += 8
+        if "cover" in ln:
+            score -= 6
+
+        return float(score), f"layout={_layout_name(a)} title={c['title']} subtitle={c['subtitle']} body={c['body']} image={c['image']}"
 
     def score_title_and_bullets(a: dict[str, Any]):
         c = _slot_counts(a)
@@ -154,7 +175,15 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         if c["bullets"] < 1 and c["body"] < 1:
             return 0.0, "missing bullets/body slot"
         score = 6 + 2 * min(c["bullets"], 1) + 1 * min(c["body"], 1) - 3 * c["image"]
-        return float(score), f"title={c['title']} bullets={c['bullets']} body={c['body']} image={c['image']}"
+
+        ln = _layout_name(a).lower()
+        # Prefer explicit content-box layouts over title/subtitle framing layouts.
+        if "content-box" in ln or "content box" in ln:
+            score += 8
+        if "subtitle only" in ln:
+            score -= 6
+
+        return float(score), f"layout={_layout_name(a)} title={c['title']} bullets={c['bullets']} body={c['body']} image={c['image']}"
 
     def score_image_left_text_right(a: dict[str, Any]):
         c = _slot_counts(a)
@@ -165,7 +194,15 @@ def infer_standard_mappings(template_spec: dict[str, Any]) -> dict[str, Any]:
         if c["body"] < 1 and c["bullets"] < 1:
             return 0.0, "missing body slot"
         score = 7 + 2 * min(c["image"], 1) + 1 * min(c["body"], 1) + 1 * min(c["bullets"], 1)
-        return float(score), f"title={c['title']} image={c['image']} body={c['body']} bullets={c['bullets']}"
+
+        ln = _layout_name(a).lower()
+        # Prefer generic content layouts over specialized agenda layouts.
+        if "column + image" in ln or "column" in ln and "image" in ln:
+            score += 8
+        if "agenda" in ln:
+            score -= 8
+
+        return float(score), f"layout={_layout_name(a)} title={c['title']} image={c['image']} body={c['body']} bullets={c['bullets']}"
 
     def score_title_subtitle_and_bullets(a: dict[str, Any]):
         c = _slot_counts(a)
