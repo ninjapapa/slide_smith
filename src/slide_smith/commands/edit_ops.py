@@ -11,9 +11,9 @@ from slide_smith.editor import (
 )
 
 
-def handle_add_slide(*, deck: str, after: int, archetype: str, input_path: str) -> tuple[int, str]:
+def handle_add_slide(*, deck: str, after: int, layout_id: str, input_path: str) -> tuple[int, str]:
     try:
-        path = add_slide_to_deck(deck, after, archetype, input_path)
+        path = add_slide_to_deck(deck, after, layout_id, input_path)
     except EditError as exc:
         return 1, f"Insert-slide failed: {exc}"
     return 0, json.dumps({"deck": path, "status": "slide inserted"}, indent=2)

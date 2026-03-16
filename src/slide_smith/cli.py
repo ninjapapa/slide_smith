@@ -111,7 +111,7 @@ def main() -> int:
     if args.command == "insert-slide":
         from slide_smith.commands.edit_ops import handle_add_slide
 
-        code, out = handle_add_slide(deck=args.deck, after=args.after, archetype=args.layout_id, input_path=args.input)
+        code, out = handle_add_slide(deck=args.deck, after=args.after, layout_id=args.layout_id, input_path=args.input)
         print(out)
         return code
 

@@ -34,7 +34,7 @@ def _load_json(path: str) -> dict[str, Any]:
 
 
 
-def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_path: str, template_id: str = "default") -> str:
+def add_slide_to_deck(deck_path: str, after_index: int, layout_id: str, input_path: str, template_id: str = "default") -> str:
     prs = Presentation(deck_path)
     slide_w_emu = int(prs.slide_width)
     slide_h_emu = int(prs.slide_height)
@@ -51,37 +51,37 @@ def add_slide_to_deck(deck_path: str, after_index: int, archetype: str, input_pa
     if not isinstance(raw_slide_spec, dict):
         raise EditError("Slide input must be a JSON object")
 
-    if archetype:
-        raw_slide_spec.setdefault("layout_id", archetype)
+    if layout_id:
+        raw_slide_spec.setdefault("layout_id", layout_id)
     slide_spec, _warnings = normalize_deck_spec({"slides": [raw_slide_spec]})
     slide_spec = dict((slide_spec.get("slides") or [raw_slide_spec])[0])
 
-    requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or archetype)
-    effective_archetype = str(slide_spec.get("archetype") or requested_layout_id)
+    requested_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or layout_id)
+    effective_layout_id = str(slide_spec.get("layout_id") or slide_spec.get("archetype") or requested_layout_id)
     base_dir = Path(input_path).resolve().parent
 
-    def render_slide_for(kind: str, spec: dict[str, Any]) -> None:
-        if kind not in archetypes:
-            raise EditError(f"Layout '{kind}' is not supported by template '{template_id}'")
+    def render_slide_for(layout_id_value: str, spec: dict[str, Any]) -> None:
+        if layout_id_value not in archetypes:
+            raise EditError(f"Layout '{layout_id_value}' is not supported by template '{template_id}'")
 
-        layout_name = archetypes[kind]["layout"]
+        layout_name = archetypes[layout_id_value]["layout"]
         slide = prs.slides.add_slide(_layout_by_name(prs, layout_name))
-        archetype_spec = archetypes[kind]
+        archetype_spec = archetypes[layout_id_value]
 
-        if kind == "title":
-            _render_title(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif kind == "section":
-            _render_section(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif kind in {"title_and_bullets", "title_subtitle_and_bullets"}:
-            _render_title_and_bullets(slide, spec, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
-        elif kind in {"image_left_text_right", "text_with_image"}:
-            _render_image_left_text_right(slide, spec, base_dir, styles, archetype_spec, kind, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        if layout_id_value == "title":
+            _render_title(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id_value == "section":
+            _render_section(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id_value in {"title_and_bullets", "title_subtitle_and_bullets"}:
+            _render_title_and_bullets(slide, spec, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
+        elif layout_id_value in {"image_left_text_right", "text_with_image"}:
+            _render_image_left_text_right(slide, spec, base_dir, styles, archetype_spec, layout_id_value, slide_w_emu=slide_w_emu, slide_h_emu=slide_h_emu)
         else:
-            raise EditError(f"Layout '{kind}' is not implemented")
+            raise EditError(f"Layout '{layout_id_value}' is not implemented")
 
     before_count = len(prs.slides)
     try:
-        render_slide_for(effective_archetype, slide_spec)
+        render_slide_for(effective_layout_id, slide_spec)
     except EditError as exc:
         try:
             while len(prs.slides) > before_count:

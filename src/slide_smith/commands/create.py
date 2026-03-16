@@ -44,9 +44,9 @@ def handle_create(
         lines = ["Deck spec validation failed:"] + [f"- {e}" for e in errors]
         return 1, "\n".join(lines)
 
-    # Non-fatal warnings (e.g. deprecated archetype ids).
+    # Non-fatal warnings (e.g. deprecated legacy layout aliases).
     # Keep stdout machine-readable JSON for both print modes.
-    # Deprecated/archetype-normalization warnings are captured in the normalized deck output instead.
+    # Deprecated legacy-alias normalization warnings are captured in the normalized deck output instead.
 
     # Schema validation is the source of truth when jsonschema is available.
     try:

@@ -39,7 +39,7 @@ def test_add_slide_to_deck_appends_supported_slide(tmp_path: Path) -> None:
     slide_input.write_text(json.dumps({"title": "Product", "body": "Body", "image": "demo.png"}))
     (tmp_path / "demo.png").write_bytes(PNG_1X1)
 
-    add_slide_to_deck(str(deck), after_index=1, archetype="image_left_text_right", input_path=str(slide_input))
+    add_slide_to_deck(str(deck), after_index=1, layout_id="image_left_text_right", input_path=str(slide_input))
 
     prs = Presentation(str(deck))
     assert len(prs.slides) == 3

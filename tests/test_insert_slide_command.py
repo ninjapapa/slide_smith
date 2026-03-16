@@ -27,7 +27,7 @@ def test_insert_slide_accepts_layout_id(tmp_path: Path) -> None:
     slide_input = tmp_path / "slide.json"
     slide_input.write_text(json.dumps({"title": "Highlights", "bullets": ["One", "Two"]}))
 
-    code, out = handle_add_slide(deck=str(deck), after=0, archetype="title_and_bullets", input_path=str(slide_input))
+    code, out = handle_add_slide(deck=str(deck), after=0, layout_id="title_and_bullets", input_path=str(slide_input))
     assert code == 0
     payload = json.loads(out)
     assert payload["status"] == "slide inserted"
@@ -42,7 +42,7 @@ def test_insert_slide_falls_back_when_layout_is_not_supported_by_template(tmp_pa
     slide_input = tmp_path / "slide.json"
     slide_input.write_text(json.dumps({"title": "Compare", "col1_body": "L", "col2_body": "R"}))
 
-    code, out = handle_add_slide(deck=str(deck), after=0, archetype="two_col", input_path=str(slide_input))
+    code, out = handle_add_slide(deck=str(deck), after=0, layout_id="two_col", input_path=str(slide_input))
     assert code == 0
     payload = json.loads(out)
     assert payload["status"] == "slide inserted"
